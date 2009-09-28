@@ -575,6 +575,9 @@ assign_file_suffix (char *dest, int idx)
     case SL (UDRILL, 0):
       sext = ".cnc";
       break;
+    case SL (SPDRILL, 0): /* special plated drill (i.e. blind and buried vias) */
+      sext = ".cnc";
+      break;
     }
 
   strcpy (dest, layer_type_to_file_name (idx, fns_style));
@@ -760,7 +763,7 @@ gerber_set_layer (const char *name, int group, int empty)
       pending_drills = NULL;
     }
 
-  is_drill = (SL_TYPE (idx) == SL_PDRILL || SL_TYPE (idx) == SL_UDRILL);
+  is_drill = (SL_TYPE (idx) == SL_PDRILL || SL_TYPE (idx) == SL_UDRILL || SL_TYPE (idx) == SL_SPDRILL);
   is_mask = (SL_TYPE (idx) == SL_MASK);
   current_mask = HID_MASK_OFF;
 #if 0

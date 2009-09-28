@@ -1016,6 +1016,7 @@ NotifyMode (void)
     case VIA_MODE:
       {
 	PinType *via;
+	int i;
 
 	if (!PCB->ViaOn)
 	  {
@@ -1029,6 +1030,9 @@ NotifyMode (void)
 				 NoFlags ())) != NULL)
 	  {
 	    AddObjectToCreateUndoList (VIA_TYPE, via, via, via);
+	    /* disable via on all layers currently invisible */
+	    for (i = 0; i < max_copper_layer; i++)
+	      ASSIGN_DISAB_LAY (i, !LAYER_PTR(i)->On, via);
 	    if (gui->shift_is_pressed ())
 	      ChangeObjectThermal (VIA_TYPE, via, via, via, PCB->ThermStyle);
 	    IncrementUndoSerialNumber ();

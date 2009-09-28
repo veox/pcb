@@ -231,10 +231,15 @@ typedef enum
 #define SL_PDRILL	0x0030
 #define SL_UDRILL	0x0040
 #define SL_PASTE	0x0050
+#define SL_SPDRILL	0x00A0 /* special plated drill (i.e. blind or buried vias) */
 #define SL_INVISIBLE	0x0060
 #define SL_FAB		0x0070
 #define SL_ASSY		0x0080
 #define SL_RATS		0x0090
+
+/* Callers should use this.  */
+#define SL(type,side) (~0xfff | SL_##type | SL_##side##_SIDE)
+#define SLNO(type,side,no) (~0xff0fff | SL_##type | SL_##side##_SIDE | ((no) & 0xff) << 16 )
 
 /* File Watch flags */
 /* Based upon those in dbus/dbus-connection.h */
