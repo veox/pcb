@@ -227,14 +227,14 @@ print_placement(FILE *fp)
       ename = g_strdup(NAMEONPCB_NAME(element));
       if(!ename)
           ename = g_strdup_printf("null");
-      pcb_fprintf(fp, "    (component %d\n", element->ID);
-      pcb_fprintf(fp, "      (place %s %.6mm %.6mm %s 0 (PN 0))\n", ename, ecentroid.X, ecentroid.Y, side);
+      pcb_fprintf(fp, "    (component \"%d\"\n", element->ID);
+      pcb_fprintf(fp, "      (place \"%s\" %.6mm %.6mm %s 0 (PN 0))\n", ename, ecentroid.X, ecentroid.Y, side);
       pcb_fprintf(fp, "    )\n");
       g_free(ename);
   } END_LOOP;
   VIA_LOOP (PCB->Data); { //add mounting holes
-      pcb_fprintf(fp, "    (component %d\n", via->ID);
-      pcb_fprintf(fp, "      (place %d %.6mm %.6mm %s 0 (PN 0))\n", via->ID, via->X, (PCB->MaxHeight - via->Y), "front");
+      pcb_fprintf(fp, "    (component \"%d\"\n", via->ID);
+      pcb_fprintf(fp, "      (place \"%d\" %.6mm %.6mm %s 0 (PN 0))\n", via->ID, via->X, (PCB->MaxHeight - via->Y), "front");
       pcb_fprintf(fp, "    )\n");
   } END_LOOP;
   fprintf(fp, "  )\n");
@@ -250,7 +250,7 @@ print_library(FILE *fp)
         int partside = TEST_FLAG(ONSOLDERFLAG, element) ? layersN-1 : 0; //0 for component side, highest for solder side
         int partsidesign = TEST_FLAG(ONSOLDERFLAG, element) ? -1 : 1;
         PointType centroid = get_centroid(element);
-        fprintf(fp, "    (image %ld\n", element->ID); //map every element by ID
+        fprintf(fp, "    (image \"%ld\"\n", element->ID); //map every element by ID
         /* loop thru pins and pads to add to image */
         PIN_LOOP (element); {
             Coord ty;
@@ -273,7 +273,7 @@ print_library(FILE *fp)
                 }
             }
             else {
-                pcb_fprintf(fp, "      (pin %s %s %.6mm %.6mm)\n", padstack, pin->Number, lx, ly);
+                pcb_fprintf(fp, "      (pin %s \"%s\" %.6mm %.6mm)\n", padstack, pin->Number, lx, ly);
             }
 
             if (!g_list_find_custom(pads, padstack, (GCompareFunc)strcmp))
@@ -311,7 +311,7 @@ print_library(FILE *fp)
                 pcb_fprintf(fp, "      (keepout \"\" (rect %s %.6mm %.6mm %.6mm %.6mm))\n",
                             lay->Name, lx-xlen/2, ly-ylen/2, lx+xlen/2, ly+ylen/2);
             } else {
-                pcb_fprintf(fp, "      (pin %s %s %.6mm %.6mm)\n",
+                pcb_fprintf(fp, "      (pin %s \"%s\" %.6mm %.6mm)\n",
                             padstack, pad->Number, lx, ly);
             }
             if (!g_list_find_custom(pads, padstack, (GCompareFunc)strcmp))
@@ -326,7 +326,7 @@ print_library(FILE *fp)
         fprintf(fp, "    (image %ld\n", via->ID); //map every via by ID
         /* for mounting holes, clearance is added to thickness for higher total clearance */
         padstack = g_strdup_printf("Th_round_%ld", via->Thickness + via->Clearance);
-        fprintf(fp, "      (pin %s 1 0 0)\n", padstack); //only 1 pin, 0,0 puts it right on component placement spot
+        fprintf(fp, "      (pin \"%s\" 1 0 0)\n", padstack); //only 1 pin, 0,0 puts it right on component placement spot
         fprintf(fp, "    )\n");
         if (!g_list_find_custom(pads, padstack, (GCompareFunc)strcmp))
             pads = g_list_append(pads, padstack);
@@ -371,16 +371,16 @@ print_network(FILE *fp)
     int ni, nei;
     fprintf(fp, "  (network\n");
     for (ni = 0; ni < PCB->NetlistLib.MenuN; ni++) {
-        fprintf(fp, "    (net %s\n      (pins", PCB->NetlistLib.Menu[ni].Name + 2);
+        fprintf(fp, "    (net \"%s\"\n      (pins", PCB->NetlistLib.Menu[ni].Name + 2);
         for (nei = 0; nei < PCB->NetlistLib.Menu[ni].EntryN; nei++) {
-            fprintf(fp, " %s", PCB->NetlistLib.Menu[ni].Entry[nei].ListEntry);
+            fprintf(fp, " \"%s\"", PCB->NetlistLib.Menu[ni].Entry[nei].ListEntry);
         }
         fprintf(fp, ")\n    )\n");
     }
 
     fprintf(fp, "    (class geda_default");
     for (ni = 0; ni < PCB->NetlistLib.MenuN; ni++) {
-        fprintf(fp, " %s", PCB->NetlistLib.Menu[ni].Name + 2);
+        fprintf(fp, " \"%s\"", PCB->NetlistLib.Menu[ni].Name + 2);
     }
     pcb_fprintf(fp, "\n      (circuit\n        (use_via via_%ld_%ld)\n      )\n",
                 viawidth, viadrill);
