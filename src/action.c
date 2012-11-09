@@ -998,6 +998,9 @@ NotifyMode (void)
 		Note.ptr2 = ptr2;
 		Note.ptr3 = ptr3;
 	      }
+	    if (!Note.Moving && (type & SELECT_TYPES) &&
+		TEST_FLAG (SELECTEDFLAG, (PinType *) ptr2))
+	      Note.Moving = true;
 	    if ((Note.Hit && Note.Moving) || type == NO_TYPE)
 	      break;
 	  }
