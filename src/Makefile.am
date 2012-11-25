@@ -404,8 +404,7 @@ libdsn_a_CPPFLAGS = -I./hid/dsn
 
 LIBDSN_SRCS = \
 	hid/hidint.h \
-	hid/dsn/dsn.c \
-	hid/dsn/dsn.h
+	hid/dsn/dsn.c
 libdsn_a_SOURCES = ${LIBDSN_SRCS} hid/dsn/dsn_lists.h
 
 hid/dsn/dsn_lists.h : ${LIBDSN_SRCS} Makefile
