@@ -176,7 +176,7 @@ print_structure(FILE *fp)
         if(is_layer_group_active[i]) {
             int ni;
             char *layeropts;
-            LayerTypePtr layer;
+            LayerType *layer;
             layeropts = g_strdup_printf("(type signal)");
             layer = g_list_nth_data(layerlist, i);
             /* see if layer has same name as a net and make it a power layer */
@@ -267,7 +267,7 @@ print_library(FILE *fp)
 
             if (!pin->Number) { //if pin is null just make it a keepout
                 for(GList *iter = layerlist; iter; iter = g_list_next(iter)) {
-                    LayerTypePtr lay = iter->data;
+                    LayerType *lay = iter->data;
                     pcb_fprintf(fp, "      (keepout \"\" (circle %s %.6mm %.6mm %.6mm))\n",
                                 lay->Name, pinthickness, lx, ly);
                 }
@@ -306,7 +306,7 @@ print_library(FILE *fp)
             gui->log("%s <- %ld, %ld\n", padstack, xlen, ylen);
 
             if (!pad->Number) { //if pad is null just make it a keepout
-                LayerTypePtr lay;
+                LayerType *lay;
                 lay = g_list_nth_data(layerlist, partside);
                 pcb_fprintf(fp, "      (keepout \"\" (rect %s %.6mm %.6mm %.6mm %.6mm))\n",
                             lay->Name, lx-xlen/2, ly-ylen/2, lx+xlen/2, ly+ylen/2);
@@ -391,7 +391,7 @@ static void
 print_wires (FILE *fp)
 {
     GList* iter;
-    LayerTypePtr lay;
+    LayerType *lay;
     fprintf(fp, "    (wiring\n");
 
     for (iter = layerlist; iter; iter = g_list_next(iter)) {
@@ -538,7 +538,7 @@ ActionLoadDsnFrom(int argc, char **argv, Coord x, Coord y)
     Coord linethick = 0, lineclear, viadiam, viadrill;
     char lname[200];
     LayerType *rlayer = NULL;
-    LineTypePtr line = NULL;
+    LineType *line = NULL;
 
     fname = argc ? argv[0] : 0;
 
