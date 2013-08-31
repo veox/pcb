@@ -962,12 +962,10 @@ LookupPVConnectionsToPVList (int flag)
       ic = GET_INTCONN(info.pv);
       if ((info.pv->Element != NULL) && (ic > 0)) {
         ElementType *e = info.pv->Element;
-        printf("Looking for intconn:\n");
         PIN_LOOP (e);
           {
             if ((info.pv != pin) && (ic == GET_INTCONN(pin)))
               {
-                printf(" FOUND!\n");
                 if (!TEST_FLAG (flag, pin))
                   ADD_PV_TO_LIST (pin, flag);
               }
@@ -2170,6 +2168,25 @@ LookupLOConnectionsToPad (PadType *Pad, Cardinal LayerGroup, int flag, bool AndR
   Cardinal entry;
   struct lo_info info;
   BoxType search_box;
+  int ic;
+
+  /* Internal connection: if pads in the same element have the same
+     internal connection group number, they are connected */
+    ic = GET_INTCONN (Pad);
+    if ((Pad->Element != NULL) && (ic > 0))
+      {
+        ElementType *e = Pad->Element;
+        PadType *orig_pad = Pad;
+        PAD_LOOP (e);
+          {
+            if ((orig_pad != pad) && (ic == GET_INTCONN (pad)))
+              {
+                if (!TEST_FLAG (flag, pad))
+                  ADD_PAD_TO_LIST (LayerGroup, pad, flag);
+              }
+          }
+        END_LOOP;
+      }
 
   if (!TEST_FLAG (SQUAREFLAG, Pad))
     return (LookupLOConnectionsToLine ((LineType *) Pad, LayerGroup, flag, false, AndRats));
