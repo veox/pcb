@@ -4854,21 +4854,28 @@ ActionChangeSquare (int argc, char **argv, Coord x, Coord y)
   if (function)
     {
       switch (GetFunctionID (function))
-	{
-	case F_ToggleObject:
-	case F_Object:
-	  {
-	    int type;
-	    void *ptr1, *ptr2, *ptr3;
+        {
+        case F_ToggleObject:
+        case F_Object:
+          {
+            int type;
+            void *ptr1, *ptr2, *ptr3;
 
-	    gui->get_coords (_("Select an Object"), &x, &y);
-	    if ((type =
-		 SearchScreen (x, y, CHANGESQUARE_TYPES,
-			       &ptr1, &ptr2, &ptr3)) != NO_TYPE)
-	      if (ChangeObjectSquare (type, ptr1, ptr2, ptr3))
-		SetChangedFlag (true);
-	    break;
-	  }
+            gui->get_coords (_("Select an Object"), &x, &y);
+
+            type = SearchScreen (x, y, CHANGESQUARE_TYPES,
+                                 &ptr1, &ptr2, &ptr3);
+            {
+              int qstyle = GET_SQUARE ((PinType *) ptr3);
+              qstyle++;
+              if (qstyle > 17)
+                qstyle = 0;
+              if (type != NO_TYPE)
+                if (ChangeObjectSquare (type, ptr1, ptr2, ptr3, qstyle))
+                  SetChangedFlag (true);
+            }
+            break;
+          }
 
 	case F_SelectedElements:
 	  if (ChangeSelectedSquare (ELEMENT_TYPE))

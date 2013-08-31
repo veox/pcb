@@ -32,7 +32,7 @@
 
 #include "global.h"
 
-#define DRAW_FLAGS  (RATFLAG | SELECTEDFLAG | SQUAREFLAG |    \
+#define DRAW_FLAGS  (RATFLAG | SELECTEDFLAG |                 \
                      HIDENAMEFLAG | HOLEFLAG | OCTAGONFLAG |  \
                      CONNECTEDFLAG | FOUNDFLAG | CLEARLINEFLAG)
 
