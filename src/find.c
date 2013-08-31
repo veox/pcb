@@ -950,11 +950,30 @@ LookupPVConnectionsToPVList (int flag)
   save_place = PVList.Location;
   while (PVList.Location < PVList.Number)
     {
+      int ic;
       BoxType search_box;
 
       /* get pointer to data */
       info.pv = PVLIST_ENTRY (PVList.Location);
       search_box = expand_bounds ((BoxType *)info.pv);
+
+      /* Internal connection: if pins in the same element have the same
+         internal connection group number, they are connected */
+      ic = GET_INTCONN(info.pv);
+      if ((info.pv->Element != NULL) && (ic > 0)) {
+        ElementType *e = info.pv->Element;
+        printf("Looking for intconn:\n");
+        PIN_LOOP (e);
+          {
+            if ((info.pv != pin) && (ic == GET_INTCONN(pin)))
+              {
+                printf(" FOUND!\n");
+                if (!TEST_FLAG (flag, pin))
+                  ADD_PV_TO_LIST (pin, flag);
+              }
+          }
+        END_LOOP;
+      }
 
       if (setjmp (info.env) == 0)
         r_search (PCB->Data->via_tree, &search_box, NULL,
