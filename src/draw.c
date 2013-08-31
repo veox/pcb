@@ -341,10 +341,16 @@ draw_element_name (ElementType *element)
     gui->graphics->set_color (Output.fgGC, PCB->ElementColor);
   else if (TEST_FLAG (SELECTEDFLAG, &ELEMENT_TEXT (PCB, element)))
     gui->graphics->set_color (Output.fgGC, PCB->ElementSelectedColor);
-  else if (FRONT (element))
-    gui->graphics->set_color (Output.fgGC, PCB->ElementColor);
+  else if (FRONT (element)) {
+/* TODO: why do we test for Name's flag here? */
+    if (TEST_FLAG (NONETLISTFLAG, &element->Name[1]))
+      gui->graphics->set_color (Output.fgGC, PCB->ElementColor_nonetlist);
+    else
+      gui->graphics->set_color (Output.fgGC, PCB->ElementColor);
+  }
   else
     gui->graphics->set_color (Output.fgGC, PCB->InvisibleObjectsColor);
+
   gui->graphics->draw_pcb_text (Output.fgGC, &ELEMENT_TEXT (PCB, element), PCB->minSlk);
 }
 

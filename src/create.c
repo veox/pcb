@@ -107,6 +107,7 @@ pcb_colors_from_settings (PCBType *ptr)
   ptr->ConnectedColor = Settings.ConnectedColor;
   ptr->FoundColor = Settings.FoundColor;
   ptr->ElementColor = Settings.ElementColor;
+  ptr->ElementColor_nonetlist = Settings.ElementColor_nonetlist;
   ptr->RatColor = Settings.RatColor;
   ptr->InvisibleObjectsColor = Settings.InvisibleObjectsColor;
   ptr->InvisibleMarkColor = Settings.InvisibleMarkColor;
