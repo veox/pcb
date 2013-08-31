@@ -216,7 +216,10 @@ If set, this object has been as physically connected by @code{FindConnection()}.
 #define EDGE2FLAG               0x4000  /* Padr.Point2 is closer to outside edge */
                                         /* also pinout text for pins is vertical */
 #define VISITFLAG               0x8000  /* marker to avoid re-visiting an object */
-#define CONNECTEDFLAG          0x10000  /* flag like FOUND flag, but used to identify physically connected objects (not rats) */
+#define CONNECTEDFLAG          0x10000  /* flag like FOUND flag, but used to identify
+                                           physically connected objects (not rats) */
+#define NONETLISTFLAG          0x20000  /* element is not on the netlist and
+                                           should not interfere with the netlist */
 
 
 #define NOCOPY_FLAGS (FOUNDFLAG | CONNECTEDFLAG)
