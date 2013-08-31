@@ -2182,7 +2182,10 @@ LookupLOConnectionsToPad (PadType *Pad, Cardinal LayerGroup, int flag, bool AndR
             if ((orig_pad != pad) && (ic == GET_INTCONN (pad)))
               {
                 if (!TEST_FLAG (flag, pad))
-                  ADD_PAD_TO_LIST (LayerGroup, pad, flag);
+                  {
+                    ADD_PAD_TO_LIST (LayerGroup, pad, flag);
+                    return LookupLOConnectionsToPad (pad, LayerGroup, flag, AndRats);
+                  }
               }
           }
         END_LOOP;
