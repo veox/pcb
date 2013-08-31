@@ -381,20 +381,35 @@ expand_bounds (BoxType *box_in)
 bool
 PinLineIntersect (PinType *PV, LineType *Line)
 {
-  /* IsLineInRectangle already has Bloat factor */
-  return TEST_FLAG (SQUAREFLAG,
-                    PV) ? IsLineInRectangle (PV->X - (PIN_SIZE (PV) + 1) / 2,
-                                             PV->Y - (PIN_SIZE (PV) + 1) / 2,
-                                             PV->X + (PIN_SIZE (PV) + 1) / 2,
-                                             PV->Y + (PIN_SIZE (PV) + 1) / 2,
-                                             Line) : IsPointInPad (PV->X,
-                                                                    PV->Y,
-								   MAX (PIN_SIZE (PV)
-                                                                         /
-                                                                         2.0 +
-                                                                         Bloat,
-                                                                         0.0),
-                                                                    (PadType *)Line);
+  if (TEST_FLAG (SQUAREFLAG, PV)) {
+    int shape = GET_SQUARE(PV);
+    if (shape <= 1) {
+      /* the original square case */
+      /* IsLineInRectangle already has Bloat factor */
+      return IsLineInRectangle (PV->X - (PIN_SIZE (PV) + 1) / 2,
+                                PV->Y - (PIN_SIZE (PV) + 1) / 2,
+                                PV->X + (PIN_SIZE (PV) + 1) / 2,
+                                PV->Y + (PIN_SIZE (PV) + 1) / 2,
+                                Line);
+    }
+
+    {
+      /* shaped pin case */
+      POLYAREA *pl, *lp;
+      int ret;
+
+      pl = PinPoly(PV, PIN_SIZE (PV), 0);
+      lp = LinePoly(Line, Line->Thickness + Bloat);
+      ret = Touching(lp, pl);
+      poly_Free(&pl);
+      poly_Free(&lp);
+      return ret;
+    }
+  }
+
+  /* the original round pin version */
+  return  IsPointInPad (PV->X, PV->Y, MAX (PIN_SIZE (PV) / 2.0 + Bloat, 0.0),
+                        (PadType *)Line);
 }
 
 
@@ -429,6 +444,23 @@ PV_TOUCH_PV (PinType *PV1, PinType *PV2)
 {
   double t1, t2;
   BoxType b1, b2;
+  int shape1, shape2;
+
+  shape1 = GET_SQUARE(PV1);
+  shape2 = GET_SQUARE(PV2);
+
+  if ((shape1 > 1) || (shape2 > 1)) {
+    POLYAREA *pl1, *pl2;
+    int ret;
+
+    pl1 = PinPoly(PV1, PIN_SIZE (PV1)+Bloat, 0);
+    pl2 = PinPoly(PV2, PIN_SIZE (PV2)+Bloat, 0);
+    ret = Touching(pl1, pl2);
+    poly_Free(&pl1);
+    poly_Free(&pl2);
+    return ret;
+  }
+
 
   t1 = MAX (PV1->Thickness / 2.0 + Bloat, 0);
   t2 = MAX (PV2->Thickness / 2.0 + Bloat, 0);
