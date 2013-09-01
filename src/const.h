@@ -220,6 +220,7 @@ If set, this object has been as physically connected by @code{FindConnection()}.
                                            physically connected objects (not rats) */
 #define NONETLISTFLAG          0x20000  /* element is not on the netlist and
                                            should not interfere with the netlist */
+#define MINCUTFLAG             0x40000  /* used by the mincut short find code */
 
 
 #define NOCOPY_FLAGS (FOUNDFLAG | CONNECTEDFLAG)
