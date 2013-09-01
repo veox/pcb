@@ -343,7 +343,7 @@ draw_element_name (ElementType *element)
     gui->graphics->set_color (Output.fgGC, PCB->ElementSelectedColor);
   else if (FRONT (element)) {
 /* TODO: why do we test for Name's flag here? */
-    if (TEST_FLAG (NONETLISTFLAG, &element->Name[1]))
+    if (TEST_FLAG (NONETLISTFLAG, element))
       gui->graphics->set_color (Output.fgGC, PCB->ElementColor_nonetlist);
     else
       gui->graphics->set_color (Output.fgGC, PCB->ElementColor);
