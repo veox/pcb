@@ -266,6 +266,15 @@ static Cardinal TotalP, TotalV;
 static ListType LineList[MAX_LAYER],    /* list of objects to */
   PolygonList[MAX_LAYER], ArcList[MAX_LAYER], PadList[2], RatList, PVList;
 
+find_callback_t find_callback = NULL;
+#define make_callback(type, ptr) 
+#if 0
+  do { \
+    if (find_callback != NULL) \
+      find_callback (type, ptr); \
+  } while (0)
+#endif
+
 /* ---------------------------------------------------------------------------
  * some local prototypes
  */
@@ -312,6 +321,7 @@ add_object_to_list (ListType *list, int type, void *ptr1, void *ptr2, void *ptr3
     AddObjectToFlagUndoList (type, ptr1, ptr2, ptr3);
 
   SET_FLAG (flag, object);
+  make_callback(type, object);
   LIST_ENTRY (list, list->Number) = object;
   list->Number++;
 
