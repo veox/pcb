@@ -267,13 +267,11 @@ static ListType LineList[MAX_LAYER],    /* list of objects to */
   PolygonList[MAX_LAYER], ArcList[MAX_LAYER], PadList[2], RatList, PVList;
 
 find_callback_t find_callback = NULL;
-#define make_callback(type, ptr) 
-#if 0
+#define make_callback(type, ptr) \
   do { \
     if (find_callback != NULL) \
       find_callback (type, ptr); \
   } while (0)
-#endif
 
 /* ---------------------------------------------------------------------------
  * some local prototypes
