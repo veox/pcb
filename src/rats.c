@@ -38,6 +38,7 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include "global.h"
 
@@ -352,6 +353,80 @@ TransferNet (NetListType *Netl, NetType *SourceNet, NetType *DestNet)
   memset (&Netl->Net[Netl->NetN], 0, sizeof (NetType));
 }
 
+static void proc_short_cb (int type, void *obj)
+{
+  printf(" found %d %p\n", type, obj);
+}
+
+static void proc_short (PinType *pin, PadType *pad)
+{
+  find_callback_t old_cb;
+  Coord x = 0, y = 0;
+
+  /* only one should be set, but one must be set */
+  assert((pin != NULL) || (pad != NULL));
+  assert((pin == NULL) || (pad == NULL));
+
+  if (pin != NULL)
+    {
+      printf ("short on pin!\n");
+      SET_FLAG (WARNFLAG, pin);
+      x = pin->X;
+      y = pin->Y;
+    }
+  else if (pad != NULL)
+    {
+      printf ("short on pad!\n");
+      SET_FLAG (WARNFLAG, pad);
+      if (TEST_FLAG (EDGE2FLAG, pad))
+        {
+          x = pad->Point2.X;
+          y = pad->Point2.Y;
+        }
+      else
+        {
+          x = pad->Point1.X;
+          y = pad->Point1.Y;
+        }
+    }
+
+  old_cb = find_callback;
+  find_callback = proc_short_cb;
+  LookupConnection (x, y, false, 1, FOUNDFLAG, false);
+  find_callback = old_cb;
+}
+
+typedef struct pinpad_s pinpad_t;
+struct pinpad_s {
+  PinType *pin;
+  PadType *pad;
+  pinpad_t *next;
+};
+
+static pinpad_t *shorts = NULL;
+
+static void found_short(PinType *pin, PadType *pad)
+{
+  pinpad_t *pp;
+  pp = malloc (sizeof(pinpad_t));
+  pp->pin = pin;
+  pp->pad = pad;
+  pp->next = shorts;
+  shorts = pp;
+}
+
+static void proc_shorts(void)
+{
+  pinpad_t *n, *next;
+  for (n = shorts; n != NULL; n = next)
+    {
+      next = n->next;
+      proc_short (n->pin, n->pad);
+      free (n);
+    }
+  shorts = NULL;
+}
+
 static bool
 CheckShorts (LibraryMenuType *theNet)
 {
@@ -376,7 +451,7 @@ CheckShorts (LibraryMenuType *theNet)
 		     &theNet->Name[2],
 		     UNKNOWN (NAMEONPCB_NAME (element)),
 		     UNKNOWN (pin->Number));
-	    SET_FLAG (WARNFLAG, pin);
+	    found_short(pin, NULL);
 	    continue;
 	  }
 	newone = true;
@@ -396,7 +471,7 @@ CheckShorts (LibraryMenuType *theNet)
 	    Message (_("Warning! Net \"%s\" is shorted to net \"%s\"\n"),
 		     &theNet->Name[2],
 		     &((LibraryMenuType *) (pin->Spare))->Name[2]);
-	    SET_FLAG (WARNFLAG, pin);
+	    found_short(pin, NULL);
 	  }
       }
   }
@@ -414,7 +489,7 @@ CheckShorts (LibraryMenuType *theNet)
 		     &theNet->Name[2],
 		     UNKNOWN (NAMEONPCB_NAME (element)),
 		     UNKNOWN (pad->Number));
-	    SET_FLAG (WARNFLAG, pad);
+	    found_short(NULL, pad);
 	    continue;
 	  }
 	newone = true;
@@ -434,7 +509,7 @@ CheckShorts (LibraryMenuType *theNet)
 	    Message (_("Warning! Net \"%s\" is shorted to net \"%s\"\n"),
 		     &theNet->Name[2],
 		     &((LibraryMenuType *) (pad->Spare))->Name[2]);
-	    SET_FLAG (WARNFLAG, pad);
+	    found_short(NULL, pad);
 	  }
       }
   }
@@ -785,7 +860,10 @@ AddAllRats (bool SelectedOnly, void (*funcp) (register ConnectionType *, registe
     return (true);
 
   if (Warned || changed)
-    Draw ();
+    {
+      proc_shorts ();
+      Draw ();
+    }
 
   if (Warned)
     Settings.RatWarn = true;
