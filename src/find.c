@@ -2169,6 +2169,7 @@ LookupLOConnectionsToPad (PadType *Pad, Cardinal LayerGroup, int flag, bool AndR
   struct lo_info info;
   BoxType search_box;
   int ic;
+  bool retv = false;
 
   /* Internal connection: if pads in the same element have the same
      internal connection group number, they are connected */
@@ -2184,7 +2185,8 @@ LookupLOConnectionsToPad (PadType *Pad, Cardinal LayerGroup, int flag, bool AndR
                 if (!TEST_FLAG (flag, pad))
                   {
                     ADD_PAD_TO_LIST (LayerGroup, pad, flag);
-                    return LookupLOConnectionsToPad (pad, LayerGroup, flag, AndRats);
+                    if (LookupLOConnectionsToPad (pad, LayerGroup, flag, AndRats))
+                      retv = true;
                   }
               }
           }
@@ -2253,7 +2255,7 @@ LookupLOConnectionsToPad (PadType *Pad, Cardinal LayerGroup, int flag, bool AndR
         }
 
     }
-  return (false);
+  return retv;
 }
 
 static int
