@@ -89,6 +89,7 @@ static void *ChangePadName (ElementType *, PadType *);
 static void *ChangeViaName (PinType *);
 static void *ChangeLineName (LayerType *, LineType *);
 static void *ChangeElementName (ElementType *);
+static void *ChangeElementNonetlist (ElementType *);
 static void *ChangeTextName (LayerType *, TextType *);
 static void *ChangeElementSquare (ElementType *);
 static void *SetElementSquare (ElementType *);
@@ -206,6 +207,20 @@ static ObjectFunctionType ChangeSquareFunctions = {
   NULL,
   ChangePinSquare,
   ChangePadSquare,
+  NULL,
+  NULL,
+  NULL,
+  NULL
+};
+static ObjectFunctionType ChangeNonetlistFunctions = {
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  ChangeElementNonetlist,
+  NULL,
+  NULL,
+  NULL,
   NULL,
   NULL,
   NULL,
@@ -1056,6 +1071,15 @@ ChangeElementName (ElementType *Element)
   return ChangeElementText (PCB, PCB->Data, Element, NAME_INDEX (PCB), NewName);
 }
 
+static void *
+ChangeElementNonetlist (ElementType *Element)
+{
+  if (TEST_FLAG (LOCKFLAG, Element))
+    return (NULL);
+  TOGGLE_FLAG(NONETLISTFLAG, Element);
+  return Element;
+}
+
 /* ---------------------------------------------------------------------------
  * sets data of a text object and calculates bounding box
  * memory must have already been allocated
@@ -1811,6 +1835,62 @@ ClrSelectedJoin (int types)
 }
 
 /* ----------------------------------------------------------------------
+ * changes the nonetlist-flag of all selected and visible elements
+ * returns true if anything has changed
+ */
+bool
+ChangeSelectedNonetlist (int types)
+{
+  bool change = false;
+
+  change = SelectedOperation (&ChangeNonetlistFunctions, false, types);
+  if (change)
+    {
+      Draw ();
+      IncrementUndoSerialNumber ();
+    }
+  return (change);
+}
+
+#if 0
+/* ----------------------------------------------------------------------
+ * sets the square-flag of all selected and visible pins or pads
+ * returns true if anything has changed
+ */
+bool
+SetSelectedNonetlist (int types)
+{
+  bool change = false;
+
+  change = SelectedOperation (&SetNonetlistFunctions, false, types);
+  if (change)
+    {
+      Draw ();
+      IncrementUndoSerialNumber ();
+    }
+  return (change);
+}
+
+/* ----------------------------------------------------------------------
+ * clears the square-flag of all selected and visible pins or pads
+ * returns true if anything has changed
+ */
+bool
+ClrSelectedNonetlist (int types)
+{
+  bool change = false;
+
+  change = SelectedOperation (&ClrNonetlistFunctions, false, types);
+  if (change)
+    {
+      Draw ();
+      IncrementUndoSerialNumber ();
+    }
+  return (change);
+}
+#endif
+
+/* ----------------------------------------------------------------------
  * changes the square-flag of all selected and visible pins or pads
  * returns true if anything has changed
  */
@@ -2148,6 +2228,23 @@ bool
 ClrObjectJoin (int Type, void *Ptr1, void *Ptr2, void *Ptr3)
 {
   if (ObjectOperation (&ClrJoinFunctions, Type, Ptr1, Ptr2, Ptr3) != NULL)
+    {
+      Draw ();
+      IncrementUndoSerialNumber ();
+      return (true);
+    }
+  return (false);
+}
+
+/* ---------------------------------------------------------------------------
+ * changes the square-flag of the passed object
+ * Returns true if anything is changed
+ */
+bool
+ChangeObjectNonetlist (int Type, void *Ptr1, void *Ptr2, void *Ptr3)
+{
+  if (ObjectOperation (&ChangeNonetlistFunctions, Type, Ptr1, Ptr2, Ptr3) !=
+      NULL)
     {
       Draw ();
       IncrementUndoSerialNumber ();
