@@ -1286,6 +1286,19 @@ DrawElementPinsAndPads (ElementType *Element)
   END_LOOP;
 }
 
+void
+EraseFlags (FlagType *f)
+{
+  unknown_flag_t *u, *next;
+  for (u = f->unknowns; u != NULL; u = next)
+    {
+      free(u->str);
+      next = u->next;
+      free(u);
+    }
+  f->unknowns = NULL;
+}
+
 /* ---------------------------------------------------------------------------
  * erase a via
  */
@@ -1295,6 +1308,7 @@ EraseVia (PinType *Via)
   AddPart (Via);
   if (TEST_FLAG (DISPLAYNAMEFLAG, Via))
     EraseViaName (Via);
+  EraseFlags (&Via->Flags);
 }
 
 /* ---------------------------------------------------------------------------
@@ -1317,6 +1331,7 @@ EraseRat (RatType *Rat)
     }
   else
     EraseLine ((LineType *)Rat);
+  EraseFlags (&Rat->Flags);
 }
 
 
@@ -1338,6 +1353,7 @@ ErasePad (PadType *Pad)
   AddPart (Pad);
   if (TEST_FLAG (DISPLAYNAMEFLAG, Pad))
     ErasePadName (Pad);
+  EraseFlags (&Pad->Flags);
 }
 
 /* ---------------------------------------------------------------------------
@@ -1358,6 +1374,7 @@ ErasePin (PinType *Pin)
   AddPart (Pin);
   if (TEST_FLAG (DISPLAYNAMEFLAG, Pin))
     ErasePinName (Pin);
+  EraseFlags (&Pin->Flags);
 }
 
 /* ---------------------------------------------------------------------------
@@ -1376,6 +1393,7 @@ void
 EraseLine (LineType *Line)
 {
   AddPart (Line);
+  EraseFlags (&Line->Flags);
 }
 
 /* ---------------------------------------------------------------------------
@@ -1387,6 +1405,7 @@ EraseArc (ArcType *Arc)
   if (!Arc->Thickness)
     return;
   AddPart (Arc);
+  EraseFlags (&Arc->Flags);
 }
 
 /* ---------------------------------------------------------------------------
@@ -1405,6 +1424,7 @@ void
 ErasePolygon (PolygonType *Polygon)
 {
   AddPart (Polygon);
+  EraseFlags(&Polygon->Flags);
 }
 
 /* ---------------------------------------------------------------------------
@@ -1425,6 +1445,7 @@ EraseElement (ElementType *Element)
   END_LOOP;
   EraseElementName (Element);
   EraseElementPinsAndPads (Element);
+  EraseFlags (&Element->Flags);
 }
 
 /* ---------------------------------------------------------------------------
@@ -1492,7 +1513,6 @@ EraseObject (int type, void *lptr, void *ptr)
       Message ("hace: Internal ERROR, trying to erase an unknown type\n");
     }
 }
-
 
 
 void
