@@ -1541,6 +1541,7 @@ ghid_interface_input_signals_disconnect (void)
   scroll_event_handler = 0;
   key_press_handler = 0;
   key_release_handler = 0;
+
 }
 
 
