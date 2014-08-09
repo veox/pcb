@@ -708,35 +708,6 @@ grid_units_button_cb (GtkWidget * widget, gpointer data)
     hid_actionl ("SetUnits", "mm", NULL);
 }
 
-/*
- * The two following callbacks are used to keep the absolute
- * and relative cursor labels from growing and shrinking as you
- * move the cursor around.
- */
-static void
-absolute_label_size_req_cb (GtkWidget * widget, 
-			    GtkRequisition *req, gpointer data)
-{
-  
-  static gint w = 0;
-  if (req->width > w)
-    w = req->width;
-  else
-    req->width = w;
-}
-
-static void
-relative_label_size_req_cb (GtkWidget * widget, 
-			    GtkRequisition *req, gpointer data)
-{
-  
-  static gint w = 0;
-  if (req->width > w)
-    w = req->width;
-  else
-    req->width = w;
-}
-
 static void
 make_cursor_position_labels (GtkWidget * hbox, GHidPort * port)
 {
@@ -765,9 +736,6 @@ make_cursor_position_labels (GtkWidget * hbox, GHidPort * port)
   label = gtk_label_new ("");
   gtk_container_add (GTK_CONTAINER (frame), label);
   ghidgui->cursor_position_absolute_label = label;
-  g_signal_connect (G_OBJECT (label), "size-request",
-		    G_CALLBACK (absolute_label_size_req_cb), NULL);
-
 
   /* The relative cursor position label
    */
@@ -775,12 +743,9 @@ make_cursor_position_labels (GtkWidget * hbox, GHidPort * port)
   gtk_box_pack_end (GTK_BOX (hbox), frame, FALSE, TRUE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (frame), 2);
   gtk_frame_set_shadow_type (GTK_FRAME (frame), GTK_SHADOW_ETCHED_OUT);
-  label = gtk_label_new (" __.__  __.__ ");
+  label = gtk_label_new ("");
   gtk_container_add (GTK_CONTAINER (frame), label);
   ghidgui->cursor_position_relative_label = label;
-  g_signal_connect (G_OBJECT (label), "size-request",
-		    G_CALLBACK (relative_label_size_req_cb), NULL);
-
 }
 
 /* \brief Add "virtual layers" to a layer selector */

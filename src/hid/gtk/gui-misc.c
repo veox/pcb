@@ -55,6 +55,10 @@ GdkPixmap *XC_clock_source, *XC_clock_mask,
 
 static GdkCursorType oldCursor;
 
+static const char cursor_position_format[] = N_("%m+%-mS %-mS");
+static const char cursor_position_relative_format[] =
+                                          N_("%m+r %-mS; phi %-.1f; %-mS %-mS");
+
 void
 ghid_status_line_set_text (const gchar * text)
 {
@@ -67,13 +71,70 @@ ghid_status_line_set_text (const gchar * text)
 void
 ghid_cursor_position_label_set_text (gchar * text)
 {
-  ghid_label_set_markup (ghidgui->cursor_position_absolute_label, text);  
+  static int grid_units = -1;
+  static Coord pcb_max_width = -1, pcb_max_height = -1;
+  GtkWidget * widget = ghidgui->cursor_position_absolute_label;
+ 
+  /* If grid units or PCB size is changed */
+  if (grid_units != Settings.grid_unit->index ||
+      pcb_max_width != PCB->MaxWidth ||
+      pcb_max_height != PCB->MaxHeight) {
+    GtkRequisition requisition;
+    gchar * str;
+
+    grid_units = Settings.grid_unit->index;
+    pcb_max_width = PCB->MaxWidth;
+    pcb_max_height = PCB->MaxHeight;
+
+    /* Calculate new maximum required widget size */
+    str = pcb_g_strdup_printf (_(cursor_position_format),
+                                Settings.grid_unit->allow,
+                                pcb_max_width, pcb_max_height);
+
+    ghid_label_set_markup (widget, str);
+    g_free (str);
+    /* Reset previous size request */
+    gtk_widget_set_size_request (widget, -1, -1);
+    gtk_widget_size_request (widget, &requisition);
+    gtk_widget_set_size_request (widget, requisition.width, requisition.height);
+  }
+
+  ghid_label_set_markup (widget, text);
 }
 
 void
 ghid_cursor_position_relative_label_set_text (gchar * text)
 {
-  ghid_label_set_markup (ghidgui->cursor_position_relative_label, text);
+  static int grid_units = -1;
+  static Coord pcb_max_width = -1, pcb_max_height = -1;
+  GtkWidget * widget = ghidgui->cursor_position_relative_label;
+
+  /* If grid units or PCB size is changed */
+  if (grid_units != Settings.grid_unit->index ||
+      pcb_max_width != PCB->MaxWidth ||
+      pcb_max_height != PCB->MaxHeight) {
+    GtkRequisition requisition;
+    gchar * str;
+
+    grid_units = Settings.grid_unit->index;
+    pcb_max_width = PCB->MaxWidth;
+    pcb_max_height = PCB->MaxHeight;
+
+    /* Calculate new maximum required widget size */
+    str = pcb_g_strdup_printf (_(cursor_position_relative_format),
+                         Settings.grid_unit->allow,
+                         (Coord) Distance (0, 0, pcb_max_width, pcb_max_height),
+                         -180.0, -pcb_max_width, -pcb_max_height);
+
+    ghid_label_set_markup (widget, str);
+    g_free (str);
+    /* Reset previous size request */
+    gtk_widget_set_size_request (widget, -1, -1);
+    gtk_widget_size_request (widget, &requisition);
+    gtk_widget_set_size_request (widget, requisition.width, requisition.height);
+  }
+
+  ghid_label_set_markup (widget, text);
 }
 
 static GdkCursorType
@@ -432,6 +493,7 @@ ghid_set_status_line_label (void)
 void
 ghid_set_cursor_position_labels (void)
 {
+  static int no_relative_position = 0;
   gchar *text;
 
   if (Marked.status)
@@ -441,17 +503,19 @@ ghid_set_cursor_position_labels (void)
       Coord r  = Distance (Crosshair.X, Crosshair.Y, Marked.X, Marked.Y);
       double a = atan2 (dy, dx) * RAD_TO_DEG;
 
-      text = pcb_g_strdup_printf (_("%m+r %-mS; phi %-.1f; %-mS %-mS"),
+      text = pcb_g_strdup_printf (cursor_position_relative_format,
                                   Settings.grid_unit->allow,
                                   r, a, dx, dy);
       ghid_cursor_position_relative_label_set_text (text);
       g_free (text);
+      no_relative_position = 0;
     }
-  else
-    ghid_cursor_position_relative_label_set_text (
-                                  _("r __.__; phi __._; __.__ __.__"));
+  else if (!no_relative_position) {
+    no_relative_position = 1;
+    ghid_cursor_position_relative_label_set_text ("");
+  }
 
-  text = pcb_g_strdup_printf (_("%m+%-mS %-mS"),
+  text = pcb_g_strdup_printf (cursor_position_format,
                               Settings.grid_unit->allow,
                               Crosshair.X, Crosshair.Y);
   ghid_cursor_position_label_set_text (text);
