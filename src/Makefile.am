@@ -136,6 +136,7 @@ PCB_SRCS = \
 	set.h \
 	strflags.c \
 	strflags.h \
+	teardrop.c \
 	thermal.c \
 	thermal.h \
 	undo.c \
