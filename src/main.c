@@ -39,6 +39,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <time.h> /* Seed for srand() */
+#include <getopt.h>
 
 #include "global.h"
 #include "data.h"
@@ -1863,7 +1864,7 @@ char *program_directory = 0;
 int
 main (int argc, char *argv[])
 {
-  int i;
+  int i, c, digit_optind = 0;
 
   /* init application:
    * - make program name available for error handlers
@@ -1889,6 +1890,94 @@ main (int argc, char *argv[])
   setlocale (LC_NUMERIC, "C");
 #endif
 
+  for (i = 0; i < argc; i++) {
+    printf("%d: %s\n", i, argv[i]);
+  }
+
+  // Nur test:
+  //argv[11] = argv[12] = "";
+  // Ergebnis: man kann Argumente leeren ohne dass es kracht.
+
+  while (1)
+    {
+      int this_option_optind = optind ? optind : 1;
+      int option_index = 0, c;
+      static struct option long_options[] =
+        {
+          // name                       has_arg   flag   value
+          {"add",                       1,        0,     0      },
+          {"append",                    0,        0,     0      },
+          {"delete",                    1,        0,     0      },
+          {"verbose",                   0,        0,     0      },
+          {"create",                    1,        0,     'c'    },
+          {"file",                      1,        0,     0      },
+          {0, 0, 0, 0}
+        };
+
+      opterr = 0;
+      c = getopt_long(argc, argv, "-abc:d:012",
+                      long_options, &option_index);
+
+      if (c == -1)
+        break;
+      printf("optind %d\n", optind);
+
+      switch (c)
+        {
+        case 0:
+          printf("long option %s", long_options[option_index].name);
+          if (optarg)
+            printf(" with arg %s", optarg);
+          printf("\n");
+  argv[optind - 2] = argv[optind - 1] = "";
+          break;
+
+        case '0':
+        case '1':
+        case '2':
+          if (digit_optind != 0 && digit_optind != this_option_optind)
+            printf("digits occur in two different argv-elements.\n");
+          digit_optind = this_option_optind;
+          printf("option %c\n", c);
+          break;
+
+        case 'a':
+          printf("option a\n");
+          break;
+
+        case 'b':
+          printf("option b\n");
+          break;
+
+        case 'c':
+          printf("option c with value '%s'\n", optarg);
+          break;
+
+        case 'd':
+          printf("option d with value '%s'\n", optarg);
+          break;
+
+         case '?':
+          printf("unknown option\n");
+          break;
+
+         default:
+            printf("?? getopt returned character code 0%o ??\n", c);
+        }
+     }
+     if (optind < argc) {
+         printf("non-option ARGV-elements: ");
+         while (optind < argc)
+             printf("%s ", argv[optind++]);
+         printf("\n");
+     }
+
+  for (i = 0; i < argc; i++) {
+    printf("%d: %s\n", i, argv[i]);
+  }
+
+exit(0);
+ 
   srand ( time(NULL) ); /* Set seed for rand() */
 
   initialize_units();
