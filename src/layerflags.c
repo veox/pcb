@@ -204,10 +204,20 @@ ActionSetLayertype (int argc, char **argv, Coord x, Coord y)
 
   if (type < 0 || type >= LT_NUM_LAYERTYPES)
     {
-      Message (N_("Invalid layer type (%d) requested. "
+      Message (N_("Invalid layer type (%d) requested.\n"
                   "See ListLayertypes() for a list.\n"), type);
       return 1;
     }
+
+  if (type == LT_OUTLINE)
+    LAYER_TYPE_LOOP (PCB->Data, max_copper_layer + SILK_LAYER, LT_OUTLINE)
+      {
+        Message (N_("Layer %d, \"%s\", is an outline layer already.\n"
+                    "Only one outline layer is allowed, aborting.\n"),
+                 n + 1, PCB->Data->Layer[n].Name);
+        return 1;
+      }
+    END_LOOP;
 
   PCB->Data->Layer[index].Type = type;
 
