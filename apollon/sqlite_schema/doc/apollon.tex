@@ -12,12 +12,12 @@
 \usepackage{url}
 \setcounter{secnumdepth}{5}
 \usepackage[none]{hyphenat}
-
+\usepackage{amsmath}
 
 \begin {document}
 
-\title{Apollon file format and data structure for gEDA/pcb\\v0.0.1}
-\date{2015-09-12}
+\title{Apollon file format and data structure for gEDA/pcb\\v0.0.2}
+\date{2015-09-13}
 \author{Levente Kovacs - leventelist@gmail.com}
 
 \maketitle
@@ -129,8 +129,10 @@ Addition of the two dimensions, the user can provide layer thickness.
 \textbf{nanometers}.
 \item
   Angular data is stored in signed integer, and interpreted as
-\textbf{degrees}.
-  A positive number identifies a counterclockwise rotation.
+\textbf{millidegrees}.\\
+  A positive number identifies a counterclockwise rotation.\\
+  0 degree is the vector points from (0,0) to the positive direction of
+\emph{y} axis.
 \end{itemize}
 
 The top object is placed at (0,0).
@@ -162,7 +164,9 @@ PCB. The layers are structured in groups.
   Between layer 32 and 53 is used for silk layer of buried components.
 \end{itemize}
 
-\subsubsection{Mask layer group}\label{mask-layer-group}
+\subsubsection{Solder mask layer group}\label{mask-layer-group}
+
+Items on this layer define solder mask openings.
 
 \begin{itemize}
 \itemsep1pt\parskip0pt\parsep0pt
@@ -172,6 +176,21 @@ PCB. The layers are structured in groups.
   Layer 95 is the \textbf{top} mask layer.
 \item
   Between layer 64 and 95 is unused, and should not be used for any
+  layer.
+\end{itemize}
+
+\subsubsection{Solder paste layer group}\label{mask-layer-group}
+
+Items on this layer define stencil openings.
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  Layer 96 is the \textbf{bottom} solder paste layer.
+\item
+  Layer 127 is the \textbf{top} solder paste layer.
+\item
+  Between layer 96 and 127 is unused, and should not be used for any
   layer.
 \end{itemize}
 
@@ -304,18 +323,21 @@ The centerpoint of the arc.
 id INTEGER,\\
 start\_angle INTEGER,\\
 stop\_angle INTEGER,\\
+R INTEGER,\\
 W INTEGER,\\
 name TEXT
 
 \begin{itemize}
 \item
   id\\The ID of the object.
-\item
-  start\_angle\\Start angle in degrees.
-\item
-  stop\_angle\\Stop angle in degrees.
-\item
-  W\\The width of the line in nanometers.
+\item start\_angle\\
+Start angle in millidegrees.
+\item stop\_angle\\
+Stop angle in millidegrees.
+\item R\\
+The radius of the arc.
+\item W\\
+The width of the line in nanometers.
 \item
   name\\Name of the object.
 \end{itemize}
@@ -668,7 +690,7 @@ multiple other object. For example, if a sub-pcb is defined, that can be
 attached to various component object. This relation can be translated as
 placing the same footprint (the sub-pcb) to multiple times on the layout.
 
-\subparagraph{Data fields}
+\paragraph{Data fields}
 
 \mbox{}\\
 
@@ -738,5 +760,4 @@ UPDATE object\_relation SET X=new\_X\_value, Y=new\_Y\_value,
 ANG=new\_ANG\_value WHERE object\_id=1234 AND object\_type=1;
 
 \end {document}
-
 

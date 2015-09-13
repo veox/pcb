@@ -51,6 +51,7 @@ CREATE TABLE arc (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	start_angle INTEGER,
 	stop_angle INTEGER,
+	R INTEGER,
 	W INTEGER,
 	name TEXT
 );
@@ -141,14 +142,17 @@ INSERT INTO layer (id, is_outer, is_mirrored, name) VALUES (63, 1, 1, "top silk"
 
 --solder mask layers from 64 to 95
 --bottom is 64, top is 95
---others make no sence, but I leave it there.
+--others make no sense, but I leave it there.
 
 INSERT INTO layer (id, is_outer, is_mirrored, name) VALUES (64, 1, 0, "bottom mask");
 INSERT INTO layer (id, is_outer, is_mirrored, name) VALUES (95, 1, 1, "top mask");
 
---isolater layers between conductive layers from 96-127
+--solder paste layers from 96 to 127
+--bottom is 96, top is 127
+--others make no sense, but I leave it there.
 
---no defaults. The user should define thoes.
+INSERT INTO layer (id, is_outer, is_mirrored, name) VALUES (96, 1, 0, "bottom mask");
+INSERT INTO layer (id, is_outer, is_mirrored, name) VALUES (127, 1, 1, "top mask");
 
 COMMIT;
 
