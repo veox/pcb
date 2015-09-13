@@ -1,0 +1,742 @@
+\documentclass[12pt]{article}
+%\usepackage{t1enc}
+\usepackage[utf8]{inputenc}
+\usepackage{a4wide}
+\usepackage{geometry}
+\usepackage{pslatex}
+\geometry{verbose,a4paper}
+\usepackage[english]{babel}
+\setlength\parskip{\medskipamount}
+\setlength\parindent{0pt}
+\usepackage{graphics}
+\usepackage{url}
+\setcounter{secnumdepth}{5}
+\usepackage[none]{hyphenat}
+
+
+\begin {document}
+
+\title{Apollon file format and data structure for gEDA/pcb\\v0.0.1}
+\date{2015-09-12}
+\author{Levente Kovacs - leventelist@gmail.com}
+
+\maketitle
+\tableofcontents
+
+\section{Scope}\label{scope}
+
+This document describe the use of the proposed database structures as
+file format for a new version of gEDA/pcb.
+
+\section{Motivation}\label{motivation}
+
+We all love and use gEDA/pcb. I personally made lots of boards with this tool.
+The most complex board was a 4 layer, RF board with a 2.4GHz radio. The
+board finally got into production, and was working, however, it was
+clear to see that designing a multilayer board was not ideal with gEDA/pcb.
+
+gEDA/pcb is reached its limits. IMHO, the problem is that the file format,
+more precisely the data structures are blocking the further development of
+the tool.
+
+\subsection{Weakness of current gEDA/pcb data
+structures}\label{weakness-of-current-gedapcb-data-structures}
+
+\begin{enumerate}
+\item
+  No concept of padstacks.\\ Only two type of padstack (pin and pad)
+\item
+  No polygons in footprints
+\item
+  Footprints are hard to edit in the GUI. Often impossible.
+\item
+  Footprints are stored N times in the *.pcb file
+\item
+  Rotated footprints are edited and stored in *.pcb file
+\item
+  No real name of the project
+\end{enumerate}
+
+\section{Goals}\label{goals}
+
+The goal is to \textbf{extend} the capabilities of the current gEDA/pcb
+program, and overcome its limitation.
+
+The following user stories should be implemented.
+
+\begin{enumerate}
+\item
+  Footrpints can contain any geometric structures
+\item
+  Arbitrary padstacks
+\item
+  Blind and buried vias
+\item
+  Referenced footprints
+\item GUI footprint editor
+
+\end{enumerate}
+
+For this to achieve, one must forget the old file format and data
+structure.
+
+\section{Data structure}\label{data-structure}
+
+The data structure detailed in this document is really table definitions of an
+SQLite database.
+
+\subsection{Why SQL?}\label{why-sql}
+
+I'm a real fanboy of scripting, and manipulating text based files with
+whatever scripting language. However, it turns out that hacking is not needed
+when it comes to SQL. One can write any script in any language that does
+arbitrary actions on a database. The database engine, which acts as the file
+parser is well written.
+
+\begin{enumerate}
+\item
+  SQLite is there. No need to reinvent the wheel.
+\item
+  It is fast. It performs well on old hardware.
+\item
+  Binding for all programming language exists.
+\end{enumerate}
+
+Even, I propose to separate exporters from the pcb editor application. For
+example, a gerber exporter could be implemented as a standalone application
+that runs independently, invoked from a Makefile, or even from the editor GUI.
+
+The only drawback is that the file itself is a binary file. This is a bit
+harder to store it under SCM, but todays SCM systems are prepared for this.
+One can define \textit{difftools}, that can visualize differences in a human
+readable format.
+
+\subsection{Coordinate system}\label{coordinate-system}
+
+The data structure uses a two dimensional, Cartesian coordinate system.
+The horizontal axis is \emph{x}, and the vertical axis is \emph{y}. The
+\emph{x} axis is growing to \textbf{right}, and \emph{y} (unlike
+gEDA/pcb) is growing \textbf{upwards}. It is because this is how 3D
+graphic represented. We have to prepare for this.
+
+Addition of the two dimensions, the user can provide layer thickness.
+
+\subsection{Dimensions}\label{dimensions}
+
+\begin{itemize}
+\item
+  Length data is stored in signed integer, and interpreted as
+\textbf{nanometers}.
+\item
+  Angular data is stored in signed integer, and interpreted as
+\textbf{degrees}.
+  A positive number identifies a counterclockwise rotation.
+\end{itemize}
+
+The top object is placed at (0,0).
+
+\subsection{Layer structure}\label{layer-structure}
+
+The layer structure is fixed, but allows the representation of any real
+PCB. The layers are structured in groups.
+
+\subsubsection{Conductive layer group}\label{conductive-layer-group}
+
+\begin{itemize}
+\item
+  Layer 0 is the \textbf{bottom} layer.
+\item
+  Layer 31 is the \textbf{top} layer.
+\item
+  Between layer 0 and 31 is defined as internal conductive layers.
+\end{itemize}
+
+\subsubsection{Silk layer group}\label{silk-layer-group}
+
+\begin{itemize}
+\item
+  Layer 32 is the \textbf{bottom} silk layer.
+\item
+  Layer 63 is the \textbf{top} silk layer.
+\item
+  Between layer 32 and 53 is used for silk layer of buried components.
+\end{itemize}
+
+\subsubsection{Mask layer group}\label{mask-layer-group}
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  Layer 64 is the \textbf{bottom} mask layer.
+\item
+  Layer 95 is the \textbf{top} mask layer.
+\item
+  Between layer 64 and 95 is unused, and should not be used for any
+  layer.
+\end{itemize}
+
+\subsubsection{The rest}\label{the-rest}
+
+The rest of the layers can be used as any layer, including, but not
+limited to:
+
+\begin{itemize}
+\item
+  insulation layers,
+\item
+  mechanical data,
+\item
+  documentation,
+\item
+  information.
+\end{itemize}
+
+\subsubsection{Layer data structure}\label{layer-data-structure}
+
+id INTEGER,\\
+material TEXT,\\
+Z INTEGER,\\
+is\_outer INTEGER,\\
+is\_mirrored INTEGER,\\
+drc INTEGER,\\
+name TEXT
+
+\begin{itemize}
+\item
+  id\\ The ID of the layer.
+\item
+  material\\ Text designator of the material. For example, if it is a
+  conductive layer, one can define it as ``copper''. If it is an
+  insulator layer, it can be ``FR4''.
+\item
+  Z\\ The thickness of the layer in nanometers.
+\item
+  is\_outer\\ 0 if it is an internal layer, 1 otherwise.
+\item
+  is\_mirrored\\ 1 if the footprint object of that layer should be
+  mirrored, 0 otherwise.
+\item
+  drc\\ For further study. The idea is to define what drc rules shall
+  apply on that layer.
+\item
+  name\\ Name of the layer. For example ``top conductive''.
+\end{itemize}
+
+\subsection{Objects}\label{objects}
+
+The pcb data structure is a many to many relation of \textbf{objects}.
+
+Objects can be either
+
+\begin{itemize}
+\item
+  primitive, graphical objects,
+\item
+  attributes,
+\item
+  logical objects.
+\end{itemize}
+
+\subsubsection{Primitive objects}\label{primitive-objects}
+
+\paragraph{oval}\label{oval}
+
+\mbox{}\\
+
+Filled oval graphical object.
+
+\subparagraph{Reference point}\label{reference-point}
+
+\mbox{}\\
+
+The geometric center of the oval.
+
+\subparagraph{Data fields}\label{data-fields}
+
+\mbox{}\\
+
+id INTEGER,\\
+DX INTEGER,\\
+DY INTEGER,\\
+name TEXT
+
+\begin{itemize}
+\item
+  id\\The ID of the object.
+\item
+  DX\\Diameter in direction \emph{x}.
+\item
+  DY\\Diameter in direction \emph{y}.
+\item
+  name\\Name of the object.
+\end{itemize}
+
+\subparagraph{Attachable primitive
+objects}\label{attachable-primitive-objects}
+
+\mbox{}\\
+
+none
+
+\subparagraph{Attachable attributes}\label{attachable-attributes}
+
+\begin{itemize}
+\item
+  net
+\end{itemize}
+
+\paragraph{arc}\label{arc}
+
+\mbox{}\\
+
+Arc object.
+
+\subparagraph{Reference point}\label{reference-point-1}
+
+\mbox{}\\
+
+The centerpoint of the arc.
+
+\subparagraph{Data fields}\label{data-fields-1}
+
+\mbox{}\\
+
+id INTEGER,\\
+start\_angle INTEGER,\\
+stop\_angle INTEGER,\\
+W INTEGER,\\
+name TEXT
+
+\begin{itemize}
+\item
+  id\\The ID of the object.
+\item
+  start\_angle\\Start angle in degrees.
+\item
+  stop\_angle\\Stop angle in degrees.
+\item
+  W\\The width of the line in nanometers.
+\item
+  name\\Name of the object.
+\end{itemize}
+
+\subparagraph{Attachable primitive
+objects}\label{attachable-primitive-objects-1}
+
+\mbox{}\\
+
+none
+
+\subparagraph{Attachable attributes}\label{attachable-attributes-1}
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  net
+\end{itemize}
+
+\paragraph{rectangle}\label{rectangle}
+
+\mbox{}\\
+
+Rectangle object.
+
+\subparagraph{Reference point}\label{reference-point-2}
+
+\mbox{}\\
+
+The geometric center of the rectangle.
+
+\subparagraph{Data fields}\label{data-fields-2}
+
+\mbox{}\\
+
+id INTEGER,\\X INTEGER,\\Y INTEGER,\\name TEXT
+
+\begin{itemize}
+\item
+  id\\The ID of the object.
+\item
+  X\\Dimension \emph{x}
+\item
+  Y\\Dimension \emph{y}
+\item
+  name\\Name of the object.
+\end{itemize}
+
+\subparagraph{Attachable primitive
+objects}\label{attachable-primitive-objects-2}
+
+\mbox{}\\
+
+none
+
+\subparagraph{Attachable attributes}\label{attachable-attributes-2}
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  net
+\end{itemize}
+
+\paragraph{line}\label{line}
+
+\mbox{}\\
+
+Polyline object.
+
+\subparagraph{Reference point}\label{reference-point-3}
+
+\mbox{}\\
+
+none
+
+\subparagraph{Data fields}\label{data-fields-3}
+
+\mbox{}\\
+
+id INTEGER,\\W INTEGER,\\name TEXT
+
+\begin{itemize}
+\item
+  id\\The id of the line.
+\item
+  W\\Width in nanometers.
+\item
+  name\\The name of the object
+\end{itemize}
+
+\subparagraph{Attachable primitive
+objects}\label{attachable-primitive-objects-3}
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  vertex\\At least two.
+\end{itemize}
+
+\subparagraph{Attachable attributes}\label{attachable-attributes-3}
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  net
+\end{itemize}
+
+\paragraph{polygon}\label{polygon}
+
+\mbox{}\\
+
+Polygon object.
+
+\subparagraph{Reference point}\label{reference-point-4}
+
+\mbox{}\\
+
+none
+
+\subparagraph{Data fields}\label{data-fields-4}
+
+\mbox{}\\
+
+id INTEGER,\\
+name TEXT
+
+\subparagraph{Attachable primitive
+objects}\label{attachable-primitive-objects-4}
+
+\begin{itemize}
+\item
+  vertex\\
+At least three.
+\end{itemize}
+
+\subparagraph{Attachable attributes}\label{attachable-attributes-4}
+
+\begin{itemize}
+\item
+  net
+\end{itemize}
+
+\paragraph{hole}\label{hole}
+
+\mbox{}\\
+
+Round hole object. Since this object defines its start and end layers,
+the layer ID in the relation table shall be ignored.
+
+\subparagraph{Reference point}\label{reference-point-5}
+
+\mbox{}\\
+
+The center of the hole.
+
+\subparagraph{Data fields}\label{data-fields-5}
+
+\mbox{}\\
+
+id INTEGER,\\
+D INTEGER,\\
+start\_layer\_id INTEGER,\\
+end\_layer\_id INTEGER,\\
+is\_plated INTEGER,\\
+name TEXT
+
+\begin{itemize}
+\item
+  id\\
+The ID of the object
+\item
+  D\\
+Diameter of the hole
+\item
+  start\_layer\_id\\
+The layer ID of starting \textbf{conductive} layer.
+\item
+  end\_layer\_id\\
+The layer ID of ending \textbf{conductive} layer.
+\end{itemize}
+
+\subparagraph{Attachable primitive
+objects}\label{attachable-primitive-objects-5}
+
+\mbox{}\\
+
+none
+
+\subparagraph{Attachable attributes}\label{attachable-attributes-5}
+
+\mbox{}\\
+
+none
+
+\paragraph{vertex}\label{vertex}
+
+\mbox{}\\
+
+Vertex object. This object defines points in polylines and polygons.
+Since this object itself defines \emph{x} and \emph{y} coordinates, the
+X and Y of the relation table is ignored.
+
+\subparagraph{Data fields}\label{data-fields-6}
+
+\mbox{}\\
+
+id INTEGER,\\
+X INTEGER,\\
+Y INTEGER,\\
+sequence INTEGER
+
+\begin{itemize}
+\item
+  id\\The ID of the object.
+\item
+  X\\Coordinate \emph{x}
+\item
+  Y\\Coordinate \emph{y}
+\item
+  name\\Name of the object.
+\item
+  sequence The sequence of the vertex.
+\end{itemize}
+
+\subsubsection{Logical objects}\label{logical-objects}
+
+\paragraph{pcb}\label{pcb}
+
+\mbox{}\\
+
+Layout object.
+
+This is a top level object for all primitive objects. There can be multiple
+layout object in a pcb file. This might be useful if the design involves pcbs
+that are connected to each other. A special GUI can visualize shared
+components like interconnecting connectors.
+
+\subparagraph{Data fields}\label{data-fields-7}
+
+\mbox{}\\
+
+id INTEGER,\\name TEXT
+
+\begin{itemize}
+\item
+  id\\
+The ID of the layout.
+\item
+  name\\
+The name of the layout.
+\end{itemize}
+
+\subparagraph{Attachable logical objects}\label{attachable-logical-objects}
+
+\begin{itemize}
+\item
+  pcb
+\item
+  padstack
+\item
+  any primitive object
+\end{itemize}
+
+\subparagraph{Attachable attributes}
+
+\mbox{}\\
+
+To be defined.
+
+\paragraph{padstack}\label{padstack}
+
+\mbox{}\\
+
+Padstack object.
+
+\subparagraph{Data fields}
+
+\mbox{}\\
+
+id INTEGER,\\
+name TEXT
+
+\begin{itemize}
+\item id\\
+The ID of the object.
+\item name\\
+The name of the object.
+\end{itemize}
+
+\subparagraph{Attachable logical objects}
+
+\mbox{}\\
+
+none
+
+\subparagraph{Attachable attributes}
+
+\mbox{}\\
+
+none
+
+\paragraph{component}\label{component}
+
+\mbox{}\\
+
+Component object. This object contains common attributes of a component.
+Apart from the defined attributes, the user can attach arbitrary attributes to
+the component.
+
+\subparagraph{Data fields}
+
+\mbox{}\\
+
+id INTEGER,\\
+refdes TEXT,\\
+value TEXT,\\
+dbsym\_id INTEGER,\\
+mech\_model TEXT
+
+\begin{itemize}
+\item id\\
+The ID of the object.
+\item refdes\\
+The refdes of the component instance
+\item dbsym\_id\\
+The dbsym ID of the component (this is a component database system)
+\item mech\_model\\
+The mechanical model of the component.
+\end{itemize}
+
+
+\subsubsection{Attributes}\label{attributes}
+
+\mbox{}\\
+
+Pre defined attributes.
+
+\begin{enumerate}
+\item
+  net\\ Electrical net from schematic
+\end{enumerate}
+
+\subsubsection{Relation}\label{relation}
+
+\mbox{}\\
+
+The relation table defines the relationship of the objects. Each parent -
+child relation has one entry in this table. One object can be attached to
+multiple other object. For example, if a sub-pcb is defined, that can be
+attached to various component object. This relation can be translated as
+placing the same footprint (the sub-pcb) to multiple times on the layout.
+
+\subparagraph{Data fields}
+
+\mbox{}\\
+
+parent\_type INTEGER,\\
+parent\_id INTEGER,\\
+object\_type INTEGER,\\
+object\_id INTEGER,\\
+X INTEGER, --relative to the parent object.\\
+Y INTEGER, --relative to the parent object.\\
+ANG INTEGER, --relative to the parent object. Placement angle.\\
+layer\_id INTEGER
+
+\begin{itemize}
+\item parent\_type\\
+Parent object type. This is defined in schema.sql
+\item parent\_id\\
+Parent object ID.
+\item object\_type\\
+Child object type.
+\item object\_id\\
+Child object ID.
+\item X\\
+Relative \emph{x} coordinate.
+\item Y\\
+Relative \emph{y} coordinate.
+\item ANG\\
+Placement angle.
+\item layer\_id\\
+Target layer ID.
+\end{itemize}
+
+\section{Actions}
+
+In this section I try to give some examples of different actions of graphical
+editing, and its representation of this data structure.
+
+\subsection{Create}
+
+Creating an object is a simple insertion into the database, in two stages. For
+example, adding a conductive pad that is 2mm wide in the X dimension and 3mm
+tall in the Y dimension, and has a name ``copper\_pad'', and is part of a
+padstack whose ID is 123. We also want to have some offset of the pad, 1mm in
+direction X and 1.5mm in direction Y. This is a copper pad so let us insert it
+into the top conductive layer in 45 degrees. To do this, we have to issue the
+following SQL statements.
+
+\begin{enumerate}
+\item Create the pad\\
+INSERT INTO rectangle (X, Y, name) VALUE (2000000, 3000000, ``copper\_pad'');
+\item Get the last inserted object ID\\
+SELECT ROWID FROM rectangle WHERE X=2000000 AND Y=3000000 AND
+name=``copper\_pad''; or use the following C function:\\
+sqlite3\_int64 sqlite3\_last\_insert\_rowid(sqlite3*);
+\item Insert the relation\\
+INSERT INTO object\_relation (parent\_type, parent\_id, object\_type,
+object\_id, X, Y, ANG, layer\_id) VALUE (2, 123, 5, 345, 1000000, 1500000, 45,
+31);
+\end{enumerate}
+
+\subsection{Move}
+
+Moving an object is very simple. Take a situation that we want to move one
+component on the layout. What we have to do is UPDATE the component's relation
+entry. All we have to do is rewrite the X,Y and ANG data fields.
+
+UPDATE object\_relation SET X=new\_X\_value, Y=new\_Y\_value,
+ANG=new\_ANG\_value WHERE object\_id=1234 AND object\_type=1;
+
+\end {document}
+
+

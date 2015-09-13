@@ -1,0 +1,38 @@
+pcb [id, name] N
+ |
+ +- component [component_id, refdes, value, ...] N
+ |    |
+ |    +- pcb [id, name] N
+ |       |
+ |       +- padstack [padstack_id, ...] N
+ |       |    |
+ |       |    +- oval [] N
+ |       |    |
+ |       |    +- rectangle [] N
+ |       |    |
+ |       |    +- polygon [] N
+ |       |    |   |
+ |       |    |   +- vertex [] 3+N
+ |       |    |
+ |       |    +- hole [] N
+ |       |    |
+ |       |    +- net [] 1
+ |       |
+ |       +- hole [] N
+ |       |
+ |       +- line [] N
+ |       |    |
+ |       |    +- vertex [] 2+N
+ |       |
+ |       +- polygon [] N
+ |            |
+ |            +- vertex [] 3+N
+ |
+ +- hole [] N
+ |
+ +- line [] N
+ |
+ +- polygon [] N
+ |
+ +- pcb [] N
+
