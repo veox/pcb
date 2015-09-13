@@ -84,6 +84,11 @@ static void AddPart (void *);
 static void DrawEMark (ElementType *, Coord, Coord, bool);
 static void DrawRats (const BoxType *);
 
+static int clearPoly_callback (const BoxType * b, void *cl);
+static int clearLine_callback (const BoxType * b, void *cl);
+static int clearArc_callback (const BoxType * b, void *cl);
+static int clearText_callback (const BoxType * b, void *cl);
+
 static void
 set_object_color (AnyObjectType *obj, char *warn_color, char *selected_color,
                   char *connected_color, char *found_color, char *normal_color)
@@ -438,6 +443,16 @@ line_callback (const BoxType * b, void *cl)
 }
 
 static int
+clearLine_callback (const BoxType * b, void *cl)
+{
+  LineType *line = (LineType *) b;
+
+  gui->graphics->draw_pcb_line (Output.pmGC, line);
+
+  return 1;
+}
+
+static int
 rat_callback (const BoxType * b, void *cl)
 {
   RatType *rat = (RatType *)b;
@@ -472,6 +487,16 @@ arc_callback (const BoxType * b, void *cl)
 
   set_layer_object_color (layer, (AnyObjectType *) arc);
   gui->graphics->draw_pcb_arc (Output.fgGC, arc);
+
+  return 1;
+}
+
+static int
+clearArc_callback (const BoxType * b, void *cl)
+{
+  ArcType *arc =  (ArcType *) b;
+
+  gui->graphics->draw_pcb_arc (Output.pmGC, arc);
 
   return 1;
 }
@@ -529,6 +554,7 @@ PrintAssembly (int side, const BoxType * drawn_area)
 
   /* draw package */
   DrawSilk (side, drawn_area);
+  DrawSidedLayers (side, LT_ASSY, drawn_area);
   doing_assy = false;
 }
 
@@ -586,8 +612,22 @@ DrawEverything (const BoxType *drawn_area)
   for (i = ngroups - 1; i >= 0; i--)
     {
       int group = drawn_groups[i];
+      int empty;
 
-      if (gui->set_layer (0, group, 0))
+      if (gui->gui)
+	empty = 0;
+      else
+	{
+	  empty = 1;
+	  GROUP_LOOP (PCB->Data, group);
+	  {
+	    if (layer->Type == LT_COPPER)
+	      empty = 0;
+	  }
+	  END_LOOP;
+	}
+
+      if (gui->set_layer (0, group, empty))
         {
           DrawLayerGroup (group, drawn_area);
           gui->end_layer ();
@@ -684,7 +724,7 @@ DrawEverything (const BoxType *drawn_area)
 
   if (gui->set_layer ("fab", SL (FAB, 0), 0))
     {
-      PrintFab (Output.fgGC);
+      PrintFab (Output.fgGC, drawn_area);
       gui->end_layer ();
     }
 }
@@ -802,6 +842,17 @@ poly_callback (const BoxType * b, void *cl)
 }
 
 static int
+clearPoly_callback (const BoxType * b, void *cl)
+{
+  struct poly_info *i = cl;
+  PolygonType *polygon = (PolygonType *)b;
+
+  gui->graphics->draw_pcb_polygon (Output.pmGC, polygon, i->drawn_area);
+
+  return 1;
+}
+
+static int
 clearPad_callback (const BoxType * b, void *cl)
 {
   PadType *pad = (PadType *) b;
@@ -830,6 +881,7 @@ DrawSilk (int side, const BoxType * drawn_area)
       gui->graphics->use_mask (HID_MASK_BEFORE);
 #endif
       DrawLayer (LAYER_PTR (max_copper_layer + side), drawn_area);
+      DrawSidedLayers (side, LT_SILK, drawn_area);
       /* draw package */
       r_search (PCB->Data->element_tree, drawn_area, NULL, element_callback, &side);
       r_search (PCB->Data->name_tree[NAME_INDEX (PCB)], drawn_area, NULL, name_callback, &side);
@@ -878,6 +930,7 @@ void
 DrawMask (int side, const BoxType *screen)
 {
   int thin = TEST_FLAG(THINDRAWFLAG, PCB) || TEST_FLAG(THINDRAWPOLYFLAG, PCB);
+  int side_group = GetLayerGroupNumberBySide (side);
 
   if (thin)
     gui->graphics->set_color (Output.pmGC, PCB->MaskColor);
@@ -890,6 +943,18 @@ DrawMask (int side, const BoxType *screen)
   r_search (PCB->Data->pin_tree, screen, NULL, clearPin_callback, NULL);
   r_search (PCB->Data->via_tree, screen, NULL, clearPin_callback, NULL);
   r_search (PCB->Data->pad_tree, screen, NULL, clearPad_callback, &side);
+
+  GROUP_LOOP (PCB->Data, side_group);
+  {
+    struct poly_info info = { screen, layer };
+    if (layer->Type != LT_MASK)
+      continue;
+    r_search (layer->polygon_tree, screen, NULL, clearPoly_callback, &info);
+    r_search (layer->line_tree, screen, NULL, clearLine_callback, layer);
+    r_search (layer->arc_tree, screen, NULL, clearArc_callback, layer);
+    r_search (layer->text_tree, screen, NULL, clearText_callback, layer);
+  }
+  END_LOOP;
 
   if (thin)
     gui->graphics->set_color (Output.pmGC, "erase");
@@ -918,6 +983,7 @@ DrawPaste (int side, const BoxType *drawn_area)
       }
   }
   ENDALL_LOOP;
+  DrawSidedLayers (side, LT_PASTE, drawn_area);
 }
 
 static void
@@ -954,6 +1020,22 @@ text_callback (const BoxType * b, void *cl)
   else
     min_silk_line = PCB->minWid;
   gui->graphics->draw_pcb_text (Output.fgGC, text, min_silk_line);
+  return 1;
+}
+
+static int
+clearText_callback (const BoxType * b, void *cl)
+{
+  LayerType *layer = cl;
+  TextType *text = (TextType *)b;
+  int min_silk_line;
+
+  if (layer == &PCB->Data->SILKLAYER ||
+      layer == &PCB->Data->BACKSILKLAYER)
+    min_silk_line = PCB->minSlk;
+  else
+    min_silk_line = PCB->minWid;
+  gui->graphics->draw_pcb_text (Output.pmGC, text, min_silk_line);
   return 1;
 }
 
@@ -1012,6 +1094,8 @@ DrawLayerGroup (int group, const BoxType *drawn_area)
       if (strcmp (Layer->Name, "outline") == 0 ||
           strcmp (Layer->Name, "route") == 0)
         rv = 0;
+      if (!gui->gui && Layer->Type != LT_COPPER)
+	continue;
       if (layernum < max_copper_layer && Layer->On)
         DrawLayer (Layer, drawn_area);
     }
@@ -1020,6 +1104,20 @@ DrawLayerGroup (int group, const BoxType *drawn_area)
 
   if (rv && !gui->gui)
     DrawPPV (group, drawn_area);
+}
+
+void
+DrawSidedLayers (int side, LayertypeType type, const BoxType *drawn_area)
+{
+  int side_group = GetLayerGroupNumberBySide (side);
+
+  GROUP_LOOP (PCB->Data, side_group);
+  {
+    if (layer->Type != type)
+      continue;
+    DrawLayer (layer, drawn_area);
+  }
+  END_LOOP;
 }
 
 static void

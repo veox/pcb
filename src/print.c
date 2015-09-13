@@ -216,7 +216,7 @@ PrintFab_overhang (void)
 }
 
 void
-PrintFab (hidGC gc)
+PrintFab (hidGC gc, const BoxType *drawn_area)
 {
   DrillInfoType *AllDrills;
   int i, n, yoff, total_drills = 0, ds = 0;
@@ -307,13 +307,8 @@ PrintFab (hidGC gc)
   for (i = 0; i < max_copper_layer; i++)
     {
       LayerType *l = LAYER_PTR (i);
-      if (l->Name && (l->LineN || l->ArcN))
-	{
-	  if (strcmp ("route", l->Name) == 0)
-	    break;
-	  if (strcmp ("outline", l->Name) == 0)
-	    break;
-	}
+      if (l->Type == LT_OUTLINE && (l->LineN || l->ArcN))
+	break;
     }
   if (i == max_copper_layer)
     {
@@ -359,6 +354,7 @@ PrintFab (hidGC gc)
       text_at (gc, PCB->MaxWidth / 2, PCB->MaxHeight + MIL_TO_COORD(20), 1,
 	       "Board outline is the centerline of this path");
     }
+
   yoff -= TEXT_LINE;
   text_at (gc, MIL_TO_COORD(2000), yoff, 0, "Date: %s", utcTime);
   yoff -= TEXT_LINE;
@@ -366,4 +362,10 @@ PrintFab (hidGC gc)
   yoff -= TEXT_LINE;
   text_at (gc, MIL_TO_COORD(2000), yoff, 0,
 	   "Title: %s - Fabrication Drawing", UNKNOWN (PCB->Name));
+
+  LAYER_TYPE_LOOP (PCB->Data, max_copper_layer, LT_FAB);
+  {
+    DrawLayer (layer, drawn_area);
+  }
+  END_LOOP;
 }

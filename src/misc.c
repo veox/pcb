@@ -701,6 +701,8 @@ bool
 IsPasteEmpty (int side)
 {
   bool paste_empty = true;
+  int side_group = GetLayerGroupNumberBySide (side);
+
   ALLPAD_LOOP (PCB->Data);
   {
     if (ON_SIDE (pad, side) && !TEST_FLAG (NOPASTEFLAG, pad) && pad->Mask > 0)
@@ -710,6 +712,18 @@ IsPasteEmpty (int side)
       }
   }
   ENDALL_LOOP;
+
+  GROUP_LOOP (PCB->Data, side_group);
+  {
+    if (layer->Type == LT_PASTE)
+      {
+	paste_empty = false;
+	break;
+      }
+
+  }
+  END_LOOP;
+
   return paste_empty;
 }
 

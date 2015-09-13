@@ -35,6 +35,6 @@
 #include "global.h"
 
 int PrintFab_overhang(void);
-void PrintFab (hidGC gc);
+void PrintFab (hidGC gc, const BoxType *drawn_area);
 
 #endif
