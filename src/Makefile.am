@@ -190,6 +190,7 @@ BUILT_SOURCES = \
 	hid/nelma/nelma_lists.h \
 	hid/ps/ps_lists.h \
 	parse_y.h \
+	parse_y.c \
 	pcb-menu.h \
 	res_parse.h \
 	hid/common/hidlist.h
