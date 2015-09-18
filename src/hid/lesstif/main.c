@@ -968,7 +968,7 @@ HID_Action lesstif_main_action_list[] = {
 REGISTER_ACTIONS (lesstif_main_action_list)
 
 
-/* ---------------------------------------------------------------------- 
+/* ----------------------------------------------------------------------
  * redraws the background image
  */
 
@@ -3336,7 +3336,7 @@ lesstif_draw_arc (hidGC gc, Coord cx, Coord cy, Coord width, Coord height,
   if (flip_y)
     {
       start_angle = - start_angle;
-      delta_angle = - delta_angle;					
+      delta_angle = - delta_angle;
     }
   start_angle = NormalizeAngle (start_angle);
   if (start_angle >= 180)
@@ -3535,6 +3535,16 @@ lesstif_set_crosshair (int x, int y, int action)
 
     }
 
+  if (action == HID_SC_CENTER_IN_VIEWPORT_AND_WARP_POINTER)
+    {
+      fprintf (
+          stderr,
+          "warning:%s:%i: HID_SC_CENTER_IN_VIEWPORT_AND_WARP_POINTER not "
+          "implemented in this HID, using HID_SC_WARP_POINTER instead\n",
+          __FILE__,
+          __LINE__ );
+      action = HID_SC_WARP_POINTER;
+    }
   if (action == HID_SC_PAN_VIEWPORT)
     {
       Window root, child;
@@ -3678,7 +3688,7 @@ typedef struct
 {
   XtBlockHookId id;
   void (*func) (hidval user_data);
-  hidval user_data; 
+  hidval user_data;
 } BlockHookStruct;
 
 static void lesstif_block_hook_cb(XtPointer user_data);

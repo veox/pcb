@@ -27,30 +27,19 @@
 static void
 pan_common (GHidPort *port)
 {
-  int event_x, event_y;
-
-  /* We need to fix up the PCB coordinates corresponding to the last
-  * event so convert it back to event coordinates temporarily. */
-  ghid_pcb_to_event_coords (gport->pcb_x, gport->pcb_y, &event_x, &event_y);
-
   /* Don't pan so far the board is completely off the screen */
   port->view.x0 = MAX (-port->view.width,  port->view.x0);
   port->view.y0 = MAX (-port->view.height, port->view.y0);
   port->view.x0 = MIN ( port->view.x0, PCB->MaxWidth);
   port->view.y0 = MIN ( port->view.y0, PCB->MaxHeight);
 
-  /* Fix up noted event coordinates to match where we clamped. Alternatively
-   * we could call ghid_note_event_location (NULL); to get a new pointer
-   * location, but this costs us an xserver round-trip (on X11 platforms)
-   */
-  ghid_event_to_pcb_coords (event_x, event_y, &gport->pcb_x, &gport->pcb_y);
-
   ghidgui->adjustment_changed_holdoff = TRUE;
-  gtk_range_set_value (GTK_RANGE (ghidgui->h_range), gport->view.x0);
-  gtk_range_set_value (GTK_RANGE (ghidgui->v_range), gport->view.y0);
+  gtk_range_set_value (GTK_RANGE (ghidgui->h_range), port->view.x0);
+  gtk_range_set_value (GTK_RANGE (ghidgui->v_range), port->view.y0);
   ghidgui->adjustment_changed_holdoff = FALSE;
 
   ghid_port_ranges_changed();
+  gdk_window_process_all_updates ();
 }
 
 static void
@@ -165,30 +154,30 @@ modified.  The @var{factor} is a floating point number, such as
 @code{1.5} or @code{0.75}.
 
 @table @code
-  
+
 @item +@var{factor}
 Values greater than 1.0 cause the board to be drawn smaller; more of
 the board will be visible.  Values between 0.0 and 1.0 cause the board
 to be drawn bigger; less of the board will be visible.
-  
+
 @item -@var{factor}
 Values greater than 1.0 cause the board to be drawn bigger; less of
 the board will be visible.  Values between 0.0 and 1.0 cause the board
 to be drawn smaller; more of the board will be visible.
- 
+
 @item =@var{factor}
- 
+
 The @var{factor} is an absolute zoom factor; the unit for this value
 is "PCB units per screen pixel".  Since PCB units are 0.01 mil, a
 @var{factor} of 1000 means 10 mils (0.01 in) per pixel, or 100 DPI,
 about the actual resolution of most screens - resulting in an "actual
 size" board.  Similarly, a @var{factor} of 100 gives you a 10x actual
 size.
- 
+
 @end table
- 
+
 Note that zoom factors of zero are silently ignored.
- 
+
 
 
 %end-doc */
@@ -314,19 +303,40 @@ ghid_set_crosshair (int x, int y, int action)
        */
     }
 
-  if (action != HID_SC_PAN_VIEWPORT &&
-      action != HID_SC_WARP_POINTER)
+  if ( action != HID_SC_PAN_VIEWPORT &&
+       action != HID_SC_WARP_POINTER &&
+       action != HID_SC_CENTER_IN_VIEWPORT_AND_WARP_POINTER ) {
     return;
+  }
 
-  /* Find out where the drawing area is on the screen. gdk_display_get_pointer
-   * and gdk_display_warp_pointer work relative to the whole display, whilst
-   * our coordinates are relative to the drawing area origin.
-   */
-  gdk_window_get_origin (gtk_widget_get_window (gport->drawing_area),
-                         &offset_x, &offset_y);
+  // Find out where the drawing area is on the screen. gdk_display_get_pointer
+  // and gdk_display_warp_pointer work relative to the whole display, whilst
+  // our coordinates are relative to the drawing area origin.
+  gdk_window_get_origin (
+      gtk_widget_get_window (gport->drawing_area), &offset_x, &offset_y );
+
   display = gdk_display_get_default ();
+  screen = gdk_display_get_default_screen (display);
 
   switch (action) {
+
+    case HID_SC_CENTER_IN_VIEWPORT_AND_WARP_POINTER:
+
+      // Center the viewport on the crosshair
+      ghid_pan_view_abs (
+          gport->crosshair_x - gport->view.width / 2,
+          gport->crosshair_y - gport->view.height / 2,
+          0,
+          0 );
+
+      // Warp pointer to crosshair
+      ghid_pcb_to_event_coords (
+          gport->crosshair_x, gport->crosshair_y, &widget_x, &widget_y );
+      gdk_display_warp_pointer (
+          display, screen, widget_x + offset_x, widget_y + offset_y );
+
+      break;
+
     case HID_SC_PAN_VIEWPORT:
       /* Pan the board in the viewport so that the crosshair (who's location
        * relative on the board was set above) lands where the pointer is.
@@ -341,6 +351,7 @@ ghid_set_crosshair (int x, int y, int action)
       widget_y = pointer_y - offset_y;
 
       ghid_event_to_pcb_coords (widget_x, widget_y, &pcb_x, &pcb_y);
+
       ghid_pan_view_abs (pcb_x, pcb_y, widget_x, widget_y);
 
       /* Just in case we couldn't pan the board the whole way,
@@ -471,7 +482,7 @@ ghid_unwatch_file (hidval data)
 {
   GuiWatch *watch = (GuiWatch*)data.ptr;
 
-  g_io_channel_shutdown( watch->channel, TRUE, NULL ); 
+  g_io_channel_shutdown( watch->channel, TRUE, NULL );
   g_io_channel_unref( watch->channel );
   g_free( watch );
 }
@@ -480,7 +491,7 @@ typedef struct
 {
   GSource source;
   void (*func) (hidval user_data);
-  hidval user_data; 
+  hidval user_data;
 } BlockHookSource;
 
 static gboolean ghid_block_hook_prepare  (GSource     *source,
@@ -572,11 +583,11 @@ ghid_confirm_dialog (char *msg, ...)
 				   GTK_MESSAGE_QUESTION,
 				   GTK_BUTTONS_NONE,
 				   "%s", msg);
-  gtk_dialog_add_button (GTK_DIALOG (dialog), 
+  gtk_dialog_add_button (GTK_DIALOG (dialog),
 			  cancelmsg, GTK_RESPONSE_CANCEL);
   if (okmsg)
     {
-      gtk_dialog_add_button (GTK_DIALOG (dialog), 
+      gtk_dialog_add_button (GTK_DIALOG (dialog),
 			     okmsg, GTK_RESPONSE_OK);
     }
 
@@ -1075,7 +1086,7 @@ HID_DRC_GUI ghid_drc_gui = {
 extern HID_Attribute *ghid_get_export_options (int *);
 
 
-/* ------------------------------------------------------------ 
+/* ------------------------------------------------------------
  *
  * Actions specific to the GTK HID follow from here
  *
@@ -1308,24 +1319,24 @@ Save (int argc, char **argv, Coord x, Coord y)
     prompt = _("Save element as");
   else
     prompt = _("Save layout as");
-  
+
   name = ghid_dialog_file_select_save (prompt,
 				       &current_dir,
 				       PCB->Filename, Settings.FilePath);
-  
+
   if (name)
     {
       if (Settings.verbose)
-	fprintf (stderr, "%s:  Calling SaveTo(%s, %s)\n", 
+	fprintf (stderr, "%s:  Calling SaveTo(%s, %s)\n",
 		 __FUNCTION__, function, name);
-      
+
       if (strcasecmp (function, "PasteBuffer") == 0)
 	hid_actionl ("PasteBuffer", "Save", name, NULL);
       else
 	{
-	  /* 
+	  /*
 	   * if we got this far and the function is Layout, then
-	   * we really needed it to be a LayoutAs.  Otherwise 
+	   * we really needed it to be a LayoutAs.  Otherwise
 	   * ActionSaveTo() will ignore the new file name we
 	   * just obtained.
 	   */
@@ -1955,7 +1966,7 @@ Popup (int argc, char **argv, Coord x, Coord y)
     {
       ghidgui->in_popup = TRUE;
       gtk_widget_grab_focus (ghid_port.drawing_area);
-      gtk_menu_popup (menu, NULL, NULL, NULL, NULL, 0, 
+      gtk_menu_popup (menu, NULL, NULL, NULL, NULL, 0,
 		      gtk_get_current_event_time());
     }
   return 0;
@@ -1981,7 +1992,7 @@ ImportGUI (int argc, char **argv, Coord x, Coord y)
     gchar *name = NULL;
     gchar sname[128];
     static gchar *current_layout_dir = NULL;
-    static int I_am_recursing = 0; 
+    static int I_am_recursing = 0;
     int rv, nsources;
 
     if (I_am_recursing)
@@ -2106,7 +2117,7 @@ hid_gtk_init ()
   tmps = g_win32_get_package_installation_directory (PACKAGE "-" VERSION, NULL);
 #define REST_OF_PATH G_DIR_SEPARATOR_S "share" G_DIR_SEPARATOR_S PACKAGE
 #define REST_OF_CACHE G_DIR_SEPARATOR_S "loaders.cache"
-  share_dir = (char *) malloc(strlen(tmps) + 
+  share_dir = (char *) malloc(strlen(tmps) +
 			  strlen(REST_OF_PATH) +
 			  1);
   sprintf (share_dir, "%s%s", tmps, REST_OF_PATH);
