@@ -106,11 +106,17 @@ CREATE TABLE attribute (
 --layer table
 CREATE TABLE layer (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	material TEXT,
+	type INTEGER,
 	Z INTEGER, --thickness
 	is_outer INTEGER,
 	is_mirrored INTEGER,
 	drc INTEGER, --drc preference. Conductive DRC, non-conductive DRC, no DRC at all, etc.
+	name TEXT
+);
+
+CREATE TABLE layer_type (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	material TEXT,
 	name TEXT
 );
 
@@ -126,33 +132,12 @@ CREATE TABLE object_relation (
 	layer_id INTEGER
 );
 
---layer structure
+--built in layer types
 
---conductive layers from 0 to 31
---bottom is 0, top is 31
-
-INSERT INTO layer (id, is_outer, is_mirrored, name) VALUES (0, 1, 0, "bottom");
-INSERT INTO layer (id, is_outer, is_mirrored, name) VALUES (31, 1, 1, "top");
-
---silk layers from 32 to 63
---bottom is 32, top is 63
-
-INSERT INTO layer (id, is_outer, is_mirrored, name) VALUES (32, 1, 0, "bottom silk");
-INSERT INTO layer (id, is_outer, is_mirrored, name) VALUES (63, 1, 1, "top silk");
-
---solder mask layers from 64 to 95
---bottom is 64, top is 95
---others make no sense, but I leave it there.
-
-INSERT INTO layer (id, is_outer, is_mirrored, name) VALUES (64, 1, 0, "bottom mask");
-INSERT INTO layer (id, is_outer, is_mirrored, name) VALUES (95, 1, 1, "top mask");
-
---solder paste layers from 96 to 127
---bottom is 96, top is 127
---others make no sense, but I leave it there.
-
-INSERT INTO layer (id, is_outer, is_mirrored, name) VALUES (96, 1, 0, "bottom mask");
-INSERT INTO layer (id, is_outer, is_mirrored, name) VALUES (127, 1, 1, "top mask");
+INSERT INTO layer_type (id, name) VALUES (0, "conductive");
+INSERT INTO layer_type (id, name) VALUES (1, "silk");
+INSERT INTO layer_type (id, name) VALUES (2, "mask");
+INSERT INTO layer_type (id, name) VALUES (3, "paste");
 
 COMMIT;
 

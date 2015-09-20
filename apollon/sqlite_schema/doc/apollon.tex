@@ -16,8 +16,8 @@
 
 \begin {document}
 
-\title{Apollon file format and data structure for gEDA/pcb\\v0.0.2}
-\date{2015-09-13}
+\title{Apollon file format and data structure for gEDA/pcb\\v0.1.1}
+\date{2015-09-18}
 \author{Levente Kovacs - leventelist@gmail.com}
 
 \maketitle
@@ -129,7 +129,7 @@ Addition of the two dimensions, the user can provide layer thickness.
 \textbf{nanometers}.
 \item
   Angular data is stored in signed integer, and interpreted as
-\textbf{millidegrees}.\\
+\textbf{microdegrees}.\\
   A positive number identifies a counterclockwise rotation.\\
   0 degree is the vector points from (0,0) to the positive direction of
 \emph{y} axis.
@@ -139,64 +139,67 @@ The top object is placed at (0,0).
 
 \subsection{Layer structure}\label{layer-structure}
 
-The layer structure is fixed, but allows the representation of any real
-PCB. The layers are structured in groups.
+Layer data is stored in two tables.
 
-\subsubsection{Conductive layer group}\label{conductive-layer-group}
+\begin{enumerate}
+\item Layer data structure, and
+\item layer type structure.
+\end{enumerate}
 
-\begin{itemize}
-\item
-  Layer 0 is the \textbf{bottom} layer.
-\item
-  Layer 31 is the \textbf{top} layer.
-\item
-  Between layer 0 and 31 is defined as internal conductive layers.
-\end{itemize}
+\subsubsection{Layer data structure}\label{layer-data-structure}
 
-\subsubsection{Silk layer group}\label{silk-layer-group}
-
-\begin{itemize}
-\item
-  Layer 32 is the \textbf{bottom} silk layer.
-\item
-  Layer 63 is the \textbf{top} silk layer.
-\item
-  Between layer 32 and 53 is used for silk layer of buried components.
-\end{itemize}
-
-\subsubsection{Solder mask layer group}\label{mask-layer-group}
-
-Items on this layer define solder mask openings.
+id INTEGER,\\
+type INTEGER,\\
+Z INTEGER,\\
+is\_outer INTEGER,\\
+is\_mirrored INTEGER,\\
+drc INTEGER,\\
+name TEXT
 
 \begin{itemize}
-\itemsep1pt\parskip0pt\parsep0pt
-\item
-  Layer 64 is the \textbf{bottom} mask layer.
-\item
-  Layer 95 is the \textbf{top} mask layer.
-\item
-  Between layer 64 and 95 is unused, and should not be used for any
-  layer.
+\item id\\
+The ID of the layer.
+\item type\\
+Layer type. That points to the layer\_type table.
+\item Z\\
+The thickness of the layer in nanometers.
+\item is\_outer\\
+0 if it is an internal layer, 1 otherwise.
+\item is\_mirrored\\
+1 if the footprint object of that layer should be mirrored, 0 otherwise.
+\item drc\\
+For further study. The idea is to define what drc rules shall apply on that layer.
+\item name\\
+Name of the layer. For example ``top conductive''.
 \end{itemize}
 
-\subsubsection{Solder paste layer group}\label{mask-layer-group}
+\subsubsection{Layer type structure}
 
-Items on this layer define stencil openings.
+id INTEGER,\\
+material TEXT,\\
+name TEXT
 
 \begin{itemize}
-\itemsep1pt\parskip0pt\parsep0pt
+\item id\\
+The ID of the type.
 \item
-  Layer 96 is the \textbf{bottom} solder paste layer.
-\item
-  Layer 127 is the \textbf{top} solder paste layer.
-\item
-  Between layer 96 and 127 is unused, and should not be used for any
-  layer.
+  material\\ Text designator of the material. For example, if it is a
+  conductive layer, one can define it as ``copper''. If it is an
+  insulator layer, it can be ``FR4''.
+\item name\\
+The name of item.
 \end{itemize}
 
-\subsubsection{The rest}\label{the-rest}
+A pre defined layer types are inserted in the layer\_type table as follows:
 
-The rest of the layers can be used as any layer, including, but not
+\begin{itemize}
+\item 0\\defines that the layer is a \textbf{conductive} layer
+\item 1\\defines that the layer is a \textbf{silk} layer
+\item 2\\defines that the layer is a \textbf{mask} layer
+\item 3\\defines that the layer is a \textbf{paste} layer
+\end{itemize}
+
+The rest of the layer types are user defined, and can be used for any purpose including, but not
 limited to:
 
 \begin{itemize}
@@ -210,36 +213,50 @@ limited to:
   information.
 \end{itemize}
 
-\subsubsection{Layer data structure}\label{layer-data-structure}
+User may create other silk, mask and paste layers.
 
-id INTEGER,\\
-material TEXT,\\
-Z INTEGER,\\
-is\_outer INTEGER,\\
-is\_mirrored INTEGER,\\
-drc INTEGER,\\
-name TEXT
+\subsubsection{Rules}
 
-\begin{itemize}
-\item
-  id\\ The ID of the layer.
-\item
-  material\\ Text designator of the material. For example, if it is a
-  conductive layer, one can define it as ``copper''. If it is an
-  insulator layer, it can be ``FR4''.
-\item
-  Z\\ The thickness of the layer in nanometers.
-\item
-  is\_outer\\ 0 if it is an internal layer, 1 otherwise.
-\item
-  is\_mirrored\\ 1 if the footprint object of that layer should be
-  mirrored, 0 otherwise.
-\item
-  drc\\ For further study. The idea is to define what drc rules shall
-  apply on that layer.
-\item
-  name\\ Name of the layer. For example ``top conductive''.
-\end{itemize}
+An example layer structure is outlined in table \ref{tab:layer_struct}.
+Conductive layers must have monotonic IDs, that grow from bottom to top. Gaps allowed between conductive
+layer IDs.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+layer\_id&layer\_type&name\\
+\hline
+\hline
+0&1&bottom silk\\
+\hline
+1&3&bottom paste\\
+\hline
+2&2&bottom mask\\
+\hline
+3&0&bottom conductive\\
+\hline
+4&0&I1 conductive\\
+\hline
+6&0&I2 conductive\\
+\hline
+8&0&I3 conductive\\
+\hline
+10&0&I4 conductive\\
+\hline
+12&0&top conductive\\
+\hline
+16&2&top mask\\
+\hline
+17&3&top paste\\
+\hline
+18&1&top silk\\
+\hline
+\end{tabular}
+\caption{Possible layer structure for a board with six conductive layers}
+\label{tab:layer_struct}
+\end{table}
+
 
 \subsection{Objects}\label{objects}
 
@@ -331,9 +348,9 @@ name TEXT
 \item
   id\\The ID of the object.
 \item start\_angle\\
-Start angle in millidegrees.
+Start angle in microdegrees.
 \item stop\_angle\\
-Stop angle in millidegrees.
+Stop angle in microdegrees.
 \item R\\
 The radius of the arc.
 \item W\\
