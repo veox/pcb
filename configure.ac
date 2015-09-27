@@ -1,6 +1,10 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([pcb], [1.99z])
+if test -f $srcdir/.gitignore ; then
+	AC_INIT([pcb], [m4_esyscmd_s([git describe --tags --long])])
+else
+	AC_INIT([pcb], [1.99z])
+fi
 AC_CONFIG_SRCDIR([src/draw.c])
 AC_PREREQ([2.60])
 AM_INIT_AUTOMAKE([1.9])
