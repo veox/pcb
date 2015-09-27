@@ -85,8 +85,8 @@
  * 'bottom' and 'top'. The offset of MAX_LAYER is not added
  */
 #define SILK_LAYER              2
-#define BOTTOM_SILK_LAYER       0
-#define TOP_SILK_LAYER          1
+#define BOTTOM_SILK_LAYER       1
+#define TOP_SILK_LAYER          0
 
 /* ---------------------------------------------------------------------------
  * the resulting maximum number of layers, including additional silk layers
