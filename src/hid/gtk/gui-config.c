@@ -1582,12 +1582,13 @@ ghid_config_groups_changed(void)
   for (i = 1; i < max_group + 1; ++i)
     {
 	if (i < 10)
-		snprintf (buf, sizeof (buf), "  %d", i);
+		snprintf (buf, sizeof (buf), "%d   ", i);
 	else
 		snprintf (buf, sizeof (buf), "%d", i);
       label = gtk_label_new (buf);
       gtk_table_attach_defaults (GTK_TABLE (table), label, i, i + 1, 0, 1);
     }
+
 
   /* Create a row of radio toggle buttons for layer.  So each layer
      |  can have an active radio button set for the group it needs to be in.
@@ -1607,10 +1608,8 @@ ghid_config_groups_changed(void)
       group = NULL;
       for (i = 0; i < max_group; ++i)
 	{
-	  snprintf (buf, sizeof (buf), "%2.2d", i+1);
-	  button = gtk_radio_button_new_with_label (group, buf);
-
-	  gtk_toggle_button_set_mode (GTK_TOGGLE_BUTTON (button), FALSE);
+	  button = gtk_radio_button_new (group);
+	  gtk_toggle_button_set_mode (GTK_TOGGLE_BUTTON (button), TRUE);
 	  group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
 	  gtk_table_attach_defaults (GTK_TABLE (table), button,
 				     i + 1, i + 2, row, row +1);
@@ -1635,10 +1634,8 @@ ghid_config_groups_changed(void)
 				     0, 1, row, row + 1);
   for (i = 0; i < max_group; ++i)
 	{
-	  snprintf (buf, sizeof (buf), "%2.2d", i+1);
-	  button = gtk_radio_button_new_with_label (group, buf);
-
-	  gtk_toggle_button_set_mode (GTK_TOGGLE_BUTTON (button), FALSE);
+	  button = gtk_radio_button_new (group);
+	  gtk_toggle_button_set_mode (GTK_TOGGLE_BUTTON (button), TRUE);
 	  group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
 	  gtk_table_attach_defaults (GTK_TABLE (table), button,
 				     i + 1, i + 2, row, row + 1);
@@ -1657,10 +1654,8 @@ ghid_config_groups_changed(void)
 				     0, 1, row, row + 1);
   for (i = 0; i < max_group; ++i)
 	{
-	  snprintf (buf, sizeof (buf), "%2.2d", i+1);
-	  button = gtk_radio_button_new_with_label (group, buf);
-
-	  gtk_toggle_button_set_mode (GTK_TOGGLE_BUTTON (button), FALSE);
+	  button = gtk_radio_button_new (group);
+	  gtk_toggle_button_set_mode (GTK_TOGGLE_BUTTON (button), TRUE);
 	  group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
 	  gtk_table_attach_defaults (GTK_TABLE (table), button,
 				     i + 1, i + 2, row, row + 1);
