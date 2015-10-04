@@ -916,6 +916,31 @@ UndoNetlistChange (UndoListType *Entry)
   return true;
 }
 
+/*!
+ * Return an identification of the object which will be undone on the next
+ * call to Undo(). If there's nothing to be undone in the list, an undoType
+ * of NO_TYPE is returned.
+ *
+ * To find the actual object one can use SearchObjectByID(PCB->Data, ...).
+ */
+void
+NextUndoObject (int *objectId, int *objectKind, int *undoType)
+{
+  UndoListType *ptr;
+
+  *undoType = NO_TYPE;
+
+  if (Serial == 0 || UndoN == 0)
+    return;
+
+  ptr = &UndoList[UndoN - 1];
+  *undoType = ptr->Type;
+  *objectKind = ptr->Kind;
+  *objectId = ptr->ID;
+
+  return;
+}
+
 /* ---------------------------------------------------------------------------
  * undo of any 'hard to recover' operation
  *

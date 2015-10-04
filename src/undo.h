@@ -41,6 +41,7 @@
 int Undo (bool);
 int Redo (bool);
 bool Undoing (void);
+void NextUndoObject (int *, int *, int *);
 void IncrementUndoSerialNumber (void);
 void SaveUndoSerialNumber (void);
 void RestoreUndoSerialNumber (void);
