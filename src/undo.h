@@ -40,6 +40,7 @@
 
 int Undo (bool);
 int Redo (bool);
+bool Undoing (void);
 void IncrementUndoSerialNumber (void);
 void SaveUndoSerialNumber (void);
 void RestoreUndoSerialNumber (void);
@@ -66,8 +67,5 @@ void AddObjectToChangeAnglesUndoList (int, void *, void *, void *);
 void AddObjectToClearPolyUndoList (int, void *, void *, void *, bool);
 void AddLayerChangeToUndoList (int, int);
 void AddNetlistLibToUndoList (LibraryType *);
-void LockUndo (void);
-void UnlockUndo (void);
-bool Undoing (void);
 
 #endif

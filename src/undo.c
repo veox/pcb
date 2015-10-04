@@ -186,6 +186,8 @@ static bool UndoChangeClearSize (UndoListType *);
 static bool UndoChangeMaskSize (UndoListType *);
 static bool UndoClearPoly (UndoListType *);
 static int PerformUndo (UndoListType *);
+static void LockUndo (void);
+static void UnlockUndo (void);
 
 /* ---------------------------------------------------------------------------
  * adds a command plus some data to the undo list
@@ -1715,7 +1717,7 @@ AddNetlistLibToUndoList (LibraryType *lib)
 /* ---------------------------------------------------------------------------
  * set lock flag
  */
-void
+static void
 LockUndo (void)
 {
   Locked = true;
@@ -1724,14 +1726,20 @@ LockUndo (void)
 /* ---------------------------------------------------------------------------
  * reset lock flag
  */
-void
+static void
 UnlockUndo (void)
 {
   Locked = false;
 }
 
-/* ---------------------------------------------------------------------------
- * return undo lock state
+/*! Report undo lock state
+ *
+ * \return wether an undo is in progress.
+ *
+ * Because the undo manager doesn't undo operations by restoring an earlier
+ * layout state, but by reverse-applying the operation to be undone, some
+ * functions have to know wether they act on behalf of the user or as part
+ * of an undo. This is the way to check for it.
  */
 bool
 Undoing (void)
