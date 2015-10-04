@@ -554,10 +554,13 @@ r_search (rtree_t * rtree, const BoxType * query,
 #ifdef SLOW_ASSERTS
   assert (__r_tree_is_good (rtree->root));
 #endif
-#ifdef DEBUG
-      if (query->X2 <= query->X1 || query->Y2 <= query->Y1)
+//#ifdef DEBUG
+      if (query->X2 <= query->X1 || query->Y2 <= query->Y1) {
+        printf ("X1 %ld  X2 %ld    Y1 %ld  Y2 %ld\n",
+                query->X1, query->X2, query->Y1, query->Y2);
         return 0;
-#endif
+      }
+//#endif
       /* check this box. If it's not touched we're done here */
       if (rtree->root->box.X1 >= query->X2 ||
           rtree->root->box.X2 <= query->X1 ||

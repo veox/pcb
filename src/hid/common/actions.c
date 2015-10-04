@@ -227,10 +227,12 @@ hid_actionv (const char *name, int argc, char **argv)
       return 1;
     }
 
-  if (a->need_coord_msg)
+  if (a->need_coord_msg) {
     gui->get_coords (_(a->need_coord_msg), &x, &y);
+    printf ("Actionv coordinates x %ld  y %ld\n", x, y);
+  }
 
-  if (Settings.verbose)
+//  if (Settings.verbose)
     {
       printf ("Action: \033[34m%s(", name);
       for (i = 0; i < argc; i++)

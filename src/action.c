@@ -6291,17 +6291,7 @@ ActionUndo (int argc, char **argv, Coord x, Coord y)
 
 	      if ((type = Undo (true)))
 		SetChangedFlag (true);
-	      /* check that the undo was of the right type */
-	      if ((type & UNDO_CREATE) == 0)
-		{
-		  /* wrong undo type, restore anchor points */
-		  Crosshair.AttachedLine.Point2.X =
-		    Crosshair.AttachedLine.Point1.X;
-		  Crosshair.AttachedLine.Point2.Y =
-		    Crosshair.AttachedLine.Point1.Y;
-		  notify_crosshair_change (true);
-		  return 0;
-		}
+
 	      /* move to new anchor */
 	      Crosshair.AttachedLine.Point1.X =
 		Crosshair.AttachedLine.Point2.X;
@@ -6310,6 +6300,7 @@ ActionUndo (int argc, char **argv, Coord x, Coord y)
 	      /* check if an intermediate point was removed */
 	      if (type & UNDO_REMOVE)
 		{
+printf("UNDO_REMOVE\n");
 		  /* this search should find the restored line */
 		  SearchObjectByLocation (LINE_TYPE | RATLINE_TYPE, &ptr1,
 					  &ptrtmp,
