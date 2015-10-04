@@ -6272,19 +6272,23 @@ ActionUndo (int argc, char **argv, Coord x, Coord y)
 	    }
 	  if (Crosshair.AttachedLine.State == STATE_THIRD)
 	    {
-	      int type;
-	      void *ptr1, *ptr3, *ptrtmp;
+	      int type, kind, object;
+              void *ptr1, *ptr3, *ptrtmp;
 	      LineType *ptr2;
-	      /* this search is guaranteed to succeed */
-	      SearchObjectByLocation (LINE_TYPE | RATLINE_TYPE, &ptr1,
-				      &ptrtmp, &ptr3,
-				      Crosshair.AttachedLine.Point1.X,
-				      Crosshair.AttachedLine.Point1.Y, 0);
-	      ptr2 = (LineType *) ptrtmp;
 
-	      /* save both ends of line */
-	      Crosshair.AttachedLine.Point2.X = ptr2->Point1.X;
-	      Crosshair.AttachedLine.Point2.Y = ptr2->Point1.Y;
+              /* Spool back the drag anchor point by the line to be undone. */
+              NextUndoObject (&object, &kind, &type);
+              if (type == UNDO_CREATE)
+                {
+                  SearchObjectByID (PCB->Data, &ptr1, (void **)&ptr2, &ptr3,
+                                    object, kind);
+                  if (kind != NO_TYPE)
+                    {
+                      Crosshair.AttachedLine.Point2.X = ptr2->Point1.X;
+                      Crosshair.AttachedLine.Point2.Y = ptr2->Point1.Y;
+                    }
+                }
+
 	      if ((type = Undo (true)))
 		SetChangedFlag (true);
 	      /* check that the undo was of the right type */
