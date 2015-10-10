@@ -555,6 +555,17 @@ typedef enum
 
     /* Notification to the GUI that the PCB file has been renamed. */
     void (*notify_filename_changed) (void);
+
+    /* Put an animated marker at X,Y  FIXME: only populated for gtk hid, should at least make sure warning and not NULL elsewhere */  
+    void (*lead_user_to_location) (Coord X, Coord Y);
+    
+    /* Remove the current animated marker FIXME: only populated for gtk hid, should at least make sure warning and not NULL elsewhere */  
+    void (*cancel_lead_user) (void);
+
+    /* Mark a point with a small red circle with fixed screen size
+     * (for debugging).  FIXME: only pupulated for gtk hid, should at least
+     * make sure warning and not NULL elsewhere */
+    void (*mark_location) (Coord X, Coord Y);
   };
 
 /* Call this as soon as possible from main().  No other HID calls are
