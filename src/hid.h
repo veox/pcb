@@ -565,7 +565,7 @@ typedef enum
     /* Mark a point with a small red circle with fixed screen size
      * (for debugging).  FIXME: only pupulated for gtk hid, should at least
      * make sure warning and not NULL elsewhere */
-    void (*mark_location) (Coord X, Coord Y);
+    void (*add_debug_marker) (Coord X, Coord Y);
   };
 
 /* Call this as soon as possible from main().  No other HID calls are
