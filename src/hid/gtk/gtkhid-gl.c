@@ -61,12 +61,13 @@ static GLfloat last_modelview_matrix[4][4] = {{1.0, 0.0, 0.0, 0.0},
                                               {0.0, 0.0, 0.0, 1.0}};
 static int global_view_2d = 1;
 
+// Support for constant-pixel size debug markers
+#define DEBUG_MARKER_RADIUS_PIXELS 8
+#define MAX_DEBUG_MARKER_COUNT 1042
 typedef struct {
   Coord x, y;
 } DebugMarker;
-
-#define MARK_POINT_MAX_MARKERS 1042
-static DebugMarker debug_markers[MARK_POINT_MAX_MARKERS];
+static DebugMarker debug_markers[MAX_DEBUG_MARKER_COUNT];
 
 typedef struct render_priv {
   GdkGLConfig *glconfig;
@@ -1721,7 +1722,7 @@ ghid_add_debug_marker (Coord x, Coord y)
   }
     
   // We only support a limited number of markers
-  assert (priv->debug_marker_count < MARK_POINT_MAX_MARKERS);
+  assert (priv->debug_marker_count < MAX_DEBUG_MARKER_COUNT);
 
   priv->debug_markers[priv->debug_marker_count].x = x;
   priv->debug_markers[priv->debug_marker_count].y = y;
@@ -1733,7 +1734,7 @@ static void
 draw_debug_markers (render_priv *priv)
 {
   // FIXME: make constant or arg or something for size in pixels
-  double radius = 10 * gport->view.coord_per_px;
+  double radius = DEBUG_MARKER_RADIUS_PIXELS * gport->view.coord_per_px;
 
   if ( priv->debug_marker_count == 0 )
     return;
