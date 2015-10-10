@@ -2208,7 +2208,7 @@ hid_gtk_init ()
   ghid_hid.lead_user_to_location    = ghid_lead_user_to_location;
   ghid_hid.cancel_lead_user         = ghid_cancel_lead_user;
 
-  ghid_hid.mark_location            = ghid_mark_location;
+  ghid_hid.add_debug_marker         = ghid_add_debug_marker;
 
   ghid_hid.graphics                 = &ghid_graphics;
 

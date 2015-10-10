@@ -63,7 +63,10 @@ static int global_view_2d = 1;
 
 typedef struct {
   Coord x, y;
-} Mark;
+} DebugMarker;
+
+#define MARK_POINT_MAX_MARKERS 1042
+static DebugMarker debug_markers[MARK_POINT_MAX_MARKERS];
 
 typedef struct render_priv {
   GdkGLConfig *glconfig;
@@ -83,11 +86,8 @@ typedef struct render_priv {
   Coord lead_user_y;
 
   /* Feature for marking one or more locations with little cross-hairs */
-  bool mark_in_use;
-  Coord mark_location_x;
-  Coord mark_location_y;
-  guint mark_count;
-  Mark *marks;
+  guint debug_marker_count;
+  DebugMarker *debug_markers;
 
   hidGC crosshair_gc;
 } render_priv;
@@ -106,7 +106,7 @@ hid_gc_struct;
 
 
 static void draw_lead_user (render_priv *priv);
-static void draw_mark_location (render_priv *priv);
+static void draw_debug_markers (render_priv *priv);
 static void ghid_unproject_to_z_plane (int ex, int ey, Coord pcb_z, Coord *pcb_x, Coord *pcb_y);
 
 
@@ -1042,7 +1042,7 @@ ghid_drawing_area_expose_cb (GtkWidget *widget,
 
   draw_lead_user (priv);
 
-  draw_mark_location (priv);
+  draw_debug_markers (priv);
 
   hidgl_finish_render ();
   ghid_end_drawing (port, widget);
@@ -1616,8 +1616,6 @@ ghid_port_rotate (void *ball, float *quarternion, gpointer userdata)
 #define LEAD_USER_COLOR_G         1.
 #define LEAD_USER_COLOR_B         0.
 
-#define MARK_POINT_MAX_MARKERS 142
-//static marks[MARK_POINT_MAX_MARKERS];
 
 static void
 draw_lead_user (render_priv *priv)
@@ -1709,40 +1707,35 @@ ghid_cancel_lead_user (void)
   priv->lead_user = false;
 }
 
-// FIXME: does this work?
-//ghid_fill_circle (hidGC gc, Coord cx, Coord cy, Coord radius)
 void
-ghid_mark_location (Coord x, Coord y)
+ghid_add_debug_marker (Coord x, Coord y)
 {
   render_priv *priv = gport->render_priv;
 
   // The priv structure is initialized to all zeros (g_new0()), so we use
   // that to set things up on the first time through.
-  /*
-  if ( priv->mark_count == 0 ) {
-    assert (priv->marks == NULL);   // This should be zeros also
-    priv->mark_count = 0;
-    priv->marks = marks;
+  if ( priv->debug_marker_count == 0 ) {
+    assert (priv->debug_markers == NULL);   // This should be zeros also
+    priv->debug_marker_count = 0;
+    priv->debug_markers = debug_markers;
   }
-  */
+    
+  // We only support a limited number of markers
+  assert (priv->debug_marker_count < MARK_POINT_MAX_MARKERS);
 
-  // FIXME: this should use some lists with colors per marker
-  priv->mark_in_use = TRUE;
+  priv->debug_markers[priv->debug_marker_count].x = x;
+  priv->debug_markers[priv->debug_marker_count].y = y;
 
-  priv->mark_location_x = x;
-  priv->mark_location_y = y;
-  hidgl_fill_circle (x, y, 1000000, 1.0);
-
-  (priv->mark_count)++;
+  (priv->debug_marker_count)++;
 }
 
 static void
-draw_mark_location (render_priv *priv)
+draw_debug_markers (render_priv *priv)
 {
   // FIXME: make constant or arg or something for size in pixels
   double radius = 10 * gport->view.coord_per_px;
 
-  if ( priv->mark_in_use == 0 )
+  if ( priv->debug_marker_count == 0 )
     return;
 
   glPushAttrib (GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT);
@@ -1750,13 +1743,14 @@ draw_mark_location (render_priv *priv)
   glLogicOp (GL_XOR);
   glColor3f (LEAD_USER_COLOR_R, LEAD_USER_COLOR_G,LEAD_USER_COLOR_B);
 
-  hidgl_fill_circle (
-      priv->mark_location_x,
-      priv->mark_location_y,
-      radius,
-      gport->view.coord_per_px );
+  for ( int ii = 0 ; ii < priv->debug_marker_count ; ii++ ) {
+    hidgl_fill_circle (
+        priv->debug_markers[ii].x,
+        priv->debug_markers[ii].y,
+        radius,
+        gport->view.coord_per_px );
+  }
 
   hidgl_flush_triangles (&buffer);
   glPopAttrib ();
-
 }
