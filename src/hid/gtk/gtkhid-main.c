@@ -2204,6 +2204,11 @@ hid_gtk_init ()
 
   ghid_hid.notify_save_pcb          = ghid_notify_save_pcb;
   ghid_hid.notify_filename_changed  = ghid_notify_filename_changed;
+  
+  ghid_hid.lead_user_to_location    = ghid_lead_user_to_location;
+  ghid_hid.cancel_lead_user         = ghid_cancel_lead_user;
+
+  ghid_hid.mark_location            = ghid_mark_location;
 
   ghid_hid.graphics                 = &ghid_graphics;
 

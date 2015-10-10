@@ -517,6 +517,8 @@ void ghid_view_2d (void *ball, gboolean view_2d, gpointer userdata);
 void ghid_lead_user_to_location (Coord x, Coord y);
 void ghid_cancel_lead_user (void);
 
+void ghid_mark_location (Coord x, Coord y);
+
 /* gtkhid-main.c */
 void ghid_pan_view_rel (Coord dx, Coord dy);
 void ghid_get_coords (const char *msg, Coord *x, Coord *y);
