@@ -562,9 +562,12 @@ typedef enum
     /* Remove the current animated marker FIXME: only populated for gtk hid, should at least make sure warning and not NULL elsewhere */  
     void (*cancel_lead_user) (void);
 
-    /* Mark a point with a small red circle with fixed screen size
-     * (for debugging).  FIXME: only pupulated for gtk hid, should at least
-     * make sure warning and not NULL elsewhere */
+    /* For debugging.  Mark a point with a small circle with fixed size in
+     * screen pixels.  A large but limited number of simultaneous marks are
+     * supported so if you draw them continually eventually the oldest ones
+     * will dissapear.  FIXME: only pupulated for gtk gl hid, should be pretty
+     * easy to add got gdk and should at least make sure warning and not NULL
+     * elsewhere.  */
     void (*add_debug_marker) (Coord X, Coord Y);
   };
 

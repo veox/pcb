@@ -239,7 +239,7 @@ drcVia_callback (const BoxType * b, void *cl)
   PinType *via = (PinType *) b;
   struct drc_info *i = (struct drc_info *) cl;
 
-  if (!TEST_FLAG (FOUNDFLAG, via) && PinLineIntersect (via, i->line))
+  if (!TEST_FLAG (FOUNDFLAG, via) && PinLineIntersect (via, i->line, NULL))
     longjmp (i->env, 1);
   return 1;
 }
@@ -251,7 +251,7 @@ drcPad_callback (const BoxType * b, void *cl)
   struct drc_info *i = (struct drc_info *) cl;
 
   if (TEST_FLAG (ONSOLDERFLAG, pad) == i->bottom_side &&
-      !TEST_FLAG (FOUNDFLAG, pad) && LinePadIntersect (i->line, pad))
+      !TEST_FLAG (FOUNDFLAG, pad) && LinePadIntersect (i->line, pad, NULL))
     longjmp (i->env, 1);
   return 1;
 }
@@ -262,7 +262,7 @@ drcLine_callback (const BoxType * b, void *cl)
   LineType *line = (LineType *) b;
   struct drc_info *i = (struct drc_info *) cl;
 
-  if (!TEST_FLAG (FOUNDFLAG, line) && LineLineIntersect (line, i->line))
+  if (!TEST_FLAG (FOUNDFLAG, line) && LineLineIntersect (line, i->line, NULL))
     longjmp (i->env, 1);
   return 1;
 }

@@ -63,7 +63,7 @@ static int global_view_2d = 1;
 
 // Support for constant-pixel size debug markers
 #define DEBUG_MARKER_RADIUS_PIXELS 8
-#define MAX_DEBUG_MARKER_COUNT 1042
+#define MAX_DEBUG_MARKER_COUNT 10042
 typedef struct {
   Coord x, y;
 } DebugMarker;
@@ -1711,6 +1711,10 @@ ghid_cancel_lead_user (void)
 void
 ghid_add_debug_marker (Coord x, Coord y)
 {
+  // FIXME: well the problem here is we keep on adding the same debug markers
+  // until we run out of slots and crash during lots of operations :) Keying
+  // by location is a pain in the ass though
+
   render_priv *priv = gport->render_priv;
 
   // The priv structure is initialized to all zeros (g_new0()), so we use
@@ -1721,8 +1725,12 @@ ghid_add_debug_marker (Coord x, Coord y)
     priv->debug_markers = debug_markers;
   }
     
-  // We only support a limited number of markers
-  assert (priv->debug_marker_count < MAX_DEBUG_MARKER_COUNT);
+  // We only support a limited number of markers before we start re-using the
+  // oldest ones
+  // Eventually we start re-using old debug markers
+  if ( priv->debug_marker_count == MAX_DEBUG_MARKER_COUNT ) {
+    priv->debug_marker_count = 0;
+  }
 
   priv->debug_markers[priv->debug_marker_count].x = x;
   priv->debug_markers[priv->debug_marker_count].y = y;
@@ -1733,7 +1741,6 @@ ghid_add_debug_marker (Coord x, Coord y)
 static void
 draw_debug_markers (render_priv *priv)
 {
-  // FIXME: make constant or arg or something for size in pixels
   double radius = DEBUG_MARKER_RADIUS_PIXELS * gport->view.coord_per_px;
 
   if ( priv->debug_marker_count == 0 )

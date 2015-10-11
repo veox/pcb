@@ -101,6 +101,13 @@
 
 #undef DEBUG
 
+//#define ENABLE_DEBUG_OUTPUT_THIS_FILE
+#ifdef ENABLE_DEBUG_OUTPUT_THIS_FILE
+#define DBG(format, ...) printf (format, ## __VA_ARGS__)
+#else
+#define DBG(format, ...) do { ; } while ( 0 )
+#endif
+
 /* ---------------------------------------------------------------------------
  * some local macros
  */
@@ -133,8 +140,8 @@
 			(Arc)) : \
 		IsPointOnArc((PV)->X,(PV)->Y,MAX((PV)->Thickness/2.0 + Bloat,0.0), (Arc)))
 
-#define	IS_PV_ON_PAD(PV,Pad) \
-	( IsPointInPad((PV)->X, (PV)->Y, MAX((PV)->Thickness/2 +Bloat,0), (Pad)))
+#define	IS_PV_ON_PAD(PV,Pad, center) \
+	( IsPointInPad((PV)->X, (PV)->Y, MAX((PV)->Thickness/2 +Bloat,0), (Pad), center))
 
 
 static DrcViolationType
@@ -280,6 +287,9 @@ static Cardinal TotalP, TotalV;
 static ListType LineList[MAX_LAYER],    /*!< List of objects to. */
   PolygonList[MAX_LAYER], ArcList[MAX_LAYER], PadList[2], RatList, PVList;
 
+// FIXME: i should get better name if I live
+static PointType my_center; 
+
 /* ---------------------------------------------------------------------------
  * some local prototypes
  */
@@ -308,14 +318,16 @@ static bool IsPolygonInPolygon (PolygonType *, PolygonType *);
  * struct starts with a line struct. See global.h for details.
  */
 bool
-LinePadIntersect (LineType *Line, PadType *Pad)
+LinePadIntersect (LineType *Line, PadType *Pad, PointType *center)
 {
-  return LineLineIntersect ((Line), (LineType *)Pad);
+  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
+  return LineLineIntersect ((Line), (LineType *)Pad, center);
 }
 
 bool
 ArcPadIntersect (ArcType *Arc, PadType *Pad)
 {
+  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
   return LineArcIntersect ((LineType *) (Pad), (Arc));
 }
 
@@ -395,22 +407,27 @@ expand_bounds (BoxType *box_in)
 }
 
 bool
-PinLineIntersect (PinType *PV, LineType *Line)
+PinLineIntersect (PinType *PV, LineType *Line, PointType *center)
 {
+  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
+ 
   /* IsLineInRectangle already has Bloat factor */
-  return TEST_FLAG (SQUAREFLAG,
-                    PV) ? IsLineInRectangle (PV->X - (PIN_SIZE (PV) + 1) / 2,
-                                             PV->Y - (PIN_SIZE (PV) + 1) / 2,
-                                             PV->X + (PIN_SIZE (PV) + 1) / 2,
-                                             PV->Y + (PIN_SIZE (PV) + 1) / 2,
-                                             Line) : IsPointInPad (PV->X,
-                                                                    PV->Y,
-								   MAX (PIN_SIZE (PV)
-                                                                         /
-                                                                         2.0 +
-                                                                         Bloat,
-                                                                         0.0),
-                                                                    (PadType *)Line);
+
+  return 
+    TEST_FLAG (SQUAREFLAG, PV) ?
+      IsLineInRectangle (
+          PV->X - (PIN_SIZE (PV) + 1) / 2,
+          PV->Y - (PIN_SIZE (PV) + 1) / 2,
+          PV->X + (PIN_SIZE (PV) + 1) / 2,
+          PV->Y + (PIN_SIZE (PV) + 1) / 2,
+          Line,
+          center ) :
+      IsPointInPad (
+          PV->X,
+          PV->Y,
+          MAX (PIN_SIZE (PV) / 2.0 + Bloat, 0.0),
+          (PadType *) Line,
+          center );
 }
 
 
@@ -427,6 +444,7 @@ SetThing (int type, void *ptr1, void *ptr2, void *ptr3)
 bool
 BoxBoxIntersection (BoxType *b1, BoxType *b2)
 {
+  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
   if (b2->X2 < b1->X1 || b2->X1 > b1->X2)
     return false;
   if (b2->Y2 < b1->Y1 || b2->Y1 > b1->Y2)
@@ -437,7 +455,8 @@ BoxBoxIntersection (BoxType *b1, BoxType *b2)
 static bool
 PadPadIntersect (PadType *p1, PadType *p2)
 {
-  return LinePadIntersect ((LineType *) p1, p2);
+  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
+  return LinePadIntersect ((LineType *) p1, p2, NULL);
 }
 
 static inline bool
@@ -617,7 +636,8 @@ LOCtoPVline_callback (const BoxType * b, void *cl)
   LineType *line = (LineType *) b;
   struct pv_info *i = (struct pv_info *) cl;
 
-  if (!TEST_FLAG (i->flag, line) && PinLineIntersect (i->pv, line) &&
+  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
+  if (!TEST_FLAG (i->flag, line) && PinLineIntersect (i->pv, line, NULL) &&
       !TEST_FLAG (HOLEFLAG, i->pv))
     {
       if (ADD_LINE_TO_LIST (i->layer, line, i->flag))
@@ -647,7 +667,8 @@ LOCtoPVpad_callback (const BoxType * b, void *cl)
   PadType *pad = (PadType *) b;
   struct pv_info *i = (struct pv_info *) cl;
 
-  if (!TEST_FLAG (i->flag, pad) && IS_PV_ON_PAD (i->pv, pad) &&
+  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
+  if (!TEST_FLAG (i->flag, pad) && IS_PV_ON_PAD (i->pv, pad, &my_center) &&
       !TEST_FLAG (HOLEFLAG, i->pv) &&
       ADD_PAD_TO_LIST (TEST_FLAG (ONSOLDERFLAG, pad) ? BOTTOM_SIDE :
                        TOP_SIDE, pad, i->flag))
@@ -875,10 +896,14 @@ LookupLOConnectionsToLOList (int flag, bool AndRats)
                       return false;
                     }
                   position = &padposition[layer];
-                  for (; *position < PadList[layer].Number; (*position)++)
+                  for (; *position < PadList[layer].Number; (*position)++) {
+                    DBG (
+                        "%s:%i:%s: checkpoint\n",
+                        __FILE__, __LINE__, __func__ );
                     if (LookupLOConnectionsToPad
                         (PADLIST_ENTRY (layer, *position), group, flag, AndRats))
                       return (true);
+                  }
                 }
             }
         }
@@ -977,7 +1002,8 @@ pv_line_callback (const BoxType * b, void *cl)
   PinType *pv = (PinType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
-  if (!TEST_FLAG (i->flag, pv) && PinLineIntersect (pv, i->line))
+  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
+  if (!TEST_FLAG (i->flag, pv) && PinLineIntersect (pv, i->line, NULL))
     {
       if (TEST_FLAG (HOLEFLAG, pv))
         {
@@ -997,7 +1023,8 @@ pv_pad_callback (const BoxType * b, void *cl)
   PinType *pv = (PinType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
-  if (!TEST_FLAG (i->flag, pv) && IS_PV_ON_PAD (pv, i->pad))
+  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
+  if (!TEST_FLAG (i->flag, pv) && IS_PV_ON_PAD (pv, i->pad, &my_center))
     {
       if (TEST_FLAG (HOLEFLAG, pv))
         {
@@ -1518,7 +1545,7 @@ form_slanted_rectangle (PointType p[4], LineType *l)
  * </pre>
  */
 bool
-LineLineIntersect (LineType *Line1, LineType *Line2)
+LineLineIntersect (LineType *Line1, LineType *Line2, PointType *center)
 {
   double s, r;
   double line1_dx, line1_dy, line2_dx, line2_dy,
@@ -1527,7 +1554,7 @@ LineLineIntersect (LineType *Line1, LineType *Line2)
     {
       PointType p[4];
       form_slanted_rectangle (p, Line1);
-      return IsLineInQuadrangle (p, Line2);
+      return IsLineInQuadrangle (p, Line2, center);
     }
   /* here come only round Line1 because IsLineInQuadrangle()
      calls LineLineIntersect() with first argument rounded*/
@@ -1535,7 +1562,7 @@ LineLineIntersect (LineType *Line1, LineType *Line2)
     {
       PointType p[4];
       form_slanted_rectangle (p, Line2);
-      return IsLineInQuadrangle (p, Line1);
+      return IsLineInQuadrangle (p, Line1, center);
     }
   /* now all lines are round */
 
@@ -1543,18 +1570,19 @@ LineLineIntersect (LineType *Line1, LineType *Line2)
    *  cases where the "real" lines don't intersect but the
    *  thick lines touch, and ensures that the dx/dy business
    *  below does not cause a divide-by-zero. */
+  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
   if (IsPointInPad (Line2->Point1.X, Line2->Point1.Y,
                     MAX (Line2->Thickness / 2 + Bloat, 0),
-                    (PadType *) Line1)
+                    (PadType *) Line1, &my_center)
        || IsPointInPad (Line2->Point2.X, Line2->Point2.Y,
                         MAX (Line2->Thickness / 2 + Bloat, 0),
-                        (PadType *) Line1)
+                        (PadType *) Line1, &my_center)
        || IsPointInPad (Line1->Point1.X, Line1->Point1.Y,
                         MAX (Line1->Thickness / 2 + Bloat, 0),
-                        (PadType *) Line2)
+                        (PadType *) Line2, &my_center)
        || IsPointInPad (Line1->Point2.X, Line1->Point2.Y,
                         MAX (Line1->Thickness / 2 + Bloat, 0),
-                        (PadType *) Line2))
+                        (PadType *) Line2, &my_center))
     return true;
 
   /* setup some constants */
@@ -1589,8 +1617,13 @@ LineLineIntersect (LineType *Line1, LineType *Line2)
   r = (point1_dy * line2_dx - point1_dx * line2_dy) / r;
 
   /* intersection is at least on AB */
-  if (r >= 0.0 && r <= 1.0)
+  if (r >= 0.0 && r <= 1.0) {
+    if ( center != NULL ) {
+      center->X = Line1->Point1.X + r * line1_dx;
+      center->Y = Line1->Point1.Y + r * line1_dy;
+    }
     return (s >= 0.0 && s <= 1.0);
+  }
 
   /* intersection is at least on CD */
   /* [removed this case since it always returns false --asp] */
@@ -1677,9 +1710,10 @@ LineArcIntersect (LineType *Line, ArcType *Arc)
     return (true);
   /* check arc end points */
   box = GetArcEnds (Arc);
-  if (IsPointInPad (box->X1, box->Y1, Arc->Thickness * 0.5 + Bloat, (PadType *)Line))
+  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
+  if (IsPointInPad (box->X1, box->Y1, Arc->Thickness * 0.5 + Bloat, (PadType *)Line, NULL))
     return true;
-  if (IsPointInPad (box->X2, box->Y2, Arc->Thickness * 0.5 + Bloat, (PadType *)Line))
+  if (IsPointInPad (box->X2, box->Y2, Arc->Thickness * 0.5 + Bloat, (PadType *)Line, NULL))
     return true;
   return false;
 }
@@ -1802,7 +1836,8 @@ LOCtoLineLine_callback (const BoxType * b, void *cl)
   LineType *line = (LineType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
-  if (!TEST_FLAG (i->flag, line) && LineLineIntersect (i->line, line))
+  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
+  if (!TEST_FLAG (i->flag, line) && LineLineIntersect (i->line, line, &my_center))
     {
       if (ADD_LINE_TO_LIST (i->layer, line, i->flag))
         longjmp (i->env, 1);
@@ -1858,7 +1893,7 @@ LOCtoLinePad_callback (const BoxType * b, void *cl)
 
   if (!TEST_FLAG (i->flag, pad) && i->layer ==
       (TEST_FLAG (ONSOLDERFLAG, pad) ? BOTTOM_SIDE : TOP_SIDE)
-      && LinePadIntersect (i->line, pad) && ADD_PAD_TO_LIST (i->layer, pad, i->flag))
+      && LinePadIntersect (i->line, pad, NULL) && ADD_PAD_TO_LIST (i->layer, pad, i->flag))
     longjmp (i->env, 1);
   return 0;
 }
@@ -2066,7 +2101,7 @@ LOCtoPadLine_callback (const BoxType * b, void *cl)
   LineType *line = (LineType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
-  if (!TEST_FLAG (i->flag, line) && LinePadIntersect (line, i->pad))
+  if (!TEST_FLAG (i->flag, line) && LinePadIntersect (line, i->pad, NULL))
     {
       if (ADD_LINE_TO_LIST (i->layer, line, i->flag))
         longjmp (i->env, 1);
@@ -2686,6 +2721,7 @@ DoIt (int flag, bool AndRats, bool AndDraw)
       /* lookup connections; these are the steps (2) to (4)
        * from the description
        */
+      DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
       newone = LookupPVConnectionsToPVList (flag) ||
                LookupLOConnectionsToPVList (flag, AndRats) ||
                LookupLOConnectionsToLOList (flag, AndRats) ||
@@ -3472,6 +3508,10 @@ DRCFind (int What, void *ptr1, void *ptr2, void *ptr3)
       drcerr_count++;
       LocateError (&x, &y);
       BuildObjectList (&object_count, &object_id_list, &object_type_list);
+      printf ("%s:%i:%s: violation\n", __FILE__, __LINE__, __func__); 
+      printf ("my_center.X: %li\n", my_center.X);
+      printf ("my_center.Y: %li\n", my_center.Y);
+      CenterDisplay (my_center.X, my_center.Y, TRUE);
       violation = pcb_drc_violation_new (_("Copper areas too close"),
                                          _("Circuits that are too close may bridge during imaging, etching,\n"
                                            "plating, or soldering processes resulting in a direct short."),
