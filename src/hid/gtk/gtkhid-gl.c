@@ -1711,10 +1711,6 @@ ghid_cancel_lead_user (void)
 void
 ghid_add_debug_marker (Coord x, Coord y)
 {
-  // FIXME: well the problem here is we keep on adding the same debug markers
-  // until we run out of slots and crash during lots of operations :) Keying
-  // by location is a pain in the ass though
-
   render_priv *priv = gport->render_priv;
 
   // The priv structure is initialized to all zeros (g_new0()), so we use
