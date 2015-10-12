@@ -985,19 +985,19 @@ typedef struct {
 } Circle;
 
 static double
-vector_mag (Vec vec)
+vec_mag (Vec vec)
 {
   return round (sqrt (((double) vec.x) * vec.x + ((double) vec.y) * vec.y));
 }
 
 double
-vector_dot (Vec va, Vec vb)
+vec_dot (Vec va, Vec vb)
 {
   return ((double) va.x) * vb.x + ((double) va.y) * vb.y;
 }
 
 static Vec
-vector_from (Vec va, Vec vb)
+vec_from (Vec va, Vec vb)
 {
   // Return vector from va to vb.
 
@@ -1007,11 +1007,11 @@ vector_from (Vec va, Vec vb)
 }
 
 static Vec
-vector_scale (Vec vec, double scale_factor)
+vec_scale (Vec vec, double scale_factor)
 {
   // Return va scaled by scale_factor.  Be careful with this: scaling
   // integer vectors to small magnitudes can result in a lot of error.
-  // Trying to make unit vectors won't work.
+  // Trying to make unit vectors won't work for this reason.
 
   Vec result;
 
@@ -1022,16 +1022,16 @@ vector_scale (Vec vec, double scale_factor)
 }
 
 static Vec
-vector_proj (Vec va, Vec vb)
+vec_proj (Vec va, Vec vb)
 {
   // Return projection of va onto vb.
 
   return
-    vector_scale (vb, ((double) vector_dot (va, vb)) / vector_dot (vb, vb));
+    vec_scale (vb, ((double) vec_dot (va, vb)) / vec_dot (vb, vb));
 }
 
 static Vec
-vector_sum (Vec va, Vec vb)
+vec_sum (Vec va, Vec vb)
 {
   Vec result;
 
@@ -1043,12 +1043,18 @@ vector_sum (Vec va, Vec vb)
 
 // FIXME: should take a pointer for seg probably
 static Vec
-nearest_point_on_line_segment (Vec pt, LineSegment *seg)
+nearest_point_on_line_segment (Vec pt, LineSegment const *seg)
 {
   // Return the nearest point on seg closest to pt.
 
-  Vec spa_spb, spa_pt, ptl, result;
-  double sm, pm, sppm;
+  Vec spa_spb;   // Vector from segment point a to point b
+  double sm;     // Segment Magnitude
+  Vec spa_pt;    // Vector from segment point a to pt
+  Vec ptl;       // Projection of pt onto seg vector (onto spa_spb)
+  double pm;     // Projection Magnitude
+  Vec pp;        // Projected Point
+  double sppm;   // Magnitude spa_spb + spa_pt (Segment Plus Proj. Mag.)
+  Vec result;    // Result to be returned
 
   // Degenerate case: seg is a point
   if ( seg->pa.x == seg->pb.x && seg->pa.y == seg->pb.y ) {
@@ -1057,21 +1063,13 @@ nearest_point_on_line_segment (Vec pt, LineSegment *seg)
     return result;
   }
 
-  spa_spb = vector_from (seg->pa, seg->pb);
-
-  spa_pt = vector_from (seg->pa, pt);
-
-  ptl = vector_proj (spa_pt, spa_spb);   // Projection To Line
-
-  sm = vector_mag (spa_spb);   // Segment Magnitude
-
-  pm = vector_mag (ptl);   // Projection Magnitude
-
-  Vec pp = vector_sum (seg->pa, ptl);   // Projected Point
-  
-  gui->add_debug_marker (pp.x, pp.y);
-
-  sppm = vector_mag (vector_sum (spa_spb, spa_pt));   // Segment Plus Proj. Mag.
+  spa_spb = vec_from (seg->pa, seg->pb);
+  spa_pt  = vec_from (seg->pa, pt);
+  ptl     = vec_proj (spa_pt, spa_spb);
+  sm      = vec_mag (spa_spb);
+  pm      = vec_mag (ptl);
+  pp      = vec_sum (seg->pa, ptl);
+  sppm    = vec_mag (vec_sum (spa_spb, spa_pt));
   
   if ( sppm < sm || sppm < pm ) {
     return seg->pa;  // Segment + Projection add desctructively, so end a 
@@ -1085,18 +1083,29 @@ nearest_point_on_line_segment (Vec pt, LineSegment *seg)
 }
 
 static bool
-circles_intersect (Circle *ca, Circle *cb, Vec *pii)
+circles_intersect (Circle const *ca, Circle const *cb, Vec *pii)
 {
   // Return true iff circles ca and cb intersect.  If pii (Point In
-  // Intersection) is not NULL, return the center of the intersection region.
+  // Intersection) is not NULL, set *pii to a point in the intersection.
 
-  Vec a_b = vector_from (ca->center, cb->center);      // Vector from a to b
-  double ma_b = vector_mag (a_b);                      // Magnitude of a_b
+  Vec a_b = vec_from (ca->center, cb->center);      // Vector from a to b
+  double ma_b = vec_mag (a_b);                      // Magnitude of a_b
   double overlap = ca->radius + cb->radius - ma_b;     // Overlap size (length)
 
   if ( overlap >= 0.0 ) {
     if ( pii != NULL ) {
-      *pii = vector_scale (a_b, (ca->radius - overlap / 2.0) / ma_b);
+      if      ( ca->radius <= overlap ) {
+        *pii = ca->center;   // ca is contained in cb
+      }
+      else if ( cb->radius <= overlap ) {
+        *pii = cb->center;   // cb is contained in ca
+      }
+      else {
+        *pii 
+          = vec_sum (
+              ca->center,
+              vec_scale (a_b, (ca->radius - overlap / 2.0) / ma_b) );
+      }
     }
     return true;
   }
@@ -1106,19 +1115,21 @@ circles_intersect (Circle *ca, Circle *cb, Vec *pii)
 }
 
 static bool
-circle_intersects_line_segment (Circle *circle, LineSegment *seg, Vec *ip)
+circle_intersects_line_segment (
+    Circle      const *circle,
+    LineSegment const *seg,
+    Vec               *ip)
 {
-  // Return true iff the circle intersects seg.  If piin (Point In
+  // Return true iff the circle intersects seg.  If pii (Point In
   // Intersection) is not NULL, return a point in the intersection.
 
   Vec np = nearest_point_on_line_segment (circle->center, seg);
 
-  Vec cc_np = vector_from (circle->center, np);
+  Vec cc_np = vec_from (circle->center, np);
 
-  double mcc_np = vector_mag (cc_np);
+  double mcc_np = vec_mag (cc_np);
 
   if ( mcc_np <= circle->radius ) {
-    printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
     if ( ip != NULL ) {
       *ip = np;
     }
@@ -1130,39 +1141,15 @@ circle_intersects_line_segment (Circle *circle, LineSegment *seg, Vec *ip)
 }
 
 typedef struct {
-  // FIXME; c4 is redundant in a way, change something?
   Vec c1, c2, c3, c4;  // c1 is diagonal to c3, and c2 is diagonal to c4
 } Rectangle;
 
 static bool
-point_is_on_rectangle (Vec point, Rectangle *rect)
+point_is_on_rectangle (Vec point, Rectangle const *rect)
 {
   // Distance between pairs of opposite sides
-  double d_c1_c2_to_c3_c4 = vector_mag (vector_from (rect->c1, rect->c4));
-  double d_c2_c3_to_c4_c1 = vector_mag (vector_from (rect->c1, rect->c2));
-
-  /*
-  printf ("rect->c1.x: %li\n", rect->c1.x);
-  printf ("rect->c1.y: %li\n", rect->c1.y);
-  printf ("rect->c2.x: %li\n", rect->c2.x);
-  printf ("rect->c2.y: %li\n", rect->c2.y);
-  printf ("rect->c3.x: %li\n", rect->c3.x);
-  printf ("rect->c3.y: %li\n", rect->c3.y);
-  printf ("rect->c4.x: %li\n", rect->c4.x);
-  printf ("rect->c4.y: %li\n", rect->c4.y);
-
-  printf ("%s:%i:%s: point.x: %li\n", __FILE__, __LINE__, __func__, point.x); 
-  printf ("%s:%i:%s: point.y: %li\n", __FILE__, __LINE__, __func__, point.y); 
-
-  printf (
-      "%s:%i:%s: d_c1_c2_to_c3_c4: %f\n",
-      __FILE__, __LINE__, __func__,
-      d_c1_c2_to_c3_c4 ); 
-  printf (
-      "%s:%i:%s: d_c1_c2_to_c3_c4: %f\n",
-      __FILE__, __LINE__, __func__,
-      d_c2_c3_to_c4_c1 ); 
-  */
+  double d_c1_c2_to_c3_c4 = vec_mag (vec_from (rect->c1, rect->c4));
+  double d_c2_c3_to_c4_c1 = vec_mag (vec_from (rect->c1, rect->c2));
 
   // Sides as line segments
   LineSegment c1_c2 = { rect->c1, rect->c2 };
@@ -1176,34 +1163,11 @@ point_is_on_rectangle (Vec point, Rectangle *rect)
   Vec npo_c3_c4 = nearest_point_on_line_segment (point, &c3_c4);
   Vec npo_c4_c1 = nearest_point_on_line_segment (point, &c4_c1);
 
-  //gui->add_debug_marker (npo_c1_c2.x, npo_c1_c2.y);
-
   // Distances from point to nearest point on each side
-  double d_point_c1_c2 = vector_mag (vector_from (point, npo_c1_c2));
-  double d_point_c2_c3 = vector_mag (vector_from (point, npo_c2_c3));
-  double d_point_c3_c4 = vector_mag (vector_from (point, npo_c3_c4));
-  double d_point_c4_c1 = vector_mag (vector_from (point, npo_c4_c1));
-
-  // FIXME: WORK POINT: something is wrong about here
-
-  /*
-  printf (
-      "%s:%i:%s: d_point_c1_c2: %f\n",
-      __FILE__, __LINE__, __func__,
-      d_point_c1_c2 ); 
-  printf (
-      "%s:%i:%s: d_point_c2_c3: %f\n",
-      __FILE__, __LINE__, __func__,
-      d_point_c2_c3 ); 
-  printf (
-      "%s:%i:%s: d_point_c3_c4: %f\n",
-      __FILE__, __LINE__, __func__,
-      d_point_c3_c4 ); 
-  printf (
-      "%s:%i:%s: d_point_c4_c1: %f\n",
-      __FILE__, __LINE__, __func__,
-      d_point_c4_c1 ); 
-      */
+  double d_point_c1_c2 = vec_mag (vec_from (point, npo_c1_c2));
+  double d_point_c2_c3 = vec_mag (vec_from (point, npo_c2_c3));
+  double d_point_c3_c4 = vec_mag (vec_from (point, npo_c3_c4));
+  double d_point_c4_c1 = vec_mag (vec_from (point, npo_c4_c1));
 
   return (
       d_point_c1_c2 <= d_c1_c2_to_c3_c4 &&
@@ -1212,13 +1176,10 @@ point_is_on_rectangle (Vec point, Rectangle *rect)
       d_point_c4_c1 <= d_c2_c3_to_c4_c1 );
 }
 
-// FIXME: could use const all over the place to doc/sami-enforce what
-// doesn't change, ug I dunno, its pretty obvious anyway I think
-
 static bool
 circle_intersects_rectangle (
-    Circle *circle,
-    LineSegment *seg,
+    Circle const *circle,
+    LineSegment const *seg,
     Coord thickness,
     Vec *pii )
 {
@@ -1232,22 +1193,16 @@ circle_intersects_rectangle (
   Vec pa = seg->pa, pb = seg->pb;   // Convenience aliases
 
   // Vector with direction and mag. of segment
-  Vec pa_pb = vector_from (pa, pb);
+  Vec pa_pb = vec_from (pa, pb);
 
   Vec ov = { -pa_pb.y, pa_pb.x };   // Orthogonol Vector (to segment)
 
   // Corners of rectangle
-  double sf  = thickness / (2.0 * vector_mag (ov));   // Scale Factor
-  printf ("%s:%i:%s: sf: %f\n", __FILE__, __LINE__, __func__, sf); 
-  Vec c1 = vector_sum (pa, vector_scale (ov, sf));
-  Vec c2 = vector_sum (pb, vector_scale (ov, sf));
-  Vec c3 = vector_sum (pb, vector_scale (ov, -sf));
-  Vec c4 = vector_sum (pa, vector_scale (ov, -sf));
-
-  //gui->add_debug_marker (c1.x, c1.y);
-  //gui->add_debug_marker (c2.x, c2.y);
-  //gui->add_debug_marker (c3.x, c3.y);
-  //gui->add_debug_marker (c4.x, c4.y);
+  double sf  = thickness / (2.0 * vec_mag (ov));   // Scale Factor
+  Vec c1 = vec_sum (pa, vec_scale (ov, sf));
+  Vec c2 = vec_sum (pb, vec_scale (ov, sf));
+  Vec c3 = vec_sum (pb, vec_scale (ov, -sf));
+  Vec c4 = vec_sum (pa, vec_scale (ov, -sf));
 
   // Line segments between corners of rectangle
   LineSegment c1_c2 = { c1, c2 };
@@ -1259,7 +1214,6 @@ circle_intersects_rectangle (
   // the situation where the circle is entirely inside the rectangle.
   Rectangle rect = { c1, c2, c3, c4 };
   if ( point_is_on_rectangle (circle->center, &rect) ) {
-    printf ("%s:%i:%s: CHECKPOINT\n", __FILE__, __LINE__, __func__); 
     *pii = circle->center;
     return true;
   }
@@ -1287,45 +1241,33 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *center)
   Vec pa = { Pad->Point1.X, Pad->Point1.Y };   // Pad (end) A
   Vec pb = { Pad->Point2.X, Pad->Point2.Y };   // Pad (end) B
 
-  //gui->add_debug_marker (pa.x, pa.y);
-  //gui->add_debug_marker (pb.x, pb.y);
-
   Coord pt = Pad->Thickness;   // Convenience alias
 
   // Center As Vector (for adapting this fctn interface to Vec interface)
   // FIXME: rename this when we rename center
   Vec cav;  
 
-  printf ("\n\n\n");
-
-  Vec pa_pb = vector_from (pa, pb);
+  Vec pa_pb = vec_from (pa, pb);
  
   // Cap Vector.  This is a vector in the direction of pa_pb, with magnitude
-  // equal to the half the radius or width of the cap.  FIXME: verify this:
-  // In pcb PadType objects are of LineType, and LineType objects have width.
-  // Pads with rounded caps have caps with radius equal this width.  Thus,
-  // they consist of a rectangle of width Pad->thickness and ends Pad-Point1
-  // and Point2 in the centers of two sides, unioned with two circles of
-  // radius Pad->thickness / 2.  Pads with square caps are similar, but
-  // union on a square the width of the pad.  This "Cap Vector" is used
-  // to account for these end caps.  We also have a "Reverse Cap Vector"
-  // (for the other ent).
-  double sf = ((pt + 1) / 2.0) / vector_mag (pa_pb);
-  Vec cv = vector_scale (pa_pb, sf);
-  Vec rcv = vector_scale (cv, -1.0);
+  // equal to half the radius or width of the cap (depending on cap shape).
+  // In pcb PadType objects are of LineType, and LineType objects have
+  // Thickness.  Pads with rounded caps have caps with radius equal to this
+  // Thickness.  Thus, they consist of a rectangle of width Pad->Thickness and
+  // ends Pad->Point1 and Pad->Point2 in the centers of two sides, unioned
+  // with two circles of radius Pad->Thickness / 2.  Pads with square caps
+  // are similar, but union on a square the width of the pad instead of
+  // a circle.  This "Cap Vector" is used to account for these end caps.
+  // We also have a "Reverse Cap Vector" (for the other end).
+  double sf = ((pt + 1) / 2.0) / vec_mag (pa_pb);
+  Vec cv = vec_scale (pa_pb, sf);
+  Vec rcv = vec_scale (cv, -1.0);
     
-  //gui->add_debug_marker (pa_pb.x, pa_pb.y);
-  //gui->add_debug_marker (cv.x, cv.y);
-
-  //printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
-  //printf ("%s:%i:%s: Radius: %li\n", __FILE__, __LINE__, __func__, Radius);
-  //printf ("%s:%i:%s: pt: %li\n", __FILE__, __LINE__, __func__, pt);
-  
   if ( TEST_FLAG (SQUAREFLAG, Pad) ) {
     // In this case the "pad" is a true rectangle, so here we compute the
     // endpoints of a Rectangular Center Line segment down the center of
     // this rectangle.
-    LineSegment rcl = { vector_sum (pa, rcv), vector_sum (pa, cv) };
+    LineSegment rcl = { vec_sum (pa, rcv), vec_sum (pa, cv) };
     if ( circle_intersects_rectangle (&circ, &rcl, pt, &cav) ) {
       if ( center != NULL ) {
         center->X = cav.x;
@@ -1338,10 +1280,10 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *center)
     }
   }
   else {
-    printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
     // In this case the rectangular part of the pad runs between the end
     // points in Pad.
-    LineSegment rcl = { pa, pb };
+    LineSegment rcl = { pa, pb };   // Rectangle Center Line
+    // First check if we're in the rectangular part of the pad
     if ( circle_intersects_rectangle (&circ, &rcl, pt, &cav) ) {
       if ( center != NULL ) {
         center->X = cav.x;
@@ -1349,6 +1291,7 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *center)
       }
       return true;
     }
+    // Otherwise, check if we're in one of the round end caps
     else {
       Circle cac = { pa, (pt + 1) / 2 };   // Cap A Circle
       Circle cbc = { pb, (pt + 1) / 2 };   // Cap B Circle
@@ -1378,8 +1321,6 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *center)
 //  Coord x; 
 //  Coord t2 = (Pad->Thickness + 1) / 2, range;
 //  PadType pad = *Pad;
-//
-//  printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
 //
 //  /* series of transforms saving range */
 //  /* move Point1 to the origin */
@@ -1440,9 +1381,6 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *center)
 //                // just return the true location of the point, but it isn't:
 //                // it actually checks for intersection of pad and circle
 //                if ( center != NULL ) {
-//                  printf (
-//                      "%s:%i:%s: checkpoint\n",
-//                      __FILE__, __LINE__, __func__ ); 
 //                  center->X = Pad->Point1.X;
 //                  center->Y = Pad->Point1.Y;
 //                }
@@ -1463,9 +1401,6 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *center)
 //                // FIXME: for now we just put it where one end of the pad is,
 //                // should make the a better estimate of the center of the
 //                // intersection
-//                printf (
-//                    "%s:%i:%s: checkpoint\n",
-//                    __FILE__, __LINE__, __func__ ); 
 //                center->X = Pad->Point1.X;
 //                center->Y = Pad->Point1.Y;
 //              }
