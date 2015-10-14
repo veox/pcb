@@ -1218,7 +1218,7 @@ circle_intersects_rectangle (
     return true;
   }
 
-  // Note that ip (if not NULL) is computed by the first short-circuit true
+  // Note that pii (if not NULL) is computed by the first short-circuit true
   // result here.
   return (
       circle_intersects_line_segment (circle, &c1_c2, pii) ||
@@ -1249,25 +1249,22 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *center)
 
   Vec pa_pb = vec_from (pa, pb);
  
-  // Cap Vector.  This is a vector in the direction of pa_pb, with magnitude
-  // equal to half the radius or width of the cap (depending on cap shape).
-  // In pcb PadType objects are of LineType, and LineType objects have
-  // Thickness.  Pads with rounded caps have caps with radius equal to this
-  // Thickness.  Thus, they consist of a rectangle of width Pad->Thickness and
-  // ends Pad->Point1 and Pad->Point2 in the centers of two sides, unioned
-  // with two circles of radius Pad->Thickness / 2.  Pads with square caps
-  // are similar, but union on a square the width of the pad instead of
-  // a circle.  This "Cap Vector" is used to account for these end caps.
-  // We also have a "Reverse Cap Vector" (for the other end).
-  double sf = ((pt + 1) / 2.0) / vec_mag (pa_pb);
-  Vec cv = vec_scale (pa_pb, sf);
-  Vec rcv = vec_scale (cv, -1.0);
-    
   if ( TEST_FLAG (SQUAREFLAG, Pad) ) {
+
+    // Cap Vector.  This is a vector in the direction of pa_pb, with magnitude
+    // equal to half the width of the pad.  Pads with square caps union
+    // on squares each Pad->Thickness on a side at the instead of line, so
+    // the underlying rectangle is larger that reflected by Pad->Point1 and
+    // Pad->Point2.  This "Cap Vector" is used to account for one of these
+    // end caps, and "Reverse Cap Vector" for the other.
+    double sf = ((pt + 1) / 2.0) / vec_mag (pa_pb);
+    Vec cv = vec_scale (pa_pb, sf);
+    Vec rcv = vec_scale (cv, -1.0);
+
     // In this case the "pad" is a true rectangle, so here we compute the
     // endpoints of a Rectangular Center Line segment down the center of
     // this rectangle.
-    LineSegment rcl = { vec_sum (pa, rcv), vec_sum (pa, cv) };
+    LineSegment rcl = { vec_sum (pa, rcv), vec_sum (pb, cv) };
     if ( circle_intersects_rectangle (&circ, &rcl, pt, &cav) ) {
       if ( center != NULL ) {
         center->X = cav.x;
@@ -1280,9 +1277,11 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *center)
     }
   }
   else {
+
     // In this case the rectangular part of the pad runs between the end
     // points in Pad.
     LineSegment rcl = { pa, pb };   // Rectangle Center Line
+
     // First check if we're in the rectangular part of the pad
     if ( circle_intersects_rectangle (&circ, &rcl, pt, &cav) ) {
       if ( center != NULL ) {
@@ -1290,9 +1289,11 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *center)
         center->Y = cav.y;
       }
       return true;
+
     }
     // Otherwise, check if we're in one of the round end caps
     else {
+
       Circle cac = { pa, (pt + 1) / 2 };   // Cap A Circle
       Circle cbc = { pb, (pt + 1) / 2 };   // Cap B Circle
       // Note that center (if not NULL) is computed by the first short-circuit

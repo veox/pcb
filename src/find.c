@@ -287,8 +287,12 @@ static Cardinal TotalP, TotalV;
 static ListType LineList[MAX_LAYER],    /*!< List of objects to. */
   PolygonList[MAX_LAYER], ArcList[MAX_LAYER], PadList[2], RatList, PVList;
 
-// FIXME: i should get better name if I live
-static PointType my_center; 
+#define PIMRI_UNSET -2
+
+// Point In Most Recent Intersection.  Currently this is just used for
+// accurately reporting the position of DRV violations involing intersections.
+static PointType pimri
+  = { PIMRI_UNSET, PIMRI_UNSET, PIMRI_UNSET, PIMRI_UNSET }; 
 
 /* ---------------------------------------------------------------------------
  * some local prototypes
@@ -303,7 +307,7 @@ static bool ArcArcIntersect (ArcType *, ArcType *);
 static bool PrepareNextLoop (FILE *);
 static void DrawNewConnections (void);
 static void DumpList (void);
-static void LocateError (Coord *, Coord *);
+static void LocateErrorObject (Coord *, Coord *);
 static void BuildObjectList (int *, long int **, int **);
 static bool SetThing (int, void *, void *, void *);
 static bool IsArcInPolygon (ArcType *, PolygonType *);
@@ -668,7 +672,7 @@ LOCtoPVpad_callback (const BoxType * b, void *cl)
   struct pv_info *i = (struct pv_info *) cl;
 
   DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
-  if (!TEST_FLAG (i->flag, pad) && IS_PV_ON_PAD (i->pv, pad, &my_center) &&
+  if (!TEST_FLAG (i->flag, pad) && IS_PV_ON_PAD (i->pv, pad, &pimri) &&
       !TEST_FLAG (HOLEFLAG, i->pv) &&
       ADD_PAD_TO_LIST (TEST_FLAG (ONSOLDERFLAG, pad) ? BOTTOM_SIDE :
                        TOP_SIDE, pad, i->flag))
@@ -1024,7 +1028,7 @@ pv_pad_callback (const BoxType * b, void *cl)
   struct lo_info *i = (struct lo_info *) cl;
 
   DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
-  if (!TEST_FLAG (i->flag, pv) && IS_PV_ON_PAD (pv, i->pad, &my_center))
+  if (!TEST_FLAG (i->flag, pv) && IS_PV_ON_PAD (pv, i->pad, &pimri))
     {
       if (TEST_FLAG (HOLEFLAG, pv))
         {
@@ -1573,16 +1577,16 @@ LineLineIntersect (LineType *Line1, LineType *Line2, PointType *center)
   DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
   if (IsPointInPad (Line2->Point1.X, Line2->Point1.Y,
                     MAX (Line2->Thickness / 2 + Bloat, 0),
-                    (PadType *) Line1, &my_center)
+                    (PadType *) Line1, &pimri)
        || IsPointInPad (Line2->Point2.X, Line2->Point2.Y,
                         MAX (Line2->Thickness / 2 + Bloat, 0),
-                        (PadType *) Line1, &my_center)
+                        (PadType *) Line1, &pimri)
        || IsPointInPad (Line1->Point1.X, Line1->Point1.Y,
                         MAX (Line1->Thickness / 2 + Bloat, 0),
-                        (PadType *) Line2, &my_center)
+                        (PadType *) Line2, &pimri)
        || IsPointInPad (Line1->Point2.X, Line1->Point2.Y,
                         MAX (Line1->Thickness / 2 + Bloat, 0),
-                        (PadType *) Line2, &my_center))
+                        (PadType *) Line2, &pimri))
     return true;
 
   /* setup some constants */
@@ -1837,7 +1841,7 @@ LOCtoLineLine_callback (const BoxType * b, void *cl)
   struct lo_info *i = (struct lo_info *) cl;
 
   DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
-  if (!TEST_FLAG (i->flag, line) && LineLineIntersect (i->line, line, &my_center))
+  if (!TEST_FLAG (i->flag, line) && LineLineIntersect (i->line, line, &pimri))
     {
       if (ADD_LINE_TO_LIST (i->layer, line, i->flag))
         longjmp (i->env, 1);
@@ -2721,7 +2725,6 @@ DoIt (int flag, bool AndRats, bool AndDraw)
       /* lookup connections; these are the steps (2) to (4)
        * from the description
        */
-      DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
       newone = LookupPVConnectionsToPVList (flag) ||
                LookupLOConnectionsToPVList (flag, AndRats) ||
                LookupLOConnectionsToLOList (flag, AndRats) ||
@@ -3453,7 +3456,7 @@ DRCFind (int What, void *ptr1, void *ptr2, void *ptr3)
           User = false;
           drc = false;
           drcerr_count++;
-          LocateError (&x, &y);
+          LocateErrorObject (&x, &y);
           BuildObjectList (&object_count, &object_id_list, &object_type_list);
           violation = pcb_drc_violation_new (_("Potential for broken trace"),
                                              _("Insufficient overlap between objects can lead to broken tracks\n"
@@ -3506,12 +3509,19 @@ DRCFind (int What, void *ptr1, void *ptr2, void *ptr3)
       DoIt (FOUNDFLAG, true, true);
       DumpList ();
       drcerr_count++;
-      LocateError (&x, &y);
+      if ( pimri.X != -1 ) {
+        x = pimri.X;
+        y = pimri.Y;
+        pimri.X = PIMRI_UNSET;  // Clear to avoid confuse ourselves next time
+      }
+      else {
+        // FIXME: once all the different intersection-detecting codes are
+        // fixed to return pimri stuff this fallback to LocateErrorObject
+        // could go away.
+        LocateErrorObject (&x, &y);
+      }
+      // FIXME: WORK POINT: the damn rtree problem triggered again...
       BuildObjectList (&object_count, &object_id_list, &object_type_list);
-      printf ("%s:%i:%s: violation\n", __FILE__, __LINE__, __func__); 
-      printf ("my_center.X: %li\n", my_center.X);
-      printf ("my_center.Y: %li\n", my_center.Y);
-      CenterDisplay (my_center.X, my_center.Y, TRUE);
       violation = pcb_drc_violation_new (_("Copper areas too close"),
                                          _("Circuits that are too close may bridge during imaging, etching,\n"
                                            "plating, or soldering processes resulting in a direct short."),
@@ -3630,7 +3640,7 @@ doIsBad:
   DrawPolygon (layer, polygon);
   DrawObject (type, ptr1, ptr2);
   drcerr_count++;
-  LocateError (&x, &y);
+  LocateErrorObject (&x, &y);
   BuildObjectList (&object_count, &object_id_list, &object_type_list);
   violation = pcb_drc_violation_new (message,
                                      _("Circuits that are too close may bridge during imaging, etching,\n"
@@ -3771,7 +3781,7 @@ DRCAll (void)
             DrawLine (layer, line);
             drcerr_count++;
             SetThing (LINE_TYPE, layer, line, line);
-            LocateError (&x, &y);
+            LocateErrorObject (&x, &y);
             BuildObjectList (&object_count, &object_id_list, &object_type_list);
             violation = pcb_drc_violation_new (_("Line width is too thin"),
                                                _("Process specifications dictate a minimum feature-width\n"
@@ -3815,7 +3825,7 @@ DRCAll (void)
             DrawArc (layer, arc);
             drcerr_count++;
             SetThing (ARC_TYPE, layer, arc, arc);
-            LocateError (&x, &y);
+            LocateErrorObject (&x, &y);
             BuildObjectList (&object_count, &object_id_list, &object_type_list);
             violation = pcb_drc_violation_new (_("Arc width is too thin"),
                                                _("Process specifications dictate a minimum feature-width\n"
@@ -3860,7 +3870,7 @@ DRCAll (void)
             DrawPin (pin);
             drcerr_count++;
             SetThing (PIN_TYPE, element, pin, pin);
-            LocateError (&x, &y);
+            LocateErrorObject (&x, &y);
             BuildObjectList (&object_count, &object_id_list, &object_type_list);
             violation = pcb_drc_violation_new (_("Pin annular ring too small"),
                                                _("Annular rings that are too small may erode during etching,\n"
@@ -3892,7 +3902,7 @@ DRCAll (void)
             DrawPin (pin);
             drcerr_count++;
             SetThing (PIN_TYPE, element, pin, pin);
-            LocateError (&x, &y);
+            LocateErrorObject (&x, &y);
             BuildObjectList (&object_count, &object_id_list, &object_type_list);
             violation = pcb_drc_violation_new (_("Pin drill size is too small"),
                                                _("Process rules dictate the minimum drill size which can be used"),
@@ -3935,7 +3945,7 @@ DRCAll (void)
             DrawPad (pad);
             drcerr_count++;
             SetThing (PAD_TYPE, element, pad, pad);
-            LocateError (&x, &y);
+            LocateErrorObject (&x, &y);
             BuildObjectList (&object_count, &object_id_list, &object_type_list);
             violation = pcb_drc_violation_new (_("Pad is too thin"),
                                                _("Pads which are too thin may erode during etching,\n"
@@ -3980,7 +3990,7 @@ DRCAll (void)
             DrawVia (via);
             drcerr_count++;
             SetThing (VIA_TYPE, via, via, via);
-            LocateError (&x, &y);
+            LocateErrorObject (&x, &y);
             BuildObjectList (&object_count, &object_id_list, &object_type_list);
             violation = pcb_drc_violation_new (_("Via annular ring too small"),
                                                _("Annular rings that are too small may erode during etching,\n"
@@ -4012,7 +4022,7 @@ DRCAll (void)
             DrawVia (via);
             drcerr_count++;
             SetThing (VIA_TYPE, via, via, via);
-            LocateError (&x, &y);
+            LocateErrorObject (&x, &y);
             BuildObjectList (&object_count, &object_id_list, &object_type_list);
             violation = pcb_drc_violation_new (_("Via drill size is too small"),
                                                _("Process rules dictate the minimum drill size which can be used"),
@@ -4055,7 +4065,7 @@ DRCAll (void)
             DrawLine (layer, line);
             drcerr_count++;
             SetThing (LINE_TYPE, layer, line, line);
-            LocateError (&x, &y);
+            LocateErrorObject (&x, &y);
             BuildObjectList (&object_count, &object_id_list, &object_type_list);
             violation = pcb_drc_violation_new (_("Silk line is too thin"),
                                                _("Process specifications dictate a minimum silkscreen\n"
@@ -4106,7 +4116,7 @@ DRCAll (void)
             DrawElement (element);
             drcerr_count++;
             SetThing (ELEMENT_TYPE, element, element, element);
-            LocateError (&x, &y);
+            LocateErrorObject (&x, &y);
             BuildObjectList (&object_count, &object_id_list, &object_type_list);
 
             title = _("Element %s has %i silk lines which are too thin");
@@ -4169,7 +4179,7 @@ DRCAll (void)
  * \brief Locate the coordinatates of offending item (thing).
  */
 static void
-LocateError (Coord *x, Coord *y)
+LocateErrorObject (Coord *x, Coord *y)
 {
   switch (thing_type)
     {
@@ -4271,7 +4281,7 @@ GotoError (void)
 {
   Coord X, Y;
 
-  LocateError (&X, &Y);
+  LocateErrorObject (&X, &Y);
 
   switch (thing_type)
     {
