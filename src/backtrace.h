@@ -1,6 +1,7 @@
 // Provide a backtrace with line numbers, and an assert()-like routine that
 // prints a backtrace on failure.
 
+#include <errno.h>
 #include <stdlib.h>
 
 // Return a new multi-line string containing a backtrace of the call point,
@@ -16,7 +17,9 @@
 //       make CFLAGS='-Wall -g -O0'
 //
 //   * FIXME: as of this writing, --disable-nls is also required at
-//     ./configure-time to avoid bugs in NLS that trigger with -O0
+//     ./configure-time to avoid bugs in NLS that trigger with -O0.
+//
+//   * Flex and Bison still seem to cause slight line number error.
 //     
 //   * It uses malloc(), so cannot reliably be used when malloc() might fail
 //     (e.g. after memory corruption).
@@ -31,16 +34,20 @@ backtrace_with_line_numbers (void);
 // Like assert(), but prints a full backtrace (if it does anything).
 // All caveats of backtrace_with_line_numbers() apply.
 #ifdef NDEBUG
-#  define ASSERT_BT(CONDITION)
+#  define ASSERT_BT(COND)
 #else
-#  define ASSERT_BT(CONDITION)                                             \
-    do {                                                                   \
-      if ( __builtin_expect (!(CONDITION), 0) ) {                          \
-        fprintf (                                                          \
-            stderr,                                                        \
-            "Assertion ` " #CONDITION "' failed.  Backtrace:\n%s",         \
-            backtrace_with_line_numbers() );                               \
-        abort ();                                                          \
-      }                                                                    \
+#  define ASSERT_BT(COND)                                                    \
+    do {                                                                     \
+      if ( __builtin_expect (!(COND), 0) ) {                                 \
+        fprintf (                                                            \
+            stderr,                                                          \
+            "%s: %s:%u: %s: Assertion ` " #COND "' failed.  Backtrace:\n%s", \
+            program_invocation_short_name,                                   \
+            __FILE__,                                                        \
+            __LINE__,                                                        \
+            __func__,                                                        \
+            backtrace_with_line_numbers() );                                 \
+        abort ();                                                            \
+      }                                                                      \
     } while ( 0 )
 #endif
