@@ -16,16 +16,19 @@ backtrace_with_line_numbers (void)
 {
   char executable_name[PATH_MAX + 1];
   ssize_t bytes_read;
-  char const *mrba = "/tmp/mrba";   // Most Recent Backtrace Addresses
-  char const *mrbt = "/tmp/mrbt";   // Most Recent Backtrace Text
-  FILE *btfp;   // Backtrace File FILE Pointer
+  size_t btrace_size;                 // Number or addresses
+  int return_code;
+  // Backtrace Addresses (temporary file, initialized to template)
+  char ba[] = "/tmp/baXXXXXX";  
+  // Most Recent Backtrace Text (temporary file, initialized to template)
+  char bt[] = "/tmp/btXXXXXX";   // Most Recent Backtrace Text
+  int tfd;     // Temporary File Descriptor (reused for different files)
+  FILE *tfp;   // Trmporary FILE Pointer (reused for different things)
 #define BT_MAX_STACK 142
   void *btrace_array[BT_MAX_STACK];   // Actual addressess
-  size_t btrace_size;                 // Number or addresses
   int ii;   //  Index variable
 #define ADDR2LINE_COMMAND_MAX_LENGTH 242
   char addr2line_command[ADDR2LINE_COMMAND_MAX_LENGTH];
-  int return_code;
   struct stat stat_buf;
   char *result;
 
@@ -39,27 +42,37 @@ backtrace_with_line_numbers (void)
   btrace_size = backtrace (btrace_array, BT_MAX_STACK);
   assert (btrace_size < BT_MAX_STACK);
 
+  // Create temp files (filling in their actual names), close file descriptors
+  tfd = mkstemp (ba);
+  assert (tfd != -1);
+  return_code = close (tfd);
+  assert (return_code == 0);
+  tfd = mkstemp (bt);
+  assert (tfd != -1);
+  return_code = close (tfd);
+  assert (return_code == 0);
+
   // Print the addresses to the address file
-  btfp = fopen (mrba, "w");
-  assert (btfp != NULL);
+  tfp = fopen (ba, "w");
+  assert (tfp != NULL);
   for ( ii = 0 ; ii < btrace_size ; ii++ ) {
-    fprintf (btfp, "%p\n", btrace_array[ii]);
+    fprintf (tfp, "%p\n", btrace_array[ii]);
   } 
-  return_code = fclose (btfp);
+  return_code = fclose (tfp);
   assert (return_code == 0);
 
   // Run addr2line to convert addresses to show func, file, line
   sprintf (
       addr2line_command,
       "cat %s | addr2line --exe %s -f -i >%s",
-      mrba,
+      ba,
       executable_name,
-      mrbt );
+      bt );
   return_code = system (addr2line_command);
   assert (return_code == 0);
 
   // Get the size of the result
-  return_code = stat (mrbt, &stat_buf);
+  return_code = stat (bt, &stat_buf);
   assert (return_code == 0);
   
   // Allocate storage for result
@@ -67,11 +80,19 @@ backtrace_with_line_numbers (void)
   assert (result != NULL);
 
   // Read the func, file, line form back in
-  btfp = fopen (mrbt, "r");
-  assert (btfp != NULL);
-  bytes_read = fread (result, 1, stat_buf.st_size, btfp);
+  tfp = fopen (bt, "r");
+  assert (tfp != NULL);
+  bytes_read = fread (result, 1, stat_buf.st_size, tfp);
   assert (bytes_read == stat_buf.st_size);
   result[stat_buf.st_size] = '\0';
+  return_code = fclose (tfp);
+  assert (return_code == 0);
+
+  // Remove the temporary files
+  return_code = unlink (bt);
+  assert (return_code == 0);
+  return_code = unlink (ba);
+  assert (return_code == 0);
 
   return result;
 }
