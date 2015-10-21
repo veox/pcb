@@ -891,16 +891,26 @@ IsPointInQuadrangle(PointType p[4], PointType *l)
  * Note: actually this quadrangle is a slanted rectangle
  */
 bool
-IsLineInQuadrangle (PointType p[4], LineType *Line, PointType *center)
+IsLineInQuadrangle (PointType p[4], LineType *Line, PointType *pii)
 {
   LineType line;
 
   /* first, see if point 1 is inside the rectangle */
   /* in case the whole line is inside the rectangle */
-  if (IsPointInQuadrangle(p,&(Line->Point1)))
+  if (IsPointInQuadrangle(p,&(Line->Point1))) {
+    if ( pii != NULL ) {
+      pii->X = Line->Point1.X;
+      pii->Y = Line->Point1.Y;
+    }
     return true;
-  if (IsPointInQuadrangle(p,&(Line->Point2)))
+  }
+  if (IsPointInQuadrangle(p,&(Line->Point2))) {
+    if ( pii != NULL ) {
+      pii->X = Line->Point2.X;
+      pii->Y = Line->Point2.Y;
+    }
     return true;
+  }
   /* construct a set of dummy lines and check each of them */
   line.Thickness = 0;
   line.Flags = NoFlags ();
@@ -908,22 +918,22 @@ IsLineInQuadrangle (PointType p[4], LineType *Line, PointType *center)
   /* upper-left to upper-right corner */
   line.Point1.X = p[0].X; line.Point1.Y = p[0].Y;
   line.Point2.X = p[1].X; line.Point2.Y = p[1].Y;
-  if (LineLineIntersect (&line, Line, center))
+  if (LineLineIntersect (&line, Line, pii))
     return (true);
 
   /* upper-right to lower-right corner */
   line.Point1.X = p[2].X; line.Point1.Y = p[2].Y;
-  if (LineLineIntersect (&line, Line, center))
+  if (LineLineIntersect (&line, Line, pii))
     return (true);
 
   /* lower-right to lower-left corner */
   line.Point2.X = p[3].X; line.Point2.Y = p[3].Y;
-  if (LineLineIntersect (&line, Line, center))
+  if (LineLineIntersect (&line, Line, pii))
     return (true);
 
   /* lower-left to upper-left corner */
   line.Point1.X = p[0].X; line.Point1.Y = p[0].Y;
-  if (LineLineIntersect (&line, Line, center))
+  if (LineLineIntersect (&line, Line, pii))
     return (true);
 
   return (false);
@@ -987,7 +997,7 @@ typedef struct {
 static double
 vec_mag (Vec vec)
 {
-  return round (sqrt (((double) vec.x) * vec.x + ((double) vec.y) * vec.y));
+  return round (hypot (vec.x, vec.y));
 }
 
 double
