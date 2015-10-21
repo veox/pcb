@@ -1227,10 +1227,10 @@ circle_intersects_rectangle (
       circle_intersects_line_segment (circle, &c4_c1, pii) );
 }
 
-// FIXME: the argument name center is bad, it should be changed to pii
-// (Point In Intersection);
+// FIXME: add comment from original if we optimize this one instead of
+// modifying original
 bool
-IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *center)
+IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *pii)
 {
   // Cirlce Around Point, having radius Radius centered at X, Y.  Despite the
   // name of this function it checks for the intersection of a pad and a
@@ -1243,9 +1243,9 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *center)
 
   Coord pt = Pad->Thickness;   // Convenience alias
 
-  // Center As Vector (for adapting this fctn interface to Vec interface)
-  // FIXME: rename this when we rename center
-  Vec cav;  
+  // Point In Intersection As Vector (for adapting this fctn interface to
+  // Vec interface)
+  Vec piiav;  
 
   Vec pa_pb = vec_from (pa, pb);
  
@@ -1265,16 +1265,17 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *center)
     // endpoints of a Rectangular Center Line segment down the center of
     // this rectangle.
     LineSegment rcl = { vec_sum (pa, rcv), vec_sum (pb, cv) };
-    if ( circle_intersects_rectangle (&circ, &rcl, pt, &cav) ) {
-      if ( center != NULL ) {
-        center->X = cav.x;
-        center->Y = cav.y;
+    if ( circle_intersects_rectangle (&circ, &rcl, pt, &piiav) ) {
+      if ( pii != NULL ) {
+        pii->X = piiav.x;
+        pii->Y = piiav.y;
       }
       return true;
     }
     else {
       return false;
     }
+
   }
   else {
 
@@ -1283,10 +1284,11 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *center)
     LineSegment rcl = { pa, pb };   // Rectangle Center Line
 
     // First check if we're in the rectangular part of the pad
-    if ( circle_intersects_rectangle (&circ, &rcl, pt, &cav) ) {
-      if ( center != NULL ) {
-        center->X = cav.x;
-        center->Y = cav.y;
+    if ( circle_intersects_rectangle (&circ, &rcl, pt, &piiav) ) {
+
+      if ( pii != NULL ) {
+        pii->X = piiav.x;
+        pii->Y = piiav.y;
       }
       return true;
 
@@ -1296,16 +1298,17 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *center)
 
       Circle cac = { pa, (pt + 1) / 2 };   // Cap A Circle
       Circle cbc = { pb, (pt + 1) / 2 };   // Cap B Circle
-      // Note that center (if not NULL) is computed by the first short-circuit
+      // Note that piiav (if not NULL) is computed by the first short-circuit
       // true result here.
       bool result = (
-          circles_intersect (&cac, &circ, &cav) ||
-          circles_intersect (&cbc, &circ, &cav) );
-      if ( result && (center != NULL) ) {
-        center->X = cav.x;
-        center->Y = cav.y;
+          circles_intersect (&cac, &circ, &piiav) ||
+          circles_intersect (&cbc, &circ, &piiav) );
+      if ( result && (pii != NULL) ) {
+        pii->X = piiav.x;
+        pii->Y = piiav.y;
       }
       return result;
+
     }
   }
 }
