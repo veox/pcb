@@ -354,7 +354,7 @@ arc_callback (const BoxType * box, void *cl)
   if (TEST_FLAG (i->locked, a))
     return 0;
 
-  if (!IsPointOnArc (PosX, PosY, SearchRadius, a))
+  if (!IsPointOnArc (PosX, PosY, SearchRadius, a, NULL))
     return 0;
   *i->Arc = a;
   *i->Dummy = a;
@@ -806,7 +806,7 @@ IsPointOnLine (Coord X, Coord Y, Coord Radius, LineType *Line)
  */
 bool
 IsLineInRectangle (
-    Coord X1, Coord Y1, Coord X2, Coord Y2, LineType *Line, PointType *center )
+    Coord X1, Coord Y1, Coord X2, Coord Y2, LineType *Line, PointType *pii )
 {
   LineType line;
 
@@ -816,11 +816,9 @@ IsLineInRectangle (
   /* in case the whole line is inside the rectangle */
   if (X1 < Line->Point1.X && X2 > Line->Point1.X &&
       Y1 < Line->Point1.Y && Y2 > Line->Point1.Y) {
-    // FIXME: a more accurate center calculation should be used, this is
-    // quick prototype
-    if ( center != NULL ) {
-      center->X = Line->Point1.X;
-      center->Y = Line->Point1.Y;
+    if ( pii != NULL ) {
+      pii->X = Line->Point1.X;
+      pii->Y = Line->Point1.Y;
     }
     return (true);
   }
@@ -832,28 +830,28 @@ IsLineInRectangle (
   line.Point1.Y = line.Point2.Y = Y1;
   line.Point1.X = X1;
   line.Point2.X = X2;
-  if (LineLineIntersect (&line, Line, center))
+  if (LineLineIntersect (&line, Line, pii))
     return (true);
 
   /* upper-right to lower-right corner */
   line.Point1.X = X2;
   line.Point1.Y = Y1;
   line.Point2.Y = Y2;
-  if (LineLineIntersect (&line, Line, center))
+  if (LineLineIntersect (&line, Line, pii))
     return (true);
 
   /* lower-right to lower-left corner */
   line.Point1.Y = Y2;
   line.Point1.X = X1;
   line.Point2.X = X2;
-  if (LineLineIntersect (&line, Line, center))
+  if (LineLineIntersect (&line, Line, pii))
     return (true);
 
   /* lower-left to upper-left corner */
   line.Point2.X = X1;
   line.Point1.Y = Y1;
   line.Point2.Y = Y2;
-  if (LineLineIntersect (&line, Line, center))
+  if (LineLineIntersect (&line, Line, pii))
     return (true);
 
   return (false);
@@ -942,7 +940,8 @@ IsLineInQuadrangle (PointType p[4], LineType *Line, PointType *pii)
  * checks if an arc crosses a square
  */
 bool
-IsArcInRectangle (Coord X1, Coord Y1, Coord X2, Coord Y2, ArcType *Arc)
+IsArcInRectangle (
+    Coord X1, Coord Y1, Coord X2, Coord Y2, ArcType *Arc, PointType *pii )
 {
   LineType line;
 
@@ -954,28 +953,28 @@ IsArcInRectangle (Coord X1, Coord Y1, Coord X2, Coord Y2, ArcType *Arc)
   line.Point1.Y = line.Point2.Y = Y1;
   line.Point1.X = X1;
   line.Point2.X = X2;
-  if (LineArcIntersect (&line, Arc))
+  if (LineArcIntersect (&line, Arc, pii))
     return (true);
 
   /* upper-right to lower-right corner */
   line.Point1.X = line.Point2.X = X2;
   line.Point1.Y = Y1;
   line.Point2.Y = Y2;
-  if (LineArcIntersect (&line, Arc))
+  if (LineArcIntersect (&line, Arc, pii))
     return (true);
 
   /* lower-right to lower-left corner */
   line.Point1.Y = line.Point2.Y = Y2;
   line.Point1.X = X1;
   line.Point2.X = X2;
-  if (LineArcIntersect (&line, Arc))
+  if (LineArcIntersect (&line, Arc, pii))
     return (true);
 
   /* lower-left to upper-left corner */
   line.Point1.X = line.Point2.X = X1;
   line.Point1.Y = Y1;
   line.Point2.Y = Y2;
-  if (LineArcIntersect (&line, Arc))
+  if (LineArcIntersect (&line, Arc, pii))
     return (true);
 
   return (false);
@@ -1051,7 +1050,6 @@ vec_sum (Vec va, Vec vb)
   return result;
 }
 
-// FIXME: should take a pointer for seg probably
 static Vec
 nearest_point_on_line_segment (Vec pt, LineSegment const *seg)
 {
@@ -1519,13 +1517,234 @@ IsPointInBox (Coord X, Coord Y, BoxType *box, Coord Radius)
   return range < Radius;
 }
 
+// FIXME: this is a goofy way to express an ellipse, should go with center+p_major(vec) + p_minor_mag
+// FIXME: should be ArcOfEllipse and reference an Ellipse 
+typedef struct {
+  Vec center;   // Center of ellipse
+  Vec p_major, p_minor;   // Points defining major/minor axes of ellipse
+  // Start angle of segment, measuing from +x towards +y, in [0, 2 * M_PI)
+  double start_angle;
+  // Angular span of segment, measuring in the +x towards +y direction
+  double angle_delta;  
+} Arc;
+
+#define normalize
+
+static double
+normalize_angle_in_radians (double angle)
+{
+  while ( angle < 0.0 ) {
+    angle += 2.0 * M_PI;
+  }
+  while ( angle >= 2.0 * M_PI ) {
+    angle -= 2.0 * M_PI;
+  }
+
+  return angle;
+}
+
+#define D2R(arg) (arg * M_PI / 180.0)
+
+static bool
+angle_in_span (double theta, double start_angle, double angle_delta)
+{
+  // Return true iff theta is between start_angle and start_angle +
+  // angle_delta in radians (winding positive angles in CCW direction).
+  //
+  // Note also that no angular epsilon is implied here: clients must include
+  // one if they need it.
+
+  if ( angle_delta > 0.0 ) {
+    return angle_delta >= normalize_angle_in_radians (theta - start_angle);
+  }
+  else {
+    return -angle_delta >= normalize_angle_in_radians (-theta + start_angle);
+  }
+}
+
+static Vec
+nearest_point_on_arc (Vec pt, Arc *arc)
+{
+  // Find the nearest point on arc from pt.
+    
+  Vec cent = arc->center;
+  Vec pmaj = arc->p_major;
+  Vec pmin = arc->p_minor;
+
+  // Translate pt st Arc ellipsoid is centered at origin wrt it
+  pt.x -= cent.x;
+  pt.y -= cent.y;
+  
+  double mmaja = vec_mag (vec_from (cent, pmaj));   // Mag. of major axis / 2
+  double mmina = vec_mag (vec_from (cent, pmin));   // Mag. of minor axis / 2
+
+  // If the major and minor axes are within this size of each other
+  // we consider the ellipse to be a circle.  This is a hack that takes
+  // advantage of the pretty tiny pcb coordinates to avoid potential problems
+  // with magnitudes being approximate.  I checked the magnitude results
+  // for a vector {1000000042, 1000000042} and its only about 0.23 off the
+  // theoretical value, so this should give a pretty good margin of error
+  // for not failing to interpret circles as circles (which is good since
+  // ellipses aren't implemented at the moment).
+  double const mag_epsilon = 10.42;
+  
+  // Uncomment this and compare results to bc or the like to get happy(ish)
+  // about the above constant.
+  //Vec tvec = {1000000042, 1000000042};
+  //double tvecmag = vec_mag (tvec);
+  //printf ("tvecmag: %f\n", tvecmag);
+
+  // Arcs that are segments of circles are special and common, do them first
+  if ( fabs (mmaja - mmina) < mag_epsilon ) {
+
+    double sa = arc->start_angle;
+    double ad = arc->angle_delta;
+    double ea = sa + ad;   // End Angle.   Note: in [0, 4.0 * M_PI)
+
+    // Nearest Point on Circle
+    Vec npoc = vec_scale (pt, mmaja / vec_mag (pt));
+    
+    double theta_npoc = atan2 (npoc.y, npoc.x);
+
+    Vec result;
+
+    // If the nearest point on the underlying circle is part of the arc,
+    // the point itself is the result we want, otherwise the end point of
+    // the arc closest to the nearest point is the one we want.
+    if ( angle_in_span (theta_npoc, sa, ad) ) {
+      result = npoc;
+    }
+    else {
+      // FIXME: use sincos() for speed and deredundification here
+      // End Point A.  round() probably isn't really worth it here
+      Vec epa = { round (mmaja * cos (sa)), round (mmaja * sin (sa)) };
+      // End Point B   round() probably isn't really worth it here
+      Vec epb = { round (mmaja * cos (ea)), round (mmaja * sin (ea)) };
+      double m_npoc_epa = vec_mag (vec_from (npoc, epa));
+      double m_npoc_epb = vec_mag (vec_from (npoc, epb));
+      result  = (m_npoc_epa < m_npoc_epb ? epa : epb);
+    }
+      
+    // Translate back to true position
+    result.x += cent.x;
+    result.y += cent.y;
+
+    return result;
+  }
+
+  // If we make it here we're dealing with a segment of an ellipse
+  
+  // What follows in this function isn't tested or complete 
+  int const implemented = FALSE;
+  assert (implemented);
+
+  // Angle of vector from origin to Arc->p_major with positive X axis
+  double theta = atan2 (pmaj.y, pmin.x);
+
+  // Rotate pt' about origin st arc->p_major is on the positive X axis wrt it
+  // FIXME: could use sincos() here for efficiency
+  double sin_theta;
+  double cos_theta;
+  sincos (theta, &sin_theta, &cos_theta);
+  pt.x = pt.x * cos_theta - pt.y * sin_theta;
+  pt.y = pt.x * sin_theta + pt.y * cos_theta;
+
+  // In general bisection or some other iterative approach is eventually
+  // required to solve the closest-point-on-ellipse problem (see
+  // www.geometrictools.com/Documentation/DistancePointEllipseEllipsoid.pdf).
+  // I would try just using geometrical bisection to keep life simple
+  // and avoid logic about quadrants etc.  Simply place a bisection point
+  // angle-wise midway along the part of the segment still remaining for
+  // consideration at each iteration, check which of the resulting half-planes
+  // formed by the origin-bisection_point line pt is in, throw away the other
+  // half segment, rinse and repeat until a satisfactorily small segment is
+  // obtained.  It might or might not be worth special-case checks in case the
+  // point is outside a hull st the nearest point is guaranteed to be an end
+  // point, it probably depends on the details of the rtree implementation
+  // elsewhere in this program.  For isolated curves at least it seems that
+  // the tree is pretty tight to the curve itself so I doubt it's worth it.
+}
+
+// FIXME: this function is horribly mis-named, it actually checks whether
+// a cirle intersects an ArcType
+bool
+FixedIsPointOnArc (
+    Coord X, Coord Y, Coord Radius, ArcType *arc, PointType *pii )
+{
+  Vec pt = {X, Y};
+
+  // Currently we only support ellipses with their axes parallel to the
+  // coordinate axes.  These are used to map to our underlying mathematical
+  // Arc type which supports arbitrary major/minor axis orientations.
+  Coord p_major_x = arc->X + (arc->Width >  arc->Height ? arc->Width : 0);
+  Coord p_major_y = arc->Y + (arc->Width >  arc->Height ? 0 : arc->Height);
+  Coord p_minor_x = arc->X + (arc->Width <= arc->Height ? arc->Width : 0);
+  Coord p_minor_y = arc->Y + (arc->Width <= arc->Height ? 0 : arc->Height);
+
+  // For our mathematical Arc object we use the normal +x towards +y winding
+  // convention, so we invert the sign here.  We also cheat a tiny bit so ad
+  // of 360 always ends up meaning what clients intend.  Note that they are
+  // still on their own when dealing with floating point comparison issues
+  // at other angular span end points.
+  double angle_delta = -arc->StartAngle;
+  if ( angle_delta == 360.0 ) {
+    // Note that it doesn't matter exactly what we add
+    angle_delta = 360.0 + 0.42;
+  }
+  else if ( angle_delta == -360.0 ) {
+    // Note that it doesn't matter exactly what we subtract
+    angle_delta = 360.0 - 0.42;
+  }
+
+  // Simple arc (i.e. mathematical arc, not ArcType arc).  The rest of pcb
+  // apparently like to have 0 degress point towards -x and angles measures
+  // from -x towards positive y, while in the Arc type I use the more usual
+  // mathematical convention of putting 0 degrees at +x and measure anngles
+  // form +x towards +y.
+  Arc sarc = {
+    { arc->X, arc->Y },
+    { p_major_x, p_major_y },
+    { p_minor_x, p_minor_y },
+    normalize_angle_in_radians (-arc->StartAngle * (M_PI / 180.0) + M_PI),
+    -arc->Delta * (M_PI / 180.0)
+  };
+
+  Vec np = nearest_point_on_arc (pt, &sarc);
+
+  Vec np_pt = vec_from (np, pt);      //  Vector from np to pt
+  
+  double m_np_pt = vec_mag (np_pt);   // Magnitude of np-pt
+  
+  // Square flags on arcs aren't supported FIXME: something gentler than assert
+  assert (! TEST_FLAG (SQUAREFLAG, arc));
+
+  if ( m_np_pt <= Radius + arc->Thickness / 2.0 ) {
+    if ( pii != NULL ) {
+      // FIXME: WORK POINT: test this solution
+      printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
+      pii->X = X - np_pt.x / 2;
+      pii->Y = Y - np_pt.y / 2;
+      //pii->X = np.x;
+      //pii->Y = np.y;
+      //pii->X = X;
+      //pii->Y = Y;
+    }
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
 /* TODO: this code is BROKEN in the case of non-circular arcs,
  *       and in the case that the arc thickness is greater than
  *       the radius.
  */
 bool
-IsPointOnArc (Coord X, Coord Y, Coord Radius, ArcType *Arc)
+IsPointOnArc (Coord X, Coord Y, Coord Radius, ArcType *Arc, PointType *pii)
 {
+  printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
+
   /* Calculate angle of point from arc center */
   double p_dist = Distance (X, Y, Arc->X, Arc->Y);
   double p_cos = (X - Arc->X) / p_dist;
@@ -1562,19 +1781,39 @@ IsPointOnArc (Coord X, Coord Y, Coord Radius, ArcType *Arc)
               cos ((Arc->StartAngle + 180) / RAD_TO_DEG);
       ArcY = Arc->Y - Arc->Width *
               sin ((Arc->StartAngle + 180) / RAD_TO_DEG);
-      if (Distance (X, Y, ArcX, ArcY) < Radius + Arc->Thickness / 2)
+      if (Distance (X, Y, ArcX, ArcY) < Radius + Arc->Thickness / 2) {
+        if ( pii != NULL ) {
+          pii->X = X;
+          pii->Y = Y;
+        }
         return true;
+      }
 
       ArcX = Arc->X + Arc->Width *
               cos ((Arc->StartAngle + Arc->Delta + 180) / RAD_TO_DEG);
       ArcY = Arc->Y - Arc->Width *
               sin ((Arc->StartAngle + Arc->Delta + 180) / RAD_TO_DEG);
-      if (Distance (X, Y, ArcX, ArcY) < Radius + Arc->Thickness / 2)
+      if (Distance (X, Y, ArcX, ArcY) < Radius + Arc->Thickness / 2) {
+        if ( pii != NULL ) {
+          pii->X = X;
+          pii->Y = Y;
+        }
         return true;
+      }
       return false;
     }
   /* If point is inside the arc range, just compare it to the arc */
-  return fabs (Distance (X, Y, Arc->X, Arc->Y) - Arc->Width) < Radius + Arc->Thickness / 2;
+
+  if ( fabs (Distance (X, Y, Arc->X, Arc->Y) - Arc->Width) < Radius + Arc->Thickness / 2 ) {
+    if ( pii != NULL ) {
+      pii->X = X;
+      pii->Y = Y;
+    }
+    return true;
+  }
+  else {
+    return false;
+  }
 }
 
 /* ---------------------------------------------------------------------------

@@ -132,16 +132,20 @@
 #define IS_PV_ON_RAT(PV, Rat) \
 	(IsPointOnLineEnd((PV)->X,(PV)->Y, (Rat)))
 
-#define IS_PV_ON_ARC(PV, Arc)	\
+#define IS_PV_ON_ARC(PV, Arc, pii)	\
 	(TEST_FLAG(SQUAREFLAG, (PV)) ? \
 		IsArcInRectangle( \
 			(PV)->X -MAX(((PV)->Thickness+1)/2 +Bloat,0), (PV)->Y -MAX(((PV)->Thickness+1)/2 +Bloat,0), \
 			(PV)->X +MAX(((PV)->Thickness+1)/2 +Bloat,0), (PV)->Y +MAX(((PV)->Thickness+1)/2 +Bloat,0), \
-			(Arc)) : \
-		IsPointOnArc((PV)->X,(PV)->Y,MAX((PV)->Thickness/2.0 + Bloat,0.0), (Arc)))
+			(Arc), \
+                        (pii)) : \
+		IsPointOnArc( \
+                        (PV)->X,(PV)->Y,MAX((PV)->Thickness/2.0 + Bloat,0.0), \
+                        (Arc), \
+                        (pii)))
 
-#define	IS_PV_ON_PAD(PV,Pad, center) \
-	( IsPointInPad((PV)->X, (PV)->Y, MAX((PV)->Thickness/2 +Bloat,0), (Pad), center))
+#define	IS_PV_ON_PAD(PV, Pad, pii) \
+	( IsPointInPad((PV)->X, (PV)->Y, MAX((PV)->Thickness/2 +Bloat,0), (Pad), (pii)))
 
 
 static DrcViolationType
@@ -287,6 +291,7 @@ static Cardinal TotalP, TotalV;
 static ListType LineList[MAX_LAYER],    /*!< List of objects to. */
   PolygonList[MAX_LAYER], ArcList[MAX_LAYER], PadList[2], RatList, PVList;
 
+// Magic number meaning that we don't have the most recent intersection point
 #define PIMRI_UNSET -2
 
 // Point In Most Recent Intersection.  Currently this is just used for
@@ -303,7 +308,7 @@ static bool LookupLOConnectionsToPolygon (PolygonType *, Cardinal, int, bool);
 static bool LookupLOConnectionsToArc (ArcType *, Cardinal, int, bool);
 static bool LookupLOConnectionsToRatEnd (PointType *, Cardinal, int);
 static bool IsRatPointOnLineEnd (PointType *, LineType *);
-static bool ArcArcIntersect (ArcType *, ArcType *);
+static bool ArcArcIntersect (ArcType *, ArcType *, PointType *pii);
 static bool PrepareNextLoop (FILE *);
 static void DrawNewConnections (void);
 static void DumpList (void);
@@ -322,17 +327,17 @@ static bool IsPolygonInPolygon (PolygonType *, PolygonType *);
  * struct starts with a line struct. See global.h for details.
  */
 bool
-LinePadIntersect (LineType *Line, PadType *Pad, PointType *center)
+LinePadIntersect (LineType *Line, PadType *Pad, PointType *pii)
 {
   DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
-  return LineLineIntersect ((Line), (LineType *)Pad, center);
+  return LineLineIntersect ((Line), (LineType *)Pad, pii);
 }
 
 bool
-ArcPadIntersect (ArcType *Arc, PadType *Pad)
+ArcPadIntersect (ArcType *Arc, PadType *Pad, PointType *pii)
 {
   DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
-  return LineArcIntersect ((LineType *) (Pad), (Arc));
+  return LineArcIntersect ((LineType *) (Pad), (Arc), pii);
 }
 
 static bool
@@ -411,7 +416,7 @@ expand_bounds (BoxType *box_in)
 }
 
 bool
-PinLineIntersect (PinType *PV, LineType *Line, PointType *center)
+PinLineIntersect (PinType *PV, LineType *Line, PointType *pii)
 {
   DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
  
@@ -425,13 +430,13 @@ PinLineIntersect (PinType *PV, LineType *Line, PointType *center)
           PV->X + (PIN_SIZE (PV) + 1) / 2,
           PV->Y + (PIN_SIZE (PV) + 1) / 2,
           Line,
-          center ) :
+          pii ) :
       IsPointInPad (
           PV->X,
           PV->Y,
           MAX (PIN_SIZE (PV) / 2.0 + Bloat, 0.0),
           (PadType *) Line,
-          center );
+          pii );
 }
 
 
@@ -641,7 +646,7 @@ LOCtoPVline_callback (const BoxType * b, void *cl)
   struct pv_info *i = (struct pv_info *) cl;
 
   DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
-  if (!TEST_FLAG (i->flag, line) && PinLineIntersect (i->pv, line, NULL) &&
+  if (!TEST_FLAG (i->flag, line) && PinLineIntersect (i->pv, line, &pimri) &&
       !TEST_FLAG (HOLEFLAG, i->pv))
     {
       if (ADD_LINE_TO_LIST (i->layer, line, i->flag))
@@ -656,7 +661,7 @@ LOCtoPVarc_callback (const BoxType * b, void *cl)
   ArcType *arc = (ArcType *) b;
   struct pv_info *i = (struct pv_info *) cl;
 
-  if (!TEST_FLAG (i->flag, arc) && IS_PV_ON_ARC (i->pv, arc) &&
+  if (!TEST_FLAG (i->flag, arc) && IS_PV_ON_ARC (i->pv, arc, &pimri) &&
       !TEST_FLAG (HOLEFLAG, i->pv))
     {
       if (ADD_ARC_TO_LIST (i->layer, arc, i->flag))
@@ -1007,7 +1012,7 @@ pv_line_callback (const BoxType * b, void *cl)
   struct lo_info *i = (struct lo_info *) cl;
 
   DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
-  if (!TEST_FLAG (i->flag, pv) && PinLineIntersect (pv, i->line, NULL))
+  if (!TEST_FLAG (i->flag, pv) && PinLineIntersect (pv, i->line, &pimri))
     {
       if (TEST_FLAG (HOLEFLAG, pv))
         {
@@ -1048,7 +1053,7 @@ pv_arc_callback (const BoxType * b, void *cl)
   PinType *pv = (PinType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
-  if (!TEST_FLAG (i->flag, pv) && IS_PV_ON_ARC (pv, i->arc))
+  if (!TEST_FLAG (i->flag, pv) && IS_PV_ON_ARC (pv, i->arc, &pimri))
     {
       if (TEST_FLAG (HOLEFLAG, pv))
         {
@@ -1332,7 +1337,7 @@ get_arc_ends (Coord *box, ArcType *arc)
  * Where dx = X2 - X1 and dy = Y2 - Y1.
  */
 static bool
-ArcArcIntersect (ArcType *Arc1, ArcType *Arc2)
+ArcArcIntersect (ArcType *Arc1, ArcType *Arc2, PointType *pii)
 {
   double x, y, dx, dy, r1, r2, a, d, l, t, t1, t2, dl;
   Coord pdx, pdy;
@@ -1346,14 +1351,26 @@ ArcArcIntersect (ArcType *Arc1, ArcType *Arc2)
   if (t < 0 || t1 < 0)
     return false;
 
+  // FIXME: this doesn't give a precise intersection location, because it
+  // cheats and bloats the "point" being tested rather than using a circle,
+  // replace it with circles_intersect(), but unfortunately that's in
+  // search.c Or, make IsPointOnArc fill in pii at the true intersection,
+  // rather than point itself, since "point" isn't a point.  Yep, stupic
+  // function names are BAD.  This latter solution is is probably what we do.
+  
+  // FIXME: in one single commit rename all the stupid point test functions
+  // that actually test circles.
+
   /* try the end points first */
   get_arc_ends (&box[0], Arc1);
   get_arc_ends (&box[4], Arc2);
-  if (IsPointOnArc (box[0], box[1], t, Arc2)
-      || IsPointOnArc (box[2], box[3], t, Arc2)
-      || IsPointOnArc (box[4], box[5], t, Arc1)
-      || IsPointOnArc (box[6], box[7], t, Arc1))
+  if (IsPointOnArc (box[0], box[1], t, Arc2, pii)
+      || IsPointOnArc (box[2], box[3], t, Arc2, pii)
+      || IsPointOnArc (box[4], box[5], t, Arc1, pii)
+      || IsPointOnArc (box[6], box[7], t, Arc1, pii)) {
+    printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
     return true;
+  }
 
   pdx = Arc2->X - Arc1->X;
   pdy = Arc2->Y - Arc1->Y;
@@ -1375,9 +1392,11 @@ ArcArcIntersect (ArcType *Arc1, ArcType *Arc2)
 	  normalize_angles (&sa2, &d2);
 	  /* sa1 == sa2 was caught when checking endpoints */
 	  if (sa1 > sa2)
+            // FIXME: got to handle this one still
             if (sa1 < sa2 + d2 || sa1 + d1 - 360 > sa2)
               return true;
 	  if (sa2 > sa1)
+            // FIXME: got to handle this one still
 	    if (sa2 < sa1 + d1 || sa2 + d2 - 360 > sa1)
               return true;
         }
@@ -1398,8 +1417,10 @@ ArcArcIntersect (ArcType *Arc1, ArcType *Arc2)
 	}
 
       if (radius_crosses_arc (Arc1->X + dx, Arc1->Y + dy, Arc1)
-	  && IsPointOnArc (Arc1->X + dx, Arc1->Y + dy, t, Arc2))
+	  && IsPointOnArc (Arc1->X + dx, Arc1->Y + dy, t, Arc2, pii)) {
+        // FIXME: verify this one.  Maybe point is translated or something
 	return true;
+      }
 
       dx = - pdx * r2 / dl;
       dy = - pdy * r2 / dl;
@@ -1410,8 +1431,10 @@ ArcArcIntersect (ArcType *Arc1, ArcType *Arc2)
 	}
 
       if (radius_crosses_arc (Arc2->X + dx, Arc2->Y + dy, Arc2)
-	  && IsPointOnArc (Arc2->X + dx, Arc2->Y + dy, t1, Arc1))
+	  && IsPointOnArc (Arc2->X + dx, Arc2->Y + dy, t1, Arc1, pii)) {
+        // FIXME: verify this one.  Maybe point is translated or something
 	return true;
+      }
       return false;
     }
 
@@ -1432,18 +1455,26 @@ ArcArcIntersect (ArcType *Arc1, ArcType *Arc2)
   dx = d * pdx;
   dy = d * pdy;
   if (radius_crosses_arc (x + dy, y - dx, Arc1)
-      && IsPointOnArc (x + dy, y - dx, t, Arc2))
+      && IsPointOnArc (x + dy, y - dx, t, Arc2, pii)) {
+    // FIXME: verify this one.  Maybe point is translated or something
     return true;
+  }
   if (radius_crosses_arc (x + dy, y - dx, Arc2)
-      && IsPointOnArc (x + dy, y - dx, t1, Arc1))
+      && IsPointOnArc (x + dy, y - dx, t1, Arc1, pii)) {
+    // FIXME: verify this one.  Maybe point is translated or something
     return true;
+  }
 
   if (radius_crosses_arc (x - dy, y + dx, Arc1)
-      && IsPointOnArc (x - dy, y + dx, t, Arc2))
+      && IsPointOnArc (x - dy, y + dx, t, Arc2, pii)) {
+    // FIXME: verify this one.  Maybe point is translated or something
     return true;
+  }
   if (radius_crosses_arc (x - dy, y + dx, Arc2)
-      && IsPointOnArc (x - dy, y + dx, t1, Arc1))
+      && IsPointOnArc (x - dy, y + dx, t1, Arc1, pii)) {
+    // FIXME: verify this one.  Maybe point is translated or something
     return true;
+  }
   return false;
 }
 
@@ -1549,7 +1580,7 @@ form_slanted_rectangle (PointType p[4], LineType *l)
  * </pre>
  */
 bool
-LineLineIntersect (LineType *Line1, LineType *Line2, PointType *center)
+LineLineIntersect (LineType *Line1, LineType *Line2, PointType *pii)
 {
   double s, r;
   double line1_dx, line1_dy, line2_dx, line2_dy,
@@ -1558,7 +1589,7 @@ LineLineIntersect (LineType *Line1, LineType *Line2, PointType *center)
     {
       PointType p[4];
       form_slanted_rectangle (p, Line1);
-      return IsLineInQuadrangle (p, Line2, center);
+      return IsLineInQuadrangle (p, Line2, pii);
     }
   /* here come only round Line1 because IsLineInQuadrangle()
      calls LineLineIntersect() with first argument rounded*/
@@ -1566,27 +1597,26 @@ LineLineIntersect (LineType *Line1, LineType *Line2, PointType *center)
     {
       PointType p[4];
       form_slanted_rectangle (p, Line2);
-      return IsLineInQuadrangle (p, Line1, center);
+      return IsLineInQuadrangle (p, Line1, pii);
     }
   /* now all lines are round */
 
   /* Check endpoints: this provides a quick exit, catches
-   *  cases where the "real" lines don't intersect but the
-   *  thick lines touch, and ensures that the dx/dy business
-   *  below does not cause a divide-by-zero. */
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
-  if (IsPointInPad (Line2->Point1.X, Line2->Point1.Y,
-                    MAX (Line2->Thickness / 2 + Bloat, 0),
-                    (PadType *) Line1, &pimri)
+   * cases where the "real" lines don't intersect but the
+   * thick lines touch, and ensures that the dx/dy business
+   * below does not cause a divide-by-zero. */
+  if (    IsPointInPad (Line2->Point1.X, Line2->Point1.Y,
+                        MAX (Line2->Thickness / 2 + Bloat, 0),
+                        (PadType *) Line1, pii)
        || IsPointInPad (Line2->Point2.X, Line2->Point2.Y,
                         MAX (Line2->Thickness / 2 + Bloat, 0),
-                        (PadType *) Line1, &pimri)
+                        (PadType *) Line1, pii)
        || IsPointInPad (Line1->Point1.X, Line1->Point1.Y,
                         MAX (Line1->Thickness / 2 + Bloat, 0),
-                        (PadType *) Line2, &pimri)
+                        (PadType *) Line2, pii)
        || IsPointInPad (Line1->Point2.X, Line1->Point2.Y,
                         MAX (Line1->Thickness / 2 + Bloat, 0),
-                        (PadType *) Line2, &pimri))
+                        (PadType *) Line2, pii) )
     return true;
 
   /* setup some constants */
@@ -1622,11 +1652,14 @@ LineLineIntersect (LineType *Line1, LineType *Line2, PointType *center)
 
   /* intersection is at least on AB */
   if (r >= 0.0 && r <= 1.0) {
-    if ( center != NULL ) {
-      center->X = Line1->Point1.X + r * line1_dx;
-      center->Y = Line1->Point1.Y + r * line1_dy;
+    if ( s >= 0.0 && s <= 1.0 ) {
+      if ( pii != NULL ) {
+        pii->X = Line1->Point1.X + r * line1_dx;
+        pii->Y = Line1->Point1.Y + r * line1_dy;
+      }
+      return true;
     }
-    return (s >= 0.0 && s <= 1.0);
+    return false;
   }
 
   /* intersection is at least on CD */
@@ -1665,10 +1698,14 @@ LineLineIntersect (LineType *Line1, LineType *Line2, PointType *center)
  * The end points are hell so they are checked individually.
  */
 bool
-LineArcIntersect (LineType *Line, ArcType *Arc)
+LineArcIntersect (LineType *Line, ArcType *Arc, PointType *pii)
 {
   double dx, dy, dx1, dy1, l, d, r, r2, Radius;
   BoxType *box;
+
+  // FIXME: double check that a correct location is passed out of this
+  // function for all branches.  Should be fine once the underlying fctns
+  // are fully fixed up but double check
 
   dx = Line->Point2.X - Line->Point1.X;
   dy = Line->Point2.Y - Line->Point1.Y;
@@ -1688,36 +1725,52 @@ LineArcIntersect (LineType *Line, ArcType *Arc)
     return (false);
   /* check the ends of the line in case the projected point */
   /* of intersection is beyond the line end */
-  if (IsPointOnArc
-      (Line->Point1.X, Line->Point1.Y,
-       MAX (0.5 * Line->Thickness + Bloat, 0.0), Arc))
-    return (true);
-  if (IsPointOnArc
-      (Line->Point2.X, Line->Point2.Y,
-       MAX (0.5 * Line->Thickness + Bloat, 0.0), Arc))
-    return (true);
+  if ( IsPointOnArc (
+           Line->Point1.X, Line->Point1.Y,
+           MAX (0.5 * Line->Thickness + Bloat, 0.0),
+           Arc,
+           pii ) ) {
+    return true;
+  }
+  if ( IsPointOnArc (
+           Line->Point2.X, Line->Point2.Y,
+           MAX (0.5 * Line->Thickness + Bloat, 0.0),
+           Arc,
+           pii ) ) {
+    return true;
+  }
   if (l == 0.0)
     return (false);
   r2 = sqrt (r2);
   Radius = -(dx * dx1 + dy * dy1);
   r = (Radius + r2) / l;
-  if (r >= 0 && r <= 1
-      && IsPointOnArc (Line->Point1.X + r * dx,
-                       Line->Point1.Y + r * dy,
-                       MAX (0.5 * Line->Thickness + Bloat, 0.0), Arc))
-    return (true);
+  if ( r >= 0 && r <= 1
+       && IsPointOnArc (
+              Line->Point1.X + r * dx, Line->Point1.Y + r * dy,
+              MAX (0.5 * Line->Thickness + Bloat, 0.0),
+              Arc,
+              pii ) ) {
+    return true;
+  }
   r = (Radius - r2) / l;
-  if (r >= 0 && r <= 1
-      && IsPointOnArc (Line->Point1.X + r * dx,
-                       Line->Point1.Y + r * dy,
-                       MAX (0.5 * Line->Thickness + Bloat, 0.0), Arc))
-    return (true);
+  if ( r >= 0 && r <= 1
+       && IsPointOnArc (
+              Line->Point1.X + r * dx, Line->Point1.Y + r * dy,
+              MAX (0.5 * Line->Thickness + Bloat, 0.0),
+              Arc,
+              pii ) ) {
+    // FIXME: this one and the above should get a quick verify also should
+    // be good though
+    printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
+    gui->add_debug_marker (pii->X, pii->Y);
+    return true;
+  }
   /* check arc end points */
   box = GetArcEnds (Arc);
   DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
-  if (IsPointInPad (box->X1, box->Y1, Arc->Thickness * 0.5 + Bloat, (PadType *)Line, NULL))
+  if (IsPointInPad (box->X1, box->Y1, Arc->Thickness * 0.5 + Bloat, (PadType *)Line, pii))
     return true;
-  if (IsPointInPad (box->X2, box->Y2, Arc->Thickness * 0.5 + Bloat, (PadType *)Line, NULL))
+  if (IsPointInPad (box->X2, box->Y2, Arc->Thickness * 0.5 + Bloat, (PadType *)Line, pii))
     return true;
   return false;
 }
@@ -1728,7 +1781,7 @@ LOCtoArcLine_callback (const BoxType * b, void *cl)
   LineType *line = (LineType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
-  if (!TEST_FLAG (i->flag, line) && LineArcIntersect (line, i->arc))
+  if (!TEST_FLAG (i->flag, line) && LineArcIntersect (line, i->arc, &pimri))
     {
       if (ADD_LINE_TO_LIST (i->layer, line, i->flag))
         longjmp (i->env, 1);
@@ -1744,7 +1797,7 @@ LOCtoArcArc_callback (const BoxType * b, void *cl)
 
   if (!arc->Thickness)
     return 0;
-  if (!TEST_FLAG (i->flag, arc) && ArcArcIntersect (i->arc, arc))
+  if (!TEST_FLAG (i->flag, arc) && ArcArcIntersect (i->arc, arc, &pimri))
     {
       if (ADD_ARC_TO_LIST (i->layer, arc, i->flag))
         longjmp (i->env, 1);
@@ -1760,7 +1813,7 @@ LOCtoArcPad_callback (const BoxType * b, void *cl)
 
   if (!TEST_FLAG (i->flag, pad) && i->layer ==
       (TEST_FLAG (ONSOLDERFLAG, pad) ? BOTTOM_SIDE : TOP_SIDE)
-      && ArcPadIntersect (i->arc, pad) && ADD_PAD_TO_LIST (i->layer, pad, i->flag))
+      && ArcPadIntersect (i->arc, pad, &pimri) && ADD_PAD_TO_LIST (i->layer, pad, i->flag))
     longjmp (i->env, 1);
   return 0;
 }
@@ -1857,7 +1910,7 @@ LOCtoLineArc_callback (const BoxType * b, void *cl)
 
   if (!arc->Thickness)
     return 0;
-  if (!TEST_FLAG (i->flag, arc) && LineArcIntersect (i->line, arc))
+  if (!TEST_FLAG (i->flag, arc) && LineArcIntersect (i->line, arc, &pimri))
     {
       if (ADD_ARC_TO_LIST (i->layer, arc, i->flag))
         longjmp (i->env, 1);
@@ -2105,7 +2158,7 @@ LOCtoPadLine_callback (const BoxType * b, void *cl)
   LineType *line = (LineType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
-  if (!TEST_FLAG (i->flag, line) && LinePadIntersect (line, i->pad, NULL))
+  if (!TEST_FLAG (i->flag, line) && LinePadIntersect (line, i->pad, &pimri))
     {
       if (ADD_LINE_TO_LIST (i->layer, line, i->flag))
         longjmp (i->env, 1);
@@ -2121,7 +2174,7 @@ LOCtoPadArc_callback (const BoxType * b, void *cl)
 
   if (!arc->Thickness)
     return 0;
-  if (!TEST_FLAG (i->flag, arc) && ArcPadIntersect (arc, i->pad))
+  if (!TEST_FLAG (i->flag, arc) && ArcPadIntersect (arc, i->pad, &pimri))
     {
       if (ADD_ARC_TO_LIST (i->layer, arc, i->flag))
         longjmp (i->env, 1);
@@ -3456,19 +3509,30 @@ DRCFind (int What, void *ptr1, void *ptr2, void *ptr3)
           User = false;
           drc = false;
           drcerr_count++;
-          LocateErrorObject (&x, &y);
+          if ( pimri.X != PIMRI_UNSET ) {
+            x = pimri.X;
+            y = pimri.Y;
+            // Clear to avoid confuse ourselves next time
+            pimri.X = PIMRI_UNSET; 
+          }
+          else {
+            // FIXME: once all the different intersection-detecting codes are
+            // fixed to return pimri stuff this fallback to LocateErrorObject
+            // could in theory go away, perhaps instead an assertion check
+            LocateErrorObject (&x, &y);
+          }
           BuildObjectList (&object_count, &object_id_list, &object_type_list);
           violation = pcb_drc_violation_new (_("Potential for broken trace"),
-                                             _("Insufficient overlap between objects can lead to broken tracks\n"
-                                               "due to registration errors with old wheel style photo-plotters."),
-                                             x, y,
-                                             0,     /* ANGLE OF ERROR UNKNOWN */
-                                             FALSE, /* MEASUREMENT OF ERROR UNKNOWN */
-                                             0,     /* MAGNITUDE OF ERROR UNKNOWN */
-                                             PCB->Shrink,
-                                             object_count,
-                                             object_id_list,
-                                             object_type_list);
+              _("Insufficient overlap between objects can lead to broken tracks\n"
+                "due to registration errors with old wheel style photo-plotters."),
+              x, y,
+              0,     /* ANGLE OF ERROR UNKNOWN */
+              FALSE, /* MEASUREMENT OF ERROR UNKNOWN */
+              0,     /* MAGNITUDE OF ERROR UNKNOWN */
+              PCB->Shrink,
+              object_count,
+              object_id_list,
+              object_type_list);
           append_drc_violation (violation);
           pcb_drc_violation_free (violation);
           free (object_id_list);
@@ -3517,7 +3581,7 @@ DRCFind (int What, void *ptr1, void *ptr2, void *ptr3)
       else {
         // FIXME: once all the different intersection-detecting codes are
         // fixed to return pimri stuff this fallback to LocateErrorObject
-        // could go away.
+        // could in theory go away, perhaps instead an assertion check
         LocateErrorObject (&x, &y);
       }
       // FIXME: WORK POINT: the damn rtree problem triggered again...

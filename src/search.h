@@ -72,12 +72,12 @@
  */
 bool IsPointOnLine (Coord, Coord, Coord, LineType *);
 bool IsPointOnPin (Coord, Coord, Coord, PinType *);
-bool IsPointOnArc (Coord, Coord, Coord, ArcType *);
+bool IsPointOnArc (Coord, Coord, Coord, ArcType *, PointType *pii);
 bool IsPointOnLineEnd (Coord, Coord, RatType *);
-bool IsLineInRectangle (Coord, Coord, Coord, Coord, LineType *, PointType *center);
-bool IsLineInQuadrangle (PointType p[4], LineType * Line, PointType *center);
-bool IsArcInRectangle (Coord, Coord, Coord, Coord, ArcType *);
-bool IsPointInPad (Coord, Coord, Coord, PadType *, PointType *center);
+bool IsLineInRectangle (Coord, Coord, Coord, Coord, LineType *, PointType *pii);
+bool IsLineInQuadrangle (PointType p[4], LineType * Line, PointType *pii);
+bool IsArcInRectangle (Coord, Coord, Coord, Coord, ArcType *, PointType *pii);
+bool IsPointInPad (Coord, Coord, Coord, PadType *, PointType *pii);
 bool IsPointInBox (Coord, Coord, BoxType *, Coord);
 int SearchObjectByLocation (unsigned, void **, void **, void **, Coord, Coord, Coord);
 int SearchScreen (Coord, Coord, int, void **, void **, void **);

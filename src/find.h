@@ -44,11 +44,11 @@
 #define SILK_TYPE	\
 	(LINE_TYPE | ARC_TYPE | POLYGON_TYPE)
 
-bool LineLineIntersect (LineType *, LineType *, PointType *center);
-bool LineArcIntersect (LineType *, ArcType *);
-bool PinLineIntersect (PinType *, LineType *, PointType *center);
-bool LinePadIntersect (LineType *, PadType *, PointType *center);
-bool ArcPadIntersect (ArcType *, PadType *);
+bool LineLineIntersect (LineType *, LineType *, PointType *pii);
+bool LineArcIntersect (LineType *, ArcType *, PointType *pii);
+bool PinLineIntersect (PinType *, LineType *, PointType *pii);
+bool LinePadIntersect (LineType *, PadType *, PointType *pii);
+bool ArcPadIntersect (ArcType *, PadType *, PointType *pii);
 void LookupElementConnections (ElementType *, FILE *);
 void LookupConnectionsToAllElements (FILE *);
 void LookupConnection (Coord, Coord, bool, Coord, int, bool AndRats);

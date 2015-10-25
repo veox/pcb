@@ -273,7 +273,7 @@ drcArc_callback (const BoxType * b, void *cl)
   ArcType *arc = (ArcType *) b;
   struct drc_info *i = (struct drc_info *) cl;
 
-  if (!TEST_FLAG (FOUNDFLAG, arc) && LineArcIntersect (i->line, arc))
+  if (!TEST_FLAG (FOUNDFLAG, arc) && LineArcIntersect (i->line, arc, NULL))
     longjmp (i->env, 1);
   return 1;
 }
