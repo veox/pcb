@@ -1126,7 +1126,7 @@ static bool
 circle_intersects_line_segment (
     Circle      const *circle,
     LineSegment const *seg,
-    Vec               *ip)
+    Vec               *pii)
 {
   // Return true iff the circle intersects seg.  If pii (Point In
   // Intersection) is not NULL, return a point in the intersection.
@@ -1138,8 +1138,8 @@ circle_intersects_line_segment (
   double mcc_np = vec_mag (cc_np);
 
   if ( mcc_np <= circle->radius ) {
-    if ( ip != NULL ) {
-      *ip = np;
+    if ( pii != NULL ) {
+      *pii = np;
     }
     return true;
   }
@@ -1191,10 +1191,10 @@ circle_intersects_rectangle (
     Coord thickness,
     Vec *pii )
 {
-  // Return true iff circle intersects the rectangle equivalent to all
-  // points on line segments of length thickness / 2 orthogonol to seg (with
-  // one end point on seg).  If an intersection is found and pii (Point In
-  // Intersection) is not NULL, return a point on the intersection in pii.
+  // Return true iff circle intersects the rectangle equivalent to all points
+  // on line segments of length thickness / 2 orthogonol and incident to seg
+  // (with one end point on seg).  If an intersection is found and pii (Point
+  // In Intersection) is not NULL, return a point on the intersection in pii.
   // As currently implemented, this routing returns a point on the boundry
   // of the intersection in pii.
 
@@ -1527,8 +1527,6 @@ typedef struct {
   // Angular span of segment, measuring in the +x towards +y direction
   double angle_delta;  
 } Arc;
-
-#define normalize
 
 static double
 normalize_angle_in_radians (double angle)
