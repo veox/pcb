@@ -35,31 +35,31 @@ typedef struct {
   double angle_delta;  
 } Arc;
 
-static double
+double
 vec_mag (Vec vec);
 
 double
 vec_dot (Vec va, Vec vb);
 
 // Vector from va to vb, aka (vb - va)
-static Vec
+Vec
 vec_from (Vec va, Vec vb);
 
 // Return va scaled by scale_factor.  Be careful with this: scaling integer
 // vectors to small magnitudes can result in a lot of error.  Trying to
 // make unit vectors won't work for this reason.
-static Vec
+Vec
 vec_scale (Vec vec, double scale_factor);
 
 // Return projection of va onto vb.
-static Vec
+Vec
 vec_proj (Vec va, Vec vb);
 
-static Vec
+Vec
 vec_sum (Vec va, Vec vb);
 
 // Return the point on seg closest to pt.
-static Vec
+Vec
 nearest_point_on_line_segment (Vec pt, LineSegment const *seg);
 
 // Return true iff circles ca and cb intersect.  If pii (Point In
