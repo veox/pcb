@@ -1,6 +1,9 @@
 // Simple 2D geometrical types (e.g. vector, line, cirle, ellipse, arc)
 // and related tests and methods.
 
+#ifndef	PCB_GEOMETRY_H
+#define	PCB_GEOMETRY_H
+
 #include "global.h"
 
 typedef struct {
@@ -92,3 +95,5 @@ circle_intersects_rectangle (
     LineSegment const *seg,
     Coord thickness,
     Vec *pii );
+
+#endif   // PCB_GEOMETRY_H
