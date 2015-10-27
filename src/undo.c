@@ -81,6 +81,7 @@ static bool added_undo_between_increment_and_restore = false;
 typedef struct			/* information about a change command */
 {
   char *Name;
+  int Index;
 } ChangeNameType;
 
 typedef struct			/* information about a move command */
@@ -338,7 +339,7 @@ UndoChangeName (UndoListType *Entry)
     {
       Entry->Data.ChangeName.Name =
 	(char *)(ChangeObjectName (type, ptr1, ptr2, ptr3,
-			   Entry->Data.ChangeName.Name));
+			   Entry->Data.ChangeName.Name, Entry->Data.ChangeName.Index));
       return (true);
     }
   return (false);
@@ -1427,7 +1428,7 @@ AddObjectToMoveUndoList (int Type, void *Ptr1, void *Ptr2, void *Ptr3,
  */
 void
 AddObjectToChangeNameUndoList (int Type, void *Ptr1, void *Ptr2, void *Ptr3,
-			       char *OldName)
+			       char *OldName, int idx)
 {
   UndoListType *undo;
 
@@ -1435,6 +1436,7 @@ AddObjectToChangeNameUndoList (int Type, void *Ptr1, void *Ptr2, void *Ptr3,
     {
       undo = GetUndoSlot (UNDO_CHANGENAME, OBJECT_ID (Ptr3), Type);
       undo->Data.ChangeName.Name = OldName;
+      undo->Data.ChangeName.Index = idx;
     }
 }
 
