@@ -86,6 +86,7 @@
 #include "draw.h"
 #include "error.h"
 #include "find.h"
+#include "geometry.h"
 #include "misc.h"
 #include "rtree.h"
 #include "polygon.h"
@@ -1368,7 +1369,6 @@ ArcArcIntersect (ArcType *Arc1, ArcType *Arc2, PointType *pii)
       || IsPointOnArc (box[2], box[3], t, Arc2, pii)
       || IsPointOnArc (box[4], box[5], t, Arc1, pii)
       || IsPointOnArc (box[6], box[7], t, Arc1, pii)) {
-    printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
     return true;
   }
 
@@ -1667,6 +1667,182 @@ LineLineIntersect (LineType *Line1, LineType *Line2, PointType *pii)
   return false;
 }
 
+static Rectangle
+rectangular_part_of_line (LineType *Line)
+{
+  // Return a new Rectangle consisting of the portion of Line that is
+  // a rectangle.  If Line has SQURE_FLAG, this rectangle incorporates
+  // the square end caps, otherwise it ends where the "Line" stops being
+  // a rectangle.
+  
+  Vec   // End points of Line
+    pa = { Line->Point1.X, Line->Point1.Y },
+    pb = { Line->Point2.X, Line->Point2.Y };
+  
+  // Vector with direction and mag. of segment, not including end caps
+  Vec pa_pb = vec_from (pa, pb);
+  
+  // Orthogonol Vector (rotated CCW 90 degrees in +x towares +y direction)
+  Vec ov = { -pa_pb.y, pa_pb.x };   // Orthogonol Vector (to segment)
+
+  // "Thickness" vector.  
+  Vec tv = vec_scale (ov, Line->Thickness / (2.0 * vec_mag (ov)));
+
+  // Cap vector.  Has magnitude of either thickness / 2.0 or 0, and opposite
+  // direction of pa_pb
+  Vec cv;
+  if ( TEST_FLAG (SQUAREFLAG, Line) ) {
+    cv = ((Vec) { -tv.y, tv.x }); 
+  }
+  else {
+    cv = ((Vec) { 0, 0 });
+  }
+  
+  Rectangle result = { 
+    vec_sum (vec_sum (pa, tv),                   cv), 
+    vec_sum (vec_sum (pb, tv),                   vec_scale (cv, -1.0)),
+    vec_sum (vec_sum (pb, vec_scale (tv, -1.0)), vec_scale (cv, -1.0)), 
+    vec_sum (vec_sum (pa, vec_scale (tv, -1.0)),  cv) };
+    
+  return result;
+}
+
+bool
+LineArcIntersect (LineType *Line, ArcType *Arc, PointType *pii)
+{
+  // We don't handle arc of ellipse at the moment
+  assert (Arc->Width == Arc->Height);
+
+  Coord radius = Arc->Width;
+
+  // Rectangular Part Of Line
+  Rectangle rpol = rectangular_part_of_line (Line);
+
+  gui->add_debug_marker (rpol.c1.x, rpol.c1.y);
+  gui->add_debug_marker (rpol.c2.x, rpol.c2.y);
+  gui->add_debug_marker (rpol.c3.x, rpol.c3.y);
+  gui->add_debug_marker (rpol.c4.x, rpol.c4.y);
+
+  // FIXME: use array initializer or compound assign here
+  LineSegment rectangle_edges[4];
+  rectangle_edges[0] = ((LineSegment) { rpol.c1, rpol.c2 });
+  rectangle_edges[1] = ((LineSegment) { rpol.c2, rpol.c3 });
+  rectangle_edges[2] = ((LineSegment) { rpol.c3, rpol.c4 });
+  rectangle_edges[3] = ((LineSegment) { rpol.c4, rpol.c1 });
+
+  // ArcType type uses degrees, puts 0 degrees on -x axis and measures
+  // positive angles in the -x towards +y direction.  Arc type uses radians,
+  // puts 0 degrees on +x and measures positive angles in +x towards +y
+  // directon according to normal mathematical convention.  So here we
+  // convert.
+  double sa = M_PI - ((M_PI / 180.0) * Arc->StartAngle);
+  double ad = -Arc->Delta * (M_PI / 180.0);
+ 
+  Coord to2 = round (Arc->Thickness / 2.0);   // Thickness Over 2
+
+  // FIXME: when to2 >= radius the inner circle is degenerate or has negative
+  // radius, handle this case.
+  assert (to2 < radius);
+
+  // Inner/Outer Arcs (of ArcType Arc, due to its thickness)
+  Arc2
+    ia = { { { Arc->X, Arc->Y }, radius - to2 }, sa, ad },
+    oa = { { { Arc->X, Arc->Y }, radius + to2 }, sa, ad };
+
+  // Check if edges of the rectangular part of line intersect any arc edges
+  for ( int ii = 0 ; ii < 4 ; ii++ ) {
+    Vec ip[2];   // Intersection Points
+    int ipc;     // Intersection Point Count
+    ipc = arc_line_segment_intersection (&ia, &(rectangle_edges[ii]), ip);
+    if ( ipc > 0 ) {
+      if ( pii != NULL ) {
+        pii->X = ip[0].x;
+        pii->Y = ip[0].y;
+      }
+      return true;
+    }
+    ipc = arc_line_segment_intersection (&oa, &(rectangle_edges[ii]), ip);
+    if ( ipc > 0 ) {
+      if ( pii != NULL ) {
+        pii->X = ip[0].x;
+        pii->Y = ip[0].y;
+      }
+      return true;
+    }
+  }
+  
+  assert (! TEST_FLAG (SQUAREFLAG, Arc));
+
+  Arc2 acl = { { { Arc->X, Arc->Y}, radius }, sa, ad };   // Arc Center Line
+  Vec aep[2];   // Arc End Points
+  arc_end_points (&acl, aep);
+  Circle aec[2] = { { aep[0], to2 }, { aep[1], to2 } };   // Arc End Caps
+
+  // Unless the line has square end caps (in which case they will already
+  // have been incorporated into the single rectangle used to represent
+  // the line)...
+  if ( ! TEST_FLAG (SQUAREFLAG, Line) ) {
+
+    Circle lec[2] = {   // Line End Caps
+      { { Line->Point1.X, Line->Point1.Y }, to2 },
+      { { Line->Point2.X, Line->Point2.Y }, to2 } };
+
+    // Check for intersections of the semicircular arc edges with the circular
+    // line caps
+    for ( int ii = 0 ; ii < 2 ; ii++ ) {
+      Vec np2lep;   // Nearest Point to Line End Point
+      np2lep = nearest_point_on_arc (lec[ii].center, &ia);
+      if ( vec_mag (vec_from (lec[ii].center, np2lep)) <= to2 ) {
+        if ( pii != NULL ) {
+          pii->X = np2lep.x;
+          pii->Y = np2lep.y;
+        }
+        return true;
+      } 
+      np2lep = nearest_point_on_arc (lec[ii].center, &oa);
+      if ( vec_mag (vec_from (lec[ii].center, np2lep)) <= to2 ) {
+        if ( pii != NULL ) {
+          pii->X = np2lep.x;
+          pii->Y = np2lep.y;
+        }
+        return true;
+      } 
+    }
+
+    // Check for intersections of the line end caps with the arc end caps
+    // (which are always circular).
+    for ( int ii = 0 ; ii < 2 ; ii++ ) {
+      for ( int jj = 0 ; jj < 2 ; jj++ ) {
+        Vec pii_as_vec;
+        if ( circles_intersect (&(aec[ii]), &(lec[jj]), &pii_as_vec) ) {
+          if ( pii != NULL ) {
+            pii->X = pii_as_vec.x;
+            pii->Y = pii_as_vec.y;
+          }
+          return true;
+        }
+      }
+    }
+
+  } 
+
+  // Finally, we have to check if the arc end caps (which are always circular)
+  // intersect the rectanglar part of the line.
+  for ( int ii = 0 ; ii < 2 ; ii++ ) {
+    Vec pii_as_vec;
+    if ( circle_intersects_rectangle_2 (&(aec[ii]), &rpol, &pii_as_vec) ) {
+      if ( pii != NULL ) {
+        pii->X = pii_as_vec.x;
+        pii->Y = pii_as_vec.y;
+      }
+      return true;
+    }
+  }
+
+  return false;
+  
+}
+
 /*!
  * \brief Check for line intersection with an arc.
  *
@@ -1698,7 +1874,7 @@ LineLineIntersect (LineType *Line1, LineType *Line2, PointType *pii)
  * The end points are hell so they are checked individually.
  */
 bool
-LineArcIntersect (LineType *Line, ArcType *Arc, PointType *pii)
+UnfixedLineArcIntersect (LineType *Line, ArcType *Arc, PointType *pii)
 {
   double dx, dy, dx1, dy1, l, d, r, r2, Radius;
   BoxType *box;
@@ -1761,13 +1937,10 @@ LineArcIntersect (LineType *Line, ArcType *Arc, PointType *pii)
               pii ) ) {
     // FIXME: this one and the above should get a quick verify also should
     // be good though
-    printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
-    gui->add_debug_marker (pii->X, pii->Y);
     return true;
   }
   /* check arc end points */
   box = GetArcEnds (Arc);
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
   if (IsPointInPad (box->X1, box->Y1, Arc->Thickness * 0.5 + Bloat, (PadType *)Line, pii))
     return true;
   if (IsPointInPad (box->X2, box->Y2, Arc->Thickness * 0.5 + Bloat, (PadType *)Line, pii))
@@ -3509,6 +3682,12 @@ DRCFind (int What, void *ptr1, void *ptr2, void *ptr3)
           User = false;
           drc = false;
           drcerr_count++;
+          // FIXME: well DoIt() runs a couple more times since the one
+          // that put us in the branch gauranteeing a violation.  I'm not
+          // clear what it's doing.  But perhaps it's finding the correct
+          // intersection point only by chance, and this location should get
+          // recorded right away instead?  Review the above code figure out
+          // what's going on and decide
           if ( pimri.X != PIMRI_UNSET ) {
             x = pimri.X;
             y = pimri.Y;
@@ -3573,7 +3752,13 @@ DRCFind (int What, void *ptr1, void *ptr2, void *ptr3)
       DoIt (FOUNDFLAG, true, true);
       DumpList ();
       drcerr_count++;
-      if ( pimri.X != -1 ) {
+      // FIXME: well DoIt() runs a couple more times since the one
+      // that put us in the branch gauranteeing a violation.  I'm not
+      // clear what it's doing.  But perhaps it's finding the correct
+      // intersection point only by chance, and this location should get
+      // recorded right away instead?  Review the above code figure out
+      // what's going on and decide
+      if ( pimri.X != PIMRI_UNSET ) {
         x = pimri.X;
         y = pimri.Y;
         pimri.X = PIMRI_UNSET;  // Clear to avoid confuse ourselves next time
@@ -3584,7 +3769,6 @@ DRCFind (int What, void *ptr1, void *ptr2, void *ptr3)
         // could in theory go away, perhaps instead an assertion check
         LocateErrorObject (&x, &y);
       }
-      // FIXME: WORK POINT: the damn rtree problem triggered again...
       BuildObjectList (&object_count, &object_id_list, &object_type_list);
       violation = pcb_drc_violation_new (_("Copper areas too close"),
                                          _("Circuits that are too close may bridge during imaging, etching,\n"

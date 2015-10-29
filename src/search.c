@@ -1263,40 +1263,10 @@ IsPointInBox (Coord X, Coord Y, BoxType *box, Coord Radius)
   return range < Radius;
 }
 
-static double
-normalize_angle_in_radians (double angle)
-{
-  while ( angle < 0.0 ) {
-    angle += 2.0 * M_PI;
-  }
-  while ( angle >= 2.0 * M_PI ) {
-    angle -= 2.0 * M_PI;
-  }
-
-  return angle;
-}
-
-#define D2R(arg) (arg * M_PI / 180.0)
-
-static bool
-angle_in_span (double theta, double start_angle, double angle_delta)
-{
-  // Return true iff theta is between start_angle and start_angle +
-  // angle_delta in radians (winding positive angles in CCW direction).
-  //
-  // Note also that no angular epsilon is implied here: clients must include
-  // one if they need it.
-
-  if ( angle_delta > 0.0 ) {
-    return angle_delta >= normalize_angle_in_radians (theta - start_angle);
-  }
-  else {
-    return -angle_delta >= normalize_angle_in_radians (-theta + start_angle);
-  }
-}
-
+// FIXME: should move to geometry.h
+// FIXME: should be replaced with nearest_point_on_arc_2 maybe
 static Vec
-nearest_point_on_arc (Vec pt, Arc *arc)
+old_nearest_point_on_arc (Vec pt, Arc *arc)
 {
   // Find the nearest point on arc from pt.
     
@@ -1401,7 +1371,7 @@ nearest_point_on_arc (Vec pt, Arc *arc)
 // FIXME: this function is horribly mis-named, it actually checks whether
 // a cirle intersects an ArcType
 bool
-FixedIsPointOnArc (
+IsPointOnArc (
     Coord X, Coord Y, Coord Radius, ArcType *arc, PointType *pii )
 {
   Vec pt = {X, Y};
@@ -1414,11 +1384,17 @@ FixedIsPointOnArc (
   Coord p_minor_x = arc->X + (arc->Width <= arc->Height ? arc->Width : 0);
   Coord p_minor_y = arc->Y + (arc->Width <= arc->Height ? 0 : arc->Height);
 
+  // ArcType type puts 0 degrees on -x axis and measures angles in the
+  // -x towards +y direction.  Arc type puts 0 degrees on +x and measures
+  // angles from
+
   // For our mathematical Arc object we use the normal +x towards +y winding
   // convention, so we invert the sign here.  We also cheat a tiny bit so ad
   // of 360 always ends up meaning what clients intend.  Note that they are
   // still on their own when dealing with floating point comparison issues
   // at other angular span end points.
+  // FIXME:uuuuu so why are we assigning start_angle to angle_delta here, 
+  // what we want to do is in sarc assignment down below
   double angle_delta = -arc->StartAngle;
   if ( angle_delta == 360.0 ) {
     // Note that it doesn't matter exactly what we add
@@ -1442,7 +1418,7 @@ FixedIsPointOnArc (
     -arc->Delta * (M_PI / 180.0)
   };
 
-  Vec np = nearest_point_on_arc (pt, &sarc);
+  Vec np = old_nearest_point_on_arc (pt, &sarc);
 
   Vec np_pt = vec_from (np, pt);      //  Vector from np to pt
   
@@ -1474,7 +1450,7 @@ FixedIsPointOnArc (
  *       the radius.
  */
 bool
-IsPointOnArc (Coord X, Coord Y, Coord Radius, ArcType *Arc, PointType *pii)
+UnfixedIsPointOnArc (Coord X, Coord Y, Coord Radius, ArcType *Arc, PointType *pii)
 {
   printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
 
