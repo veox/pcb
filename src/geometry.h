@@ -38,6 +38,13 @@ typedef struct {
   double angle_delta;  
 } Arc;
 
+// This is what Arc should be fixed to be FIXME: change them
+typedef struct {
+  Circle circle;
+  double start_angle;   // Measuing from +x towards +y, in [0, 2 * M_PI)
+  double angle_delta;   // Measuing from +x towards +y, in [0, 2 * M_PI)
+} Arc2;
+
 double
 vec_mag (Vec vec);
 
@@ -61,9 +68,43 @@ vec_proj (Vec va, Vec vb);
 Vec
 vec_sum (Vec va, Vec vb);
 
+double
+normalize_angle_in_radians (double angle);
+
+// Return true iff theta is between start_angle and start_angle + angle_delta
+// in radians (winding positive angles from +x towards +y).  No angular
+// epsilon is implied here: clients must include one if they need it.
+bool
+angle_in_span (double theta, double start_angle, double angle_delta);
+
 // Return the point on seg closest to pt.
 Vec
 nearest_point_on_line_segment (Vec pt, LineSegment const *seg);
+
+// FIXME: The function in this module should be put in a reasonable order
+
+// Return the point on Arc closest to pt.
+Vec
+nearest_point_on_arc (Vec pt, Arc2 *arc);
+
+// Return the number of points in the intersection of circ and ls (0, 1, or
+// 2), assuming no floating point problems.  If the result is non-zero and
+// intersections is non-NULL, the intersection point(s) are returned there.
+// Degenerate inputs (0-radius circles and 0-length line segments) are not
+// allowed.  Detection of the intersection for line segments tangent to circ
+// is subject to rounding error and a result of 1 is doubtful in this case.
+int
+circle_line_segment_intersection (
+    Circle const *circ,
+    LineSegment const *ls,
+    Vec intersection[2] );
+
+// Like circle_line_segment_intersection(), but for an arc of a cirle.
+int
+arc_line_segment_intersection (
+    Arc2 const *arc,
+    LineSegment const *ls,
+    Vec intersection[2] );
 
 // Return true iff circles ca and cb intersect.  If pii (Point In
 // Intersection) is not NULL, set *pii to a point in the intersection.
@@ -78,7 +119,7 @@ circle_intersects_line_segment (
     LineSegment const *seg,
     Vec               *pii );
 
-// FIXME: my implementation is lazy and slow, should rotate point
+// FIXME: my implementation is lazy and slow, should use rotation
 bool
 point_is_on_rectangle (Vec point, Rectangle const *rect);
 
@@ -95,5 +136,15 @@ circle_intersects_rectangle (
     LineSegment const *seg,
     Coord thickness,
     Vec *pii );
+
+// circle_intersects_rectangle as it shoudl be // FIXME: replce the other
+bool
+circle_intersects_rectangle_2 (Circle const *circ, Rectangle *rect, Vec *pii);
+
+// Return the end points of arc in *ep.  Note that arcs spanning > 2 pi
+// radians are still considered to have distinct end points according to
+// this function.
+void
+arc_end_points (Arc2 *arc, Vec ep[2]);
 
 #endif   // PCB_GEOMETRY_H
