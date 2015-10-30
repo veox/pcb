@@ -29,6 +29,7 @@ typedef struct {
 
 // FIXME: this is a goofy way to express an ellipse, should go with center+p_major(vec) + p_minor_mag
 // FIXME: should be ArcOfEllipse and reference an Ellipse 
+/*
 typedef struct {
   Vec center;   // Center of ellipse
   Vec p_major, p_minor;   // Points defining major/minor axes of ellipse
@@ -37,6 +38,7 @@ typedef struct {
   // Angular span of segment, measuring in the +x towards +y direction
   double angle_delta;  
 } Arc;
+*/
 
 // This is what Arc should be fixed to be FIXME: change them
 typedef struct {
@@ -61,7 +63,8 @@ vec_from (Vec va, Vec vb);
 Vec
 vec_scale (Vec vec, double scale_factor);
 
-// Return projection of va onto vb.
+// Return projection of va onto vb.  Projecting onto a vector of zero
+// magnitude will result in a divide-by-zero error.
 Vec
 vec_proj (Vec va, Vec vb);
 
