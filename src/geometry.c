@@ -10,6 +10,7 @@
 double
 vec_mag (Vec vec)
 {
+  // FIXME: this hidden round is weird, should make clients do it at need
   return round (hypot (vec.x, vec.y));
 }
 
@@ -47,10 +48,9 @@ vec_scale (Vec vec, double scale_factor)
 Vec
 vec_proj (Vec va, Vec vb)
 {
-  return vec_scale (vb, ((double) vec_dot (va, vb)) / vec_dot (vb, vb));
+  return vec_scale (vb, vec_dot (va, vb) / vec_dot (vb, vb));
 }
 
-// FIXME: this should be vec_add() since it only supports two arguments
 Vec
 vec_sum (Vec va, Vec vb)
 {
@@ -86,11 +86,14 @@ angle_in_span (double theta, double start_angle, double angle_delta)
   }
 }
 
-// FIXME: I don't do anything efficient for horizontal/vertical line segments
 Vec
 nearest_point_on_line_segment (Vec pt, LineSegment const *seg)
 {
-  // FIXME: I don't do anything efficient for horizontal/vertical line segments
+  // FIXME: I don't do anything efficient for horizontal/vertical line
+  // segments
+
+  // FIXME: I could be rewritten without so many vectors if I'm found to be
+  // slow enought to matter
 
   Vec spa_spb;   // Vector from segment point a to point b
   double sm;     // Segment Magnitude
@@ -108,15 +111,13 @@ nearest_point_on_line_segment (Vec pt, LineSegment const *seg)
     return result;
   }
 
-  // FIXME: consider whether this works when pt is on seg
-
   spa_spb = vec_from (seg->pa, seg->pb);
   spa_pt  = vec_from (seg->pa, pt);
   ptl     = vec_proj (spa_pt, spa_spb);
   sm      = vec_mag (spa_spb);
   pm      = vec_mag (ptl);
   pp      = vec_sum (seg->pa, ptl);
-  sppm    = vec_mag (vec_sum (spa_spb, spa_pt));
+  sppm    = vec_mag (vec_sum (spa_spb, ptl));
   
   if ( sppm < sm || sppm < pm ) {
     return seg->pa;  // Segment + Projection add desctructively, so end a 
@@ -128,8 +129,6 @@ nearest_point_on_line_segment (Vec pt, LineSegment const *seg)
     return pp;       // Projection landed on line, so projected point
   }
 }
-
-// FIXME: change the old_nearest_point_on_arc to use this new one
 
 Vec
 nearest_point_on_arc (Vec pt, Arc2 *arc)
@@ -159,7 +158,7 @@ nearest_point_on_arc (Vec pt, Arc2 *arc)
     result = npoc;
   }
   else {
-    // FIXME: use sincos() for speed and deredundification here
+    // We should use sincos() here when it becomes standard
     // End Point A.  round() probably isn't really worth it here
     Vec epa = { round (rad * cos (sa)), round (rad * sin (sa)) };
     // End Point B   round() probably isn't really worth it here
@@ -266,9 +265,7 @@ arc_line_segment_intersection (
     LineSegment const *ls,
     Vec intersection[2] )
 {
-  // Underlying Cicle.  FIXME: change Arc type to reference a circle so this
-  // can go away.
-  Circle const *uc = &(arc->circle);
+  Circle const *uc = &(arc->circle);   // Underlying Circle
    
   // Get intersection count and intersection points 
   Vec ci[2];   // Circle Intersection (up to two points)
@@ -455,12 +452,21 @@ void
 arc_end_points (Arc2 *arc, Vec ep[2])
 {
   // Sines and cosines of Start Angle/End Angle
-  double sin_sa, cos_sa, sin_ea, cos_ea;
-  sincos (arc->start_angle, &sin_sa, &cos_sa);
-  sincos (arc->start_angle + arc->angle_delta, &sin_ea, &cos_ea);
+  double
+    sin_sa = sin (arc->start_angle),
+    cos_sa = cos (arc->start_angle),
+    sin_ea = sin (arc->start_angle + arc->angle_delta),
+    cos_ea = cos (arc->start_angle + arc->angle_delta);
 
-  double radius = arc->circle.radius;
+  // It would be nicer to do this but sincos() currently needs _GNU_SOURCE:
+  //double sin_sa, cos_sa, sin_ea, cos_ea;
+  //sincos (arc->start_angle, &sin_sa, &cos_sa);
+  //sincos (arc->start_angle + arc->angle_delta, &sin_ea, &cos_ea);
 
-  ep[0] = ((Vec) { round (radius * cos_sa), round (radius * sin_sa) });
-  ep[1] = ((Vec) { round (radius * cos_ea), round (radius * sin_ea) });
+  double rad = arc->circle.radius;
+
+  Coord cx = arc->circle.center.x, cy = arc->circle.center.y;
+
+  ep[0] = ((Vec) { cx + round (rad * cos_sa), cy + round (rad * sin_sa) });
+  ep[1] = ((Vec) { cx + round (rad * cos_ea), cy + round (rad * sin_ea) });
 }
