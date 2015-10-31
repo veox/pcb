@@ -14,23 +14,6 @@ vec_mag (Vec vec)
   return round (hypot (vec.x, vec.y));
 }
 
-double
-vec_dot (Vec va, Vec vb)
-{
-  return ((double) va.x) * vb.x + ((double) va.y) * vb.y;
-}
-
-// Vector from va to vb, aka (vb - va)
-Vec
-vec_from (Vec va, Vec vb)
-{
-  // Return vector from va to vb.
-
-  Vec result = { vb.x - va.x, vb.y - va.y };
-  
-  return result;
-}
-
 // Return va scaled by scale_factor.  Be careful with this: scaling integer
 // vectors to small magnitudes can result in a lot of error.  Trying to
 // make unit vectors won't work for this reason.
@@ -46,12 +29,6 @@ vec_scale (Vec vec, double scale_factor)
 }
 
 Vec
-vec_proj (Vec va, Vec vb)
-{
-  return vec_scale (vb, vec_dot (va, vb) / vec_dot (vb, vb));
-}
-
-Vec
 vec_sum (Vec va, Vec vb)
 {
   Vec result;
@@ -60,6 +37,29 @@ vec_sum (Vec va, Vec vb)
   result.y = va.y + vb.y;
 
   return result;
+}
+
+// Vector from va to vb, aka (vb - va)
+Vec
+vec_from (Vec va, Vec vb)
+{
+  // Return vector from va to vb.
+
+  Vec result = { vb.x - va.x, vb.y - va.y };
+  
+  return result;
+}
+
+double
+vec_dot (Vec va, Vec vb)
+{
+  return ((double) va.x) * vb.x + ((double) va.y) * vb.y;
+}
+
+Vec
+vec_proj (Vec va, Vec vb)
+{
+  return vec_scale (vb, vec_dot (va, vb) / vec_dot (vb, vb));
 }
 
 double
@@ -84,6 +84,48 @@ angle_in_span (double theta, double start_angle, double angle_delta)
   else {
     return -angle_delta >= normalize_angle_in_radians (-theta + start_angle);
   }
+}
+
+bool
+point_intersects_rectangle (Vec pt, Rectangle const *rect)
+{
+  // Distance between pairs of opposite sides
+  double d_c1_c2_to_c3_c4 = vec_mag (vec_from (rect->c1, rect->c4));
+  double d_c2_c3_to_c4_c1 = vec_mag (vec_from (rect->c1, rect->c2));
+
+  // Sides as line segments
+  LineSegment c1_c2 = { rect->c1, rect->c2 };
+  LineSegment c2_c3 = { rect->c2, rect->c3 };
+  LineSegment c3_c4 = { rect->c3, rect->c4 };
+  LineSegment c4_c1 = { rect->c4, rect->c1 };
+   
+  // Nearest Point (to point) On Sides
+  Vec npo_c1_c2 = nearest_point_on_line_segment (pt, &c1_c2);
+  Vec npo_c2_c3 = nearest_point_on_line_segment (pt, &c2_c3);
+  Vec npo_c3_c4 = nearest_point_on_line_segment (pt, &c3_c4);
+  Vec npo_c4_c1 = nearest_point_on_line_segment (pt, &c4_c1);
+
+  // Distances from pt to nearest point on each side
+  double d_pt_c1_c2 = vec_mag (vec_from (pt, npo_c1_c2));
+  double d_pt_c2_c3 = vec_mag (vec_from (pt, npo_c2_c3));
+  double d_pt_c3_c4 = vec_mag (vec_from (pt, npo_c3_c4));
+  double d_pt_c4_c1 = vec_mag (vec_from (pt, npo_c4_c1));
+
+  return (
+      d_pt_c1_c2 <= d_c1_c2_to_c3_c4 &&
+      d_pt_c3_c4 <= d_c1_c2_to_c3_c4 &&
+      d_pt_c2_c3 <= d_c2_c3_to_c4_c1 &&
+      d_pt_c4_c1 <= d_c2_c3_to_c4_c1 );
+}
+
+bool
+point_intersects_circle (Vec pt, Circle const *circ)
+{
+  // Translate pt st circ is relatively situated at origin.
+  pt.x -= circ->center.x;
+  pt.y -= circ->center.y;
+
+  return hypot (pt.x, pt.y) <= circ->radius;
 }
 
 Vec
@@ -131,7 +173,7 @@ nearest_point_on_line_segment (Vec pt, LineSegment const *seg)
 }
 
 Vec
-nearest_point_on_arc (Vec pt, Arc2 *arc)
+nearest_point_on_arc (Vec pt, Arc const *arc)
 {
   Vec cent = arc->circle.center;
   Coord rad = arc->circle.radius;
@@ -175,22 +217,133 @@ nearest_point_on_arc (Vec pt, Arc2 *arc)
   return result;
 }
 
+bool
+circle_intersects_line_segment (
+    Circle      const *circ,
+    LineSegment const *seg,
+    Vec               *pii )
+{
+  Vec np = nearest_point_on_line_segment (circ->center, seg);
+
+  Vec cc_np = vec_from (circ->center, np);
+
+  double mcc_np = vec_mag (cc_np);
+
+  if ( mcc_np <= circ->radius ) {
+    if ( pii != NULL ) {
+      *pii = np;
+    }
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+bool
+circle_intersects_rectangle (
+    Circle const *circ,
+    Rectangle const *rect,
+    Vec *pii )
+{
+  Vec cc = circ->center;
+  double cr2 = pow (circ->radius, 2.0);
+
+  // Check if the center of the circle is on the rectangle.  Note that this
+  // catches the situation where the circle is entirely inside the rectangle.
+  if ( point_intersects_rectangle (circ->center, rect) ) {
+    *pii = cc;
+    return true;
+  }
+
+  // FIXME: the type should just have array to begin with
+  Vec *ca = (Vec *) rect;   // Probably the type should just have array
+
+  // Check if any of the corners of the rect lie inside circ.  Note that
+  // this catches the case where the rectangle is entirely inside the circle.
+  // FIXME: check that this test work right
+  for ( int ii = 0 ; ii < 4 ; ii++ ) {
+    Vec tc = { ca[ii].x - cc.x, ca[ii].y - cc.y };   // Translated Corner
+    if ( pow (tc.x, 2.0) + pow (tc.y, 2.0) <= cr2 ) {
+      *pii = ca[ii];
+     return true; 
+    }
+  }
+ 
+  // FIXME: the below code would probably be a tiny bit faster if it tested
+  // as it went but I doubt it's enough to matter anywhere
+
+  // Line segments between corners of rectangle
+  LineSegment c1_c2 = { rect->c1, rect->c2 };
+  LineSegment c2_c3 = { rect->c2, rect->c3 };
+  LineSegment c3_c4 = { rect->c3, rect->c4 };
+  LineSegment c4_c1 = { rect->c4, rect->c1 };
+
+  // Note that pii (if not NULL) is computed by the first short-circuit true
+  // result here.
+  return (
+      circle_intersects_line_segment (circ, &c1_c2, pii) ||
+      circle_intersects_line_segment (circ, &c2_c3, pii) ||
+      circle_intersects_line_segment (circ, &c3_c4, pii) ||
+      circle_intersects_line_segment (circ, &c4_c1, pii) );
+}
+
+bool
+circle_intersects_circle (Circle const *ca, Circle const *cb, Vec *pii)
+{
+
+  Vec a_b = vec_from (ca->center, cb->center);      // Vector from a to b
+  double ma_b = vec_mag (a_b);                      // Magnitude of a_b
+  double overlap = ca->radius + cb->radius - ma_b;     // Overlap size (length)
+
+  if ( overlap >= 0.0 ) {
+    if ( pii != NULL ) {
+      if      ( ca->radius <= overlap ) {
+        *pii = ca->center;   // ca is contained in cb
+      }
+      else if ( cb->radius <= overlap ) {
+        *pii = cb->center;   // cb is contained in ca
+      }
+      else {
+        *pii 
+          = vec_sum (
+              ca->center,
+              vec_scale (a_b, (ca->radius - overlap / 2.0) / ma_b) );
+      }
+    }
+    return true;
+  }
+  else {
+    return false;
+  }
+
+}
+
 int
 circle_line_segment_intersection (
     Circle const *circ,
-    LineSegment const *ls,
+    LineSegment const *seg,
     Vec intersection[2] )
 {
   // Translated end point coordinates st circ is relatively situated at (0, 0).
-  Coord x1 = ls->pa.x - circ->center.x;
-  Coord y1 = ls->pa.y - circ->center.y;
-  Coord x2 = ls->pb.x - circ->center.x;
-  Coord y2 = ls->pb.y - circ->center.y;
+  Coord x1 = seg->pa.x - circ->center.x;
+  Coord y1 = seg->pa.y - circ->center.y;
+  Coord x2 = seg->pb.x - circ->center.x;
+  Coord y2 = seg->pb.y - circ->center.y;
 
-  // Degenerate cases. We can't get these right in general, and clients have
-  // been warned.
-  assert (! ((x1 == x2 && y1 == y2) || (circ->radius == 0)));
-    
+  // Degenerate case: seg is a point.
+  if ( x1 == x2 && y1 == y2 ) {
+    if ( point_intersects_circle (seg->pa, circ) ) {
+      if ( intersection != NULL ) {
+        intersection[0] = seg->pa;
+      }
+      return 1;
+    }
+  }
+
+  // Degenerate circles aren't allowed.
+  assert (circ->radius > 0);
+
   // Straight from http://mathworld.wolfram.com/Circle-LineIntersection.html
   Coord dx = x2 - x1;
   Coord dy = y2 - y1;
@@ -210,9 +363,6 @@ circle_line_segment_intersection (
   Coord ip2y = round ((-determinant * dx - temp) / dr2);
   
   int result = 0;
-
-  // FIXME: I think the below mess is no longer worth it and we should
-  // instead add vectors and check if they get bigger or smaller.
 
   // Now we just need to check which of the intersections are in our segment.
   // We only need to check one coordinate, since the intersection points are
@@ -259,10 +409,33 @@ circle_line_segment_intersection (
   return result;
 }
 
+void
+arc_end_points (Arc *arc, Vec ep[2])
+{
+  // Sines and cosines of Start Angle/End Angle
+  double
+    sin_sa = sin (arc->start_angle),
+    cos_sa = cos (arc->start_angle),
+    sin_ea = sin (arc->start_angle + arc->angle_delta),
+    cos_ea = cos (arc->start_angle + arc->angle_delta);
+
+  // It would be nicer to do this but sincos() currently needs _GNU_SOURCE:
+  //double sin_sa, cos_sa, sin_ea, cos_ea;
+  //sincos (arc->start_angle, &sin_sa, &cos_sa);
+  //sincos (arc->start_angle + arc->angle_delta, &sin_ea, &cos_ea);
+
+  double rad = arc->circle.radius;
+
+  Coord cx = arc->circle.center.x, cy = arc->circle.center.y;
+
+  ep[0] = ((Vec) { cx + round (rad * cos_sa), cy + round (rad * sin_sa) });
+  ep[1] = ((Vec) { cx + round (rad * cos_ea), cy + round (rad * sin_ea) });
+}
+
 int
 arc_line_segment_intersection (
-    Arc2 const *arc,
-    LineSegment const *ls,
+    Arc const *arc,
+    LineSegment const *seg,
     Vec intersection[2] )
 {
   Circle const *uc = &(arc->circle);   // Underlying Circle
@@ -270,7 +443,7 @@ arc_line_segment_intersection (
   // Get intersection count and intersection points 
   Vec ci[2];   // Circle Intersection (up to two points)
   int cic;     // Circle Intersection Count
-  cic = circle_line_segment_intersection (uc, ls, ci);
+  cic = circle_line_segment_intersection (uc, seg, ci);
 
   int result = 0;
 
@@ -292,181 +465,3 @@ arc_line_segment_intersection (
   return result;
 }
 
-bool
-circles_intersect (Circle const *ca, Circle const *cb, Vec *pii)
-{
-
-  Vec a_b = vec_from (ca->center, cb->center);      // Vector from a to b
-  double ma_b = vec_mag (a_b);                      // Magnitude of a_b
-  double overlap = ca->radius + cb->radius - ma_b;     // Overlap size (length)
-
-  if ( overlap >= 0.0 ) {
-    if ( pii != NULL ) {
-      if      ( ca->radius <= overlap ) {
-        *pii = ca->center;   // ca is contained in cb
-      }
-      else if ( cb->radius <= overlap ) {
-        *pii = cb->center;   // cb is contained in ca
-      }
-      else {
-        *pii 
-          = vec_sum (
-              ca->center,
-              vec_scale (a_b, (ca->radius - overlap / 2.0) / ma_b) );
-      }
-    }
-    return true;
-  }
-  else {
-    return false;
-  }
-
-}
-
-bool
-circle_intersects_line_segment (
-    Circle      const *circle,
-    LineSegment const *seg,
-    Vec               *pii )
-{
-  Vec np = nearest_point_on_line_segment (circle->center, seg);
-
-  Vec cc_np = vec_from (circle->center, np);
-
-  double mcc_np = vec_mag (cc_np);
-
-  if ( mcc_np <= circle->radius ) {
-    if ( pii != NULL ) {
-      *pii = np;
-    }
-    return true;
-  }
-  else {
-    return false;
-  }
-}
-
-bool
-point_is_on_rectangle (Vec point, Rectangle const *rect)
-{
-  // Distance between pairs of opposite sides
-  double d_c1_c2_to_c3_c4 = vec_mag (vec_from (rect->c1, rect->c4));
-  double d_c2_c3_to_c4_c1 = vec_mag (vec_from (rect->c1, rect->c2));
-
-  // Sides as line segments
-  LineSegment c1_c2 = { rect->c1, rect->c2 };
-  LineSegment c2_c3 = { rect->c2, rect->c3 };
-  LineSegment c3_c4 = { rect->c3, rect->c4 };
-  LineSegment c4_c1 = { rect->c4, rect->c1 };
-   
-  // Nearest Point (to point) On Sides
-  Vec npo_c1_c2 = nearest_point_on_line_segment (point, &c1_c2);
-  Vec npo_c2_c3 = nearest_point_on_line_segment (point, &c2_c3);
-  Vec npo_c3_c4 = nearest_point_on_line_segment (point, &c3_c4);
-  Vec npo_c4_c1 = nearest_point_on_line_segment (point, &c4_c1);
-
-  // Distances from point to nearest point on each side
-  double d_point_c1_c2 = vec_mag (vec_from (point, npo_c1_c2));
-  double d_point_c2_c3 = vec_mag (vec_from (point, npo_c2_c3));
-  double d_point_c3_c4 = vec_mag (vec_from (point, npo_c3_c4));
-  double d_point_c4_c1 = vec_mag (vec_from (point, npo_c4_c1));
-
-  return (
-      d_point_c1_c2 <= d_c1_c2_to_c3_c4 &&
-      d_point_c3_c4 <= d_c1_c2_to_c3_c4 &&
-      d_point_c2_c3 <= d_c2_c3_to_c4_c1 &&
-      d_point_c4_c1 <= d_c2_c3_to_c4_c1 );
-  
-}
-
-bool
-circle_intersects_rectangle (
-    Circle      const *circle,
-    LineSegment const *seg,
-    Coord              thickness,
-    Vec               *pii )
-{
-  Vec pa = seg->pa, pb = seg->pb;   // Convenience aliases
-
-  // Vector with direction and mag. of segment
-  Vec pa_pb = vec_from (pa, pb);
-
-  Vec ov = { -pa_pb.y, pa_pb.x };   // Orthogonol Vector (to segment)
-
-  // Corners of rectangle
-  double sf  = thickness / (2.0 * vec_mag (ov));   // Scale Factor
-  Vec c1 = vec_sum (pa, vec_scale (ov, sf));
-  Vec c2 = vec_sum (pb, vec_scale (ov, sf));
-  Vec c3 = vec_sum (pb, vec_scale (ov, -sf));
-  Vec c4 = vec_sum (pa, vec_scale (ov, -sf));
-
-  // Line segments between corners of rectangle
-  LineSegment c1_c2 = { c1, c2 };
-  LineSegment c2_c3 = { c2, c3 };
-  LineSegment c3_c4 = { c3, c4 };
-  LineSegment c4_c1 = { c4, c1 };
-
-  // Check if the center of the circle is on the rectangle.  This catches
-  // the situation where the circle is entirely inside the rectangle.
-  Rectangle rect = { c1, c2, c3, c4 };
-  if ( point_is_on_rectangle (circle->center, &rect) ) {
-    *pii = circle->center;
-    return true;
-  }
-
-  // Note that pii (if not NULL) is computed by the first short-circuit true
-  // result here.
-  return (
-      circle_intersects_line_segment (circle, &c1_c2, pii) ||
-      circle_intersects_line_segment (circle, &c2_c3, pii) ||
-      circle_intersects_line_segment (circle, &c3_c4, pii) ||
-      circle_intersects_line_segment (circle, &c4_c1, pii) );
-}
-
-bool
-circle_intersects_rectangle_2 (Circle const *circ, Rectangle *rect, Vec *pii)
-{
-  // Line segments between corners of rectangle
-  LineSegment c1_c2 = { rect->c1, rect->c2 };
-  LineSegment c2_c3 = { rect->c2, rect->c3 };
-  LineSegment c3_c4 = { rect->c3, rect->c4 };
-  LineSegment c4_c1 = { rect->c4, rect->c1 };
-
-  // Check if the center of the circle is on the rectangle.  This catches
-  // the situation where the circle is entirely inside the rectangle.
-  if ( point_is_on_rectangle (circ->center, rect) ) {
-    *pii = circ->center;
-    return true;
-  }
-
-  // Note that pii (if not NULL) is computed by the first short-circuit true
-  // result here.
-  return (
-      circle_intersects_line_segment (circ, &c1_c2, pii) ||
-      circle_intersects_line_segment (circ, &c2_c3, pii) ||
-      circle_intersects_line_segment (circ, &c3_c4, pii) ||
-      circle_intersects_line_segment (circ, &c4_c1, pii) );
-}
-
-void
-arc_end_points (Arc2 *arc, Vec ep[2])
-{
-  // Sines and cosines of Start Angle/End Angle
-  double
-    sin_sa = sin (arc->start_angle),
-    cos_sa = cos (arc->start_angle),
-    sin_ea = sin (arc->start_angle + arc->angle_delta),
-    cos_ea = cos (arc->start_angle + arc->angle_delta);
-
-  // It would be nicer to do this but sincos() currently needs _GNU_SOURCE:
-  //double sin_sa, cos_sa, sin_ea, cos_ea;
-  //sincos (arc->start_angle, &sin_sa, &cos_sa);
-  //sincos (arc->start_angle + arc->angle_delta, &sin_ea, &cos_ea);
-
-  double rad = arc->circle.radius;
-
-  Coord cx = arc->circle.center.x, cy = arc->circle.center.y;
-
-  ep[0] = ((Vec) { cx + round (rad * cos_sa), cy + round (rad * sin_sa) });
-  ep[1] = ((Vec) { cx + round (rad * cos_ea), cy + round (rad * sin_ea) });
-}
