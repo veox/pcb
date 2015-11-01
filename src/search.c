@@ -36,10 +36,6 @@
 #include <math.h>
 #include <setjmp.h>
 
-// FIXME: added for debugging:
-#include <unistd.h>
-#include "crosshair.h"
-
 #include "global.h"
 
 #include "box.h"
@@ -981,8 +977,51 @@ IsArcInRectangle (
   return (false);
 }
 
-// FIXME: add comment from original if we optimize this one instead of
-// modifying original
+static Rectangle
+rectangular_part_of_line (LineType *Line)
+{
+  // Return a new Rectangle consisting of the portion of Line that is
+  // a rectangle.  If Line has SQURE_FLAG, this rectangle incorporates
+  // the square end caps, otherwise it ends where the "Line" stops being
+  // a rectangle.
+  
+  Vec   // End points of Line
+    pa = { Line->Point1.X, Line->Point1.Y },
+    pb = { Line->Point2.X, Line->Point2.Y };
+  
+  // Vector with direction and mag. of segment, not including end caps
+  Vec pa_pb = vec_from (pa, pb);
+  
+  // Orthogonol Vector (rotated CCW 90 degrees in +x towares +y direction)
+  Vec ov = { -pa_pb.y, pa_pb.x };   // Orthogonol Vector (to segment)
+
+  // "Thickness" vector.  
+  Vec tv = vec_scale (ov, Line->Thickness / (2.0 * vec_mag (ov)));
+
+  // Cap vector.  Has magnitude of either thickness / 2.0 or 0, and opposite
+  // direction of pa_pb
+  Vec cv;
+  if ( TEST_FLAG (SQUAREFLAG, Line) ) {
+    cv = ((Vec) { -tv.y, tv.x }); 
+  }
+  else {
+    cv = ((Vec) { 0, 0 });
+  }
+  
+  Rectangle result = { 
+    { vec_sum (vec_sum (pa, tv),                   cv), 
+      vec_sum (vec_sum (pb, tv),                   vec_scale (cv, -1.0)),
+      vec_sum (vec_sum (pb, vec_scale (tv, -1.0)), vec_scale (cv, -1.0)), 
+      vec_sum (vec_sum (pa, vec_scale (tv, -1.0)),  cv) } };
+
+  return result;
+}
+
+
+/* ---------------------------------------------------------------------------
+ * Check if a circle of Radius with center at (X, Y) intersects a Pad.
+ * Written to enable arbitrary pad directions; for rounded pads, too.
+ */
 bool
 IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *pii)
 {
@@ -1001,222 +1040,40 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *pii)
   // Vec interface)
   Vec piiav;  
 
-  Vec pa_pb = vec_from (pa, pb);
- 
-  if ( TEST_FLAG (SQUAREFLAG, Pad) ) {
+  // Note that this includes the end caps if the line has square ends
+  Rectangle rpol = rectangular_part_of_line ((LineType *) Pad);
 
-    // Cap Vector.  This is a vector in the direction of pa_pb, with magnitude
-    // equal to half the width of the pad.  Pads with square caps union
-    // on squares each Pad->Thickness on a side at the instead of line, so
-    // the underlying rectangle is larger that reflected by Pad->Point1 and
-    // Pad->Point2.  This "Cap Vector" is used to account for one of these
-    // end caps, and "Reverse Cap Vector" for the other.
-    double sf = ((pt + 1) / 2.0) / vec_mag (pa_pb);
-    Vec cv = vec_scale (pa_pb, sf);
-    Vec rcv = vec_scale (cv, -1.0);
+  if ( circle_intersects_rectangle (&circ, &rpol, &piiav) ) {
+    if ( pii != NULL ) {
+      pii->X = piiav.x;
+      pii->Y = piiav.y;
+    }
+    return true;
+  }
 
-    // In this case the "pad" is a true rectangle, so here we compute the
-    // endpoints of a Rectangular Center Line segment down the center of
-    // this rectangle.
-    LineSegment rcl = { vec_sum (pa, rcv), vec_sum (pb, cv) };
-    if ( circle_intersects_rectangle (&circ, &rcl, pt, &piiav) ) {
+  // For lines with round end caps we have to check those also
+  if ( ! TEST_FLAG (SQUAREFLAG, Pad) ) {
+    Circle cac = { pa, (pt + 1) / 2 };   // Cap A Circle
+    Circle cbc = { pb, (pt + 1) / 2 };   // Cap B Circle
+    // Note that piiav (if not NULL) is computed by the first short-circuit
+    // true result here.
+    bool ci = (   // Circles Intersect
+        circle_intersects_circle (&cac, &circ, &piiav) ||
+        circle_intersects_circle (&cbc, &circ, &piiav) );
+    if ( ci ) {
       if ( pii != NULL ) {
         pii->X = piiav.x;
         pii->Y = piiav.y;
       }
       return true;
     }
-    else {
-      return false;
-    }
-
   }
-  else {
 
-    // In this case the rectangular part of the pad runs between the end
-    // points in Pad.
-    LineSegment rcl = { pa, pb };   // Rectangle Center Line
+  return false;
 
-    // First check if we're in the rectangular part of the pad
-    if ( circle_intersects_rectangle (&circ, &rcl, pt, &piiav) ) {
-
-      if ( pii != NULL ) {
-        pii->X = piiav.x;
-        pii->Y = piiav.y;
-      }
-      return true;
-
-    }
-    // Otherwise, check if we're in one of the round end caps
-    else {
-
-      Circle cac = { pa, (pt + 1) / 2 };   // Cap A Circle
-      Circle cbc = { pb, (pt + 1) / 2 };   // Cap B Circle
-      // Note that piiav (if not NULL) is computed by the first short-circuit
-      // true result here.
-      bool result = (
-          circles_intersect (&cac, &circ, &piiav) ||
-          circles_intersect (&cbc, &circ, &piiav) );
-      if ( result && (pii != NULL) ) {
-        pii->X = piiav.x;
-        pii->Y = piiav.y;
-      }
-      return result;
-
-    }
-  }
+  // FIXME: make sure to inspect every git delta involving Bloat to make
+  // sure they aren't removed
 }
-
-
-/* ---------------------------------------------------------------------------
- * Check if a circle of Radius with center at (X, Y) intersects a Pad.
- * Written to enable arbitrary pad directions; for rounded pads, too.
- */
-//bool
-//IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *center)
-//{
-//  double r, Sin, Cos;
-//  Coord x; 
-//  Coord t2 = (Pad->Thickness + 1) / 2, range;
-//  PadType pad = *Pad;
-//
-//  /* series of transforms saving range */
-//  /* move Point1 to the origin */
-//  // FIXME: the above comment is not true, the point is move dependeing on
-//  // pad position.
-//  X -= pad.Point1.X;
-//  Y -= pad.Point1.Y;
-//
-//  pad.Point2.X -= pad.Point1.X;
-//  pad.Point2.Y -= pad.Point1.Y;
-//  /* so, pad.Point1.X = pad.Point1.Y = 0; */
-//  // FIXME: the comment immediately above is not true, and not just because
-//  // it uses = rather than ==).  These asserts fail:
-//  //assert (pad.Point1.X == 0);
-//  //assert (pad.Point1.Y == 0);
-//
-//  /* rotate round (0, 0) so that Point2 coordinates be (r, 0) */
-//  r = Distance (0, 0, pad.Point2.X, pad.Point2.Y);
-//  if (r < .1)
-//    {
-//      Cos = 1;
-//      Sin = 0;
-//    }
-//  else
-//    {
-//      Sin = pad.Point2.Y / r;
-//      Cos = pad.Point2.X / r;
-//    }
-//  x = X;
-//  X = X * Cos + Y * Sin;
-//  Y = Y * Cos - x * Sin;
-//  /* now pad.Point2.X = r; pad.Point2.Y = 0; */
-//  // FIXME: the above comment is wrong, these assertions don't both pass:
-//  //assert (pad.Point2.X == r);
-//  //assert (pad.Point2.Y == 0);
-//
-//  /* take into account the ends */
-//  if (TEST_FLAG (SQUAREFLAG, Pad))
-//    {
-//      r += Pad->Thickness;
-//      X += t2;
-//    }
-//  if (Y < 0)
-//    Y = -Y;	/* range value is evident now*/
-//
-//  if (TEST_FLAG (SQUAREFLAG, Pad))
-//    {
-//      if (X <= 0)
-//	{
-//	  if (Y <= t2)
-//            range = -X;
-//          else 
-//            {
-//              if ( Radius > Distance (0, t2, X, Y) ) {
-//                // FIXME: for now we just put it where one end of the pad is,
-//                // should make the a better estimate of the center of the
-//                // intersection.  If this function was well-named we could
-//                // just return the true location of the point, but it isn't:
-//                // it actually checks for intersection of pad and circle
-//                if ( center != NULL ) {
-//                  center->X = Pad->Point1.X;
-//                  center->Y = Pad->Point1.Y;
-//                }
-//                return true;
-//              }
-//              else {
-//                return false;
-//              }
-//            }
-//	}
-//      else if (X >= r)
-//	{
-//	  if (Y <= t2)
-//            range = X - r;
-//          else 
-//            if ( Radius > Distance (r, t2, X, Y) ) {
-//              if ( center != NULL ) {
-//                // FIXME: for now we just put it where one end of the pad is,
-//                // should make the a better estimate of the center of the
-//                // intersection
-//                center->X = Pad->Point1.X;
-//                center->Y = Pad->Point1.Y;
-//              }
-//              return true;
-//            }
-//            else {
-//              return false;
-//            }
-//	}
-//      else
-//	range = Y - t2;
-//    }
-//  else/*Rounded pad: even more simple*/
-//    {
-//      if (X <= 0) {
-//        if ( (Radius + t2) > Distance (0, 0, X, Y) ) {
-//          if ( center != NULL ) {
-//            printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
-//            // FIXME: needs to find point actually in intersection
-//            center->X = Pad->Point1.X;
-//            center->Y = Pad->Point1.Y;
-//          }
-//          return true;
-//        }
-//        else {
-//          return false;
-//        }
-//      }
-//      else if (X >= r) {
-//        if ( (Radius + t2) > Distance (r, 0, X, Y) ) {
-//          if ( center != NULL ) {
-//            printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
-//            // FIXME: needs to find point actually in intersection
-//            center->X = Pad->Point1.X;
-//            center->Y = Pad->Point1.Y;
-//          }
-//          return true;
-//        }
-//        else {
-//          return false;
-//        }
-//      }
-//      else
-//	range = Y - t2;
-//    }
-//  if ( range < Radius ) {
-//    if ( center != NULL ) {
-//      printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
-//      // FIXME: needs to find point actually in intersection
-//      center->X = Pad->Point2.X;
-//      center->Y = Pad->Point2.Y;
-//    }
-//    return true;
-//  }
-//  else {
-//    return false;
-//  }
-//}
 
 bool
 IsPointInBox (Coord X, Coord Y, BoxType *box, Coord Radius)
@@ -1263,180 +1120,41 @@ IsPointInBox (Coord X, Coord Y, BoxType *box, Coord Radius)
   return range < Radius;
 }
 
-// FIXME: should move to geometry.h
-// FIXME: should be replaced with nearest_point_on_arc_2 maybe
-static Vec
-old_nearest_point_on_arc (Vec pt, Arc *arc)
-{
-  // Find the nearest point on arc from pt.
-    
-  Vec cent = arc->center;
-  Vec pmaj = arc->p_major;
-  Vec pmin = arc->p_minor;
-
-  // Translate pt st Arc ellipsoid is centered at origin wrt it
-  pt.x -= cent.x;
-  pt.y -= cent.y;
-  
-  double mmaja = vec_mag (vec_from (cent, pmaj));   // Mag. of major axis / 2
-  double mmina = vec_mag (vec_from (cent, pmin));   // Mag. of minor axis / 2
-
-  // If the major and minor axes are within this size of each other
-  // we consider the ellipse to be a circle.  This is a hack that takes
-  // advantage of the pretty tiny pcb coordinates to avoid potential problems
-  // with magnitudes being approximate.  I checked the magnitude results
-  // for a vector {1000000042, 1000000042} and its only about 0.23 off the
-  // theoretical value, so this should give a pretty good margin of error
-  // for not failing to interpret circles as circles (which is good since
-  // ellipses aren't implemented at the moment).
-  double const mag_epsilon = 10.42;
-  
-  // Uncomment this and compare results to bc or the like to get happy(ish)
-  // about the above constant.
-  //Vec tvec = {1000000042, 1000000042};
-  //double tvecmag = vec_mag (tvec);
-  //printf ("tvecmag: %f\n", tvecmag);
-
-  // Arcs that are segments of circles are special and common, do them first
-  if ( fabs (mmaja - mmina) < mag_epsilon ) {
-
-    double sa = arc->start_angle;
-    double ad = arc->angle_delta;
-    double ea = sa + ad;   // End Angle.   Note: in [0, 4.0 * M_PI)
-
-    // Nearest Point on Circle
-    Vec npoc = vec_scale (pt, mmaja / vec_mag (pt));
-    
-    double theta_npoc = atan2 (npoc.y, npoc.x);
-
-    Vec result;
-
-    // If the nearest point on the underlying circle is part of the arc,
-    // the point itself is the result we want, otherwise the end point of
-    // the arc closest to the nearest point is the one we want.
-    if ( angle_in_span (theta_npoc, sa, ad) ) {
-      result = npoc;
-    }
-    else {
-      // FIXME: use sincos() for speed and deredundification here
-      // End Point A.  round() probably isn't really worth it here
-      Vec epa = { round (mmaja * cos (sa)), round (mmaja * sin (sa)) };
-      // End Point B   round() probably isn't really worth it here
-      Vec epb = { round (mmaja * cos (ea)), round (mmaja * sin (ea)) };
-      double m_npoc_epa = vec_mag (vec_from (npoc, epa));
-      double m_npoc_epb = vec_mag (vec_from (npoc, epb));
-      result  = (m_npoc_epa < m_npoc_epb ? epa : epb);
-    }
-      
-    // Translate back to true position
-    result.x += cent.x;
-    result.y += cent.y;
-
-    return result;
-  }
-
-  // If we make it here we're dealing with a segment of an ellipse
-  
-  // What follows in this function isn't tested or complete 
-  int const implemented = FALSE;
-  assert (implemented);
-
-  // Angle of vector from origin to Arc->p_major with positive X axis
-  double theta = atan2 (pmaj.y, pmin.x);
-
-  // Rotate pt' about origin st arc->p_major is on the positive X axis wrt it
-  // FIXME: could use sincos() here for efficiency
-  double sin_theta;
-  double cos_theta;
-  sincos (theta, &sin_theta, &cos_theta);
-  pt.x = pt.x * cos_theta - pt.y * sin_theta;
-  pt.y = pt.x * sin_theta + pt.y * cos_theta;
-
-  // In general bisection or some other iterative approach is eventually
-  // required to solve the closest-point-on-ellipse problem (see
-  // www.geometrictools.com/Documentation/DistancePointEllipseEllipsoid.pdf).
-  // I would try just using geometrical bisection to keep life simple
-  // and avoid logic about quadrants etc.  Simply place a bisection point
-  // angle-wise midway along the part of the segment still remaining for
-  // consideration at each iteration, check which of the resulting half-planes
-  // formed by the origin-bisection_point line pt is in, throw away the other
-  // half segment, rinse and repeat until a satisfactorily small segment is
-  // obtained.  It might or might not be worth special-case checks in case the
-  // point is outside a hull st the nearest point is guaranteed to be an end
-  // point, it probably depends on the details of the rtree implementation
-  // elsewhere in this program.  For isolated curves at least it seems that
-  // the tree is pretty tight to the curve itself so I doubt it's worth it.
-}
-
 // FIXME: this function is horribly mis-named, it actually checks whether
-// a cirle intersects an ArcType
+// a cirle intersects an ArcType.  There are other functions mis-named in
+// the same way, they should all be changed
 bool
 IsPointOnArc (
     Coord X, Coord Y, Coord Radius, ArcType *arc, PointType *pii )
 {
-  Vec pt = {X, Y};
+  // Currently we can only handle arcs of circles
+  assert (arc->Width == arc->Height);
 
-  // Currently we only support ellipses with their axes parallel to the
-  // coordinate axes.  These are used to map to our underlying mathematical
-  // Arc type which supports arbitrary major/minor axis orientations.
-  Coord p_major_x = arc->X + (arc->Width >  arc->Height ? arc->Width : 0);
-  Coord p_major_y = arc->Y + (arc->Width >  arc->Height ? 0 : arc->Height);
-  Coord p_minor_x = arc->X + (arc->Width <= arc->Height ? arc->Width : 0);
-  Coord p_minor_y = arc->Y + (arc->Width <= arc->Height ? 0 : arc->Height);
+  Vec pt = { X, Y };
 
-  // ArcType type puts 0 degrees on -x axis and measures angles in the
-  // -x towards +y direction.  Arc type puts 0 degrees on +x and measures
-  // angles from
+  // ArcType type uses degrees, puts 0 degrees on -x axis and measures
+  // positive angles in the -x towards +y direction.  Arc type uses radians,
+  // puts 0 degrees on +x and measures positive angles in +x towards +y
+  // directon according to normal mathematical convention.  So here we
+  // convert.
+  double sa = M_PI - ((M_PI / 180.0) * arc->StartAngle);
+  double ad = -arc->Delta * (M_PI / 180.0);
 
-  // For our mathematical Arc object we use the normal +x towards +y winding
-  // convention, so we invert the sign here.  We also cheat a tiny bit so ad
-  // of 360 always ends up meaning what clients intend.  Note that they are
-  // still on their own when dealing with floating point comparison issues
-  // at other angular span end points.
-  // FIXME:uuuuu so why are we assigning start_angle to angle_delta here, 
-  // what we want to do is in sarc assignment down below
-  double angle_delta = -arc->StartAngle;
-  if ( angle_delta == 360.0 ) {
-    // Note that it doesn't matter exactly what we add
-    angle_delta = 360.0 + 0.42;
-  }
-  else if ( angle_delta == -360.0 ) {
-    // Note that it doesn't matter exactly what we subtract
-    angle_delta = 360.0 - 0.42;
-  }
+  Arc sarc = { { { arc->X, arc->Y }, arc->Width }, sa, ad };
 
-  // Simple arc (i.e. mathematical arc, not ArcType arc).  The rest of pcb
-  // apparently like to have 0 degress point towards -x and angles measures
-  // from -x towards positive y, while in the Arc type I use the more usual
-  // mathematical convention of putting 0 degrees at +x and measure anngles
-  // form +x towards +y.
-  Arc sarc = {
-    { arc->X, arc->Y },
-    { p_major_x, p_major_y },
-    { p_minor_x, p_minor_y },
-    normalize_angle_in_radians (-arc->StartAngle * (M_PI / 180.0) + M_PI),
-    -arc->Delta * (M_PI / 180.0)
-  };
-
-  Vec np = old_nearest_point_on_arc (pt, &sarc);
+  Vec np = nearest_point_on_arc (pt, &sarc);
 
   Vec np_pt = vec_from (np, pt);      //  Vector from np to pt
   
   double m_np_pt = vec_mag (np_pt);   // Magnitude of np-pt
   
-  // Square flags on arcs aren't supported FIXME: something gentler than assert
+  // Square flags on arcs aren't supported
   assert (! TEST_FLAG (SQUAREFLAG, arc));
 
   if ( m_np_pt <= Radius + arc->Thickness / 2.0 ) {
     if ( pii != NULL ) {
-      // FIXME: WORK POINT: test this solution
-      printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
       pii->X = X - np_pt.x / 2;
       pii->Y = Y - np_pt.y / 2;
-      //pii->X = np.x;
-      //pii->Y = np.y;
-      //pii->X = X;
-      //pii->Y = Y;
     }
     return true;
   }

@@ -1347,20 +1347,14 @@ ArcArcIntersect (ArcType *Arc1, ArcType *Arc2, PointType *pii)
   t  = 0.5 * Arc1->Thickness + Bloat;
   t2 = 0.5 * Arc2->Thickness;
   t1 = t2 + Bloat;
+  
+  // FIXME: there is breakage for arcs of different sizes Fat arc end cap
+  // near thin arc span leads to false intersetion Maybe other cases too,
+  // they need to be thouroughly checked out
 
   /* too thin arc */
   if (t < 0 || t1 < 0)
     return false;
-
-  // FIXME: this doesn't give a precise intersection location, because it
-  // cheats and bloats the "point" being tested rather than using a circle,
-  // replace it with circles_intersect(), but unfortunately that's in
-  // search.c Or, make IsPointOnArc fill in pii at the true intersection,
-  // rather than point itself, since "point" isn't a point.  Yep, stupic
-  // function names are BAD.  This latter solution is is probably what we do.
-  
-  // FIXME: in one single commit rename all the stupid point test functions
-  // that actually test circles.
 
   /* try the end points first */
   get_arc_ends (&box[0], Arc1);
@@ -1667,6 +1661,10 @@ LineLineIntersect (LineType *Line1, LineType *Line2, PointType *pii)
   return false;
 }
 
+// FIXME: this function is currently duplicated in search.c.  I think a
+// header that wraps geometry.h, defining its base int and float types and
+// additional adaptation functions to go from pcb types to related geometry
+// types or collections would be good.
 static Rectangle
 rectangular_part_of_line (LineType *Line)
 {
@@ -1699,68 +1697,67 @@ rectangular_part_of_line (LineType *Line)
   }
   
   Rectangle result = { 
-    vec_sum (vec_sum (pa, tv),                   cv), 
-    vec_sum (vec_sum (pb, tv),                   vec_scale (cv, -1.0)),
-    vec_sum (vec_sum (pb, vec_scale (tv, -1.0)), vec_scale (cv, -1.0)), 
-    vec_sum (vec_sum (pa, vec_scale (tv, -1.0)),  cv) };
-    
+    { vec_sum (vec_sum (pa, tv),                   cv), 
+      vec_sum (vec_sum (pb, tv),                   vec_scale (cv, -1.0)),
+      vec_sum (vec_sum (pb, vec_scale (tv, -1.0)), vec_scale (cv, -1.0)), 
+      vec_sum (vec_sum (pa, vec_scale (tv, -1.0)),  cv) } };
+
   return result;
 }
 
 bool
-LineArcIntersect (LineType *Line, ArcType *Arc, PointType *pii)
+LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
 {
-  // We don't handle arc of ellipse at the moment
-  assert (Arc->Width == Arc->Height);
+  // FIXME: now we have to honor Bloat here as well, so DRC can work right
 
-  Coord radius = Arc->Width;
+  // We don't handle arc of ellipse at the moment
+  assert (arc->Width == arc->Height);
+  
+  // We don't handle arcs with square ends
+  assert (! TEST_FLAG (SQUAREFLAG, arc));
+  
+  Coord radius = arc->Width;
 
   // Rectangular Part Of Line
   Rectangle rpol = rectangular_part_of_line (Line);
 
-  gui->add_debug_marker (rpol.c1.x, rpol.c1.y);
-  gui->add_debug_marker (rpol.c2.x, rpol.c2.y);
-  gui->add_debug_marker (rpol.c3.x, rpol.c3.y);
-  gui->add_debug_marker (rpol.c4.x, rpol.c4.y);
-
-  // FIXME: use array initializer or compound assign here
-  LineSegment rectangle_edges[4];
-  rectangle_edges[0] = ((LineSegment) { rpol.c1, rpol.c2 });
-  rectangle_edges[1] = ((LineSegment) { rpol.c2, rpol.c3 });
-  rectangle_edges[2] = ((LineSegment) { rpol.c3, rpol.c4 });
-  rectangle_edges[3] = ((LineSegment) { rpol.c4, rpol.c1 });
-
+  LineSegment rectangle_edges[4] = {
+    ((LineSegment) { rpol.corner[0], rpol.corner[1] }),
+    ((LineSegment) { rpol.corner[1], rpol.corner[2] }),
+    ((LineSegment) { rpol.corner[2], rpol.corner[3] }),
+    ((LineSegment) { rpol.corner[3], rpol.corner[0] }) };
+  
   // ArcType type uses degrees, puts 0 degrees on -x axis and measures
   // positive angles in the -x towards +y direction.  Arc type uses radians,
   // puts 0 degrees on +x and measures positive angles in +x towards +y
   // directon according to normal mathematical convention.  So here we
   // convert.
-  double sa = M_PI - ((M_PI / 180.0) * Arc->StartAngle);
-  double ad = -Arc->Delta * (M_PI / 180.0);
+  double sa = M_PI - ((M_PI / 180.0) * arc->StartAngle);
+  double ad = -arc->Delta * (M_PI / 180.0);
  
-  Coord to2 = round (Arc->Thickness / 2.0);   // Thickness Over 2
+  Coord lto2 = Line->Thickness / 2;                      // Line Thickness / 2
+  Coord ato2 = arc->Thickness / 2;                       // Arc Thickness / 2
+  Coord sto2 = (Line->Thickness + arc->Thickness) / 2;   // Both thickness / 2
 
-  // FIXME: when to2 >= radius the inner circle is degenerate or has negative
-  // radius, handle this case.
-  assert (to2 < radius);
+  // FIXME: when ato2 >= radius the inner circle is degenerate or has negative
+  // radius, we should handle this case.
+  assert (ato2 < radius);
 
   // Inner/Outer Arcs (of ArcType Arc, due to its thickness)
-  Arc2
-    ia = { { { Arc->X, Arc->Y }, radius - to2 }, sa, ad },
-    oa = { { { Arc->X, Arc->Y }, radius + to2 }, sa, ad };
-
-  // Check if edges of the rectangular part of line intersect any arc edges
+  Arc
+    oa = { { { arc->X, arc->Y }, radius + ato2 }, sa, ad },
+    ia = { { { arc->X, arc->Y }, radius - ato2 }, sa, ad };
+  
+  Arc acl = { { { arc->X, arc->Y}, radius }, sa, ad };      // Arc Center Line
+  Vec aep[2];                                               // Arc End Points
+  arc_end_points (&acl, aep);
+  
+  // Check if the rectangular part of line intersects anything
   for ( int ii = 0 ; ii < 4 ; ii++ ) {
+
+    // Check arc edges
     Vec ip[2];   // Intersection Points
     int ipc;     // Intersection Point Count
-    ipc = arc_line_segment_intersection (&ia, &(rectangle_edges[ii]), ip);
-    if ( ipc > 0 ) {
-      if ( pii != NULL ) {
-        pii->X = ip[0].x;
-        pii->Y = ip[0].y;
-      }
-      return true;
-    }
     ipc = arc_line_segment_intersection (&oa, &(rectangle_edges[ii]), ip);
     if ( ipc > 0 ) {
       if ( pii != NULL ) {
@@ -1769,78 +1766,74 @@ LineArcIntersect (LineType *Line, ArcType *Arc, PointType *pii)
       }
       return true;
     }
+    ipc = arc_line_segment_intersection (&ia, &(rectangle_edges[ii]), ip);
+    if ( ipc > 0 ) {
+      if ( pii != NULL ) {
+        pii->X = ip[0].x;
+        pii->Y = ip[0].y;
+      }
+      return true;
+    }
+
+    // Check arc end caps (which are always round).  Note that this catches
+    // the case in which the line is entirely contained within an arc end cap.
+    for ( int jj = 0 ; jj < 2 ; jj++ ) {
+      Vec npol
+        = nearest_point_on_line_segment (aep[jj], &(rectangle_edges[ii]));
+      if ( vec_mag (vec_from (aep[jj], npol) ) <= ato2 ) {
+        if ( pii != NULL ) {
+          pii->X = npol.x;
+          pii->Y = npol.y;
+        }
+        return true;
+      }
+    }
+    
+    // The rectangular line might be entirely contained between the inner and
+    // outer edges of the arc.  In this case all the corners of the rectangle
+    // will be within ato2 of acl, so it's sufficient to check one of them.
+    Vec ctc = rpol.corner[0];                      // Corner To Check
+    Vec nptc = nearest_point_on_arc (ctc, &acl);   // Nearest Point To Corner
+    if ( vec_mag (vec_from (ctc, nptc)) <= ato2 ) {
+      if ( pii != NULL ) {
+        pii->X = ctc.x;
+        pii->Y = ctc.y;
+      }
+      return true;
+    }
   }
   
-  assert (! TEST_FLAG (SQUAREFLAG, Arc));
-
-  Arc2 acl = { { { Arc->X, Arc->Y}, radius }, sa, ad };   // Arc Center Line
-  Vec aep[2];   // Arc End Points
-  arc_end_points (&acl, aep);
-  Circle aec[2] = { { aep[0], to2 }, { aep[1], to2 } };   // Arc End Caps
-
   // Unless the line has square end caps (in which case they will already
   // have been incorporated into the single rectangle used to represent
   // the line)...
   if ( ! TEST_FLAG (SQUAREFLAG, Line) ) {
 
-    Circle lec[2] = {   // Line End Caps
-      { { Line->Point1.X, Line->Point1.Y }, to2 },
-      { { Line->Point2.X, Line->Point2.Y }, to2 } };
-
-    // Check for intersections of the semicircular arc edges with the circular
-    // line caps
+    Vec leccs[2] = {   // Line End Cap Centers
+      { Line->Point1.X, Line->Point1.Y },
+      { Line->Point2.X, Line->Point2.Y } };
+    
+    // Check if the line end caps intersect the arc.  Note that this catches
+    // intersections with the arc end caps, since they are always round.
     for ( int ii = 0 ; ii < 2 ; ii++ ) {
+      Vec lecc = leccs[ii];   // Line End Cap Center
       Vec np2lep;   // Nearest Point to Line End Point
-      np2lep = nearest_point_on_arc (lec[ii].center, &ia);
-      if ( vec_mag (vec_from (lec[ii].center, np2lep)) <= to2 ) {
+      np2lep = nearest_point_on_arc (lecc, &acl);
+      // (Vector from) Line Cap Center to Nearest Point (on acl)
+      Vec lcc_np = vec_from (lecc, np2lep);
+      if ( vec_mag (lcc_np) <= sto2 ) {
         if ( pii != NULL ) {
-          pii->X = np2lep.x;
-          pii->Y = np2lep.y;
+          Vec pii_as_vector
+            = vec_sum (lecc, vec_scale (lcc_np, (lto2 / vec_mag (lcc_np))));
+          pii->X = pii_as_vector.x;
+          pii->Y = pii_as_vector.y;
         }
         return true;
       } 
-      np2lep = nearest_point_on_arc (lec[ii].center, &oa);
-      if ( vec_mag (vec_from (lec[ii].center, np2lep)) <= to2 ) {
-        if ( pii != NULL ) {
-          pii->X = np2lep.x;
-          pii->Y = np2lep.y;
-        }
-        return true;
-      } 
-    }
-
-    // Check for intersections of the line end caps with the arc end caps
-    // (which are always circular).
-    for ( int ii = 0 ; ii < 2 ; ii++ ) {
-      for ( int jj = 0 ; jj < 2 ; jj++ ) {
-        Vec pii_as_vec;
-        if ( circles_intersect (&(aec[ii]), &(lec[jj]), &pii_as_vec) ) {
-          if ( pii != NULL ) {
-            pii->X = pii_as_vec.x;
-            pii->Y = pii_as_vec.y;
-          }
-          return true;
-        }
-      }
     }
 
   } 
 
-  // Finally, we have to check if the arc end caps (which are always circular)
-  // intersect the rectanglar part of the line.
-  for ( int ii = 0 ; ii < 2 ; ii++ ) {
-    Vec pii_as_vec;
-    if ( circle_intersects_rectangle_2 (&(aec[ii]), &rpol, &pii_as_vec) ) {
-      if ( pii != NULL ) {
-        pii->X = pii_as_vec.x;
-        pii->Y = pii_as_vec.y;
-      }
-      return true;
-    }
-  }
-
   return false;
-  
 }
 
 /*!
