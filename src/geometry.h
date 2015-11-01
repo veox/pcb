@@ -15,7 +15,8 @@ typedef struct {
 } LineSegment;
 
 typedef struct {
-  Vec c1, c2, c3, c4;  // c1 is diagonal to c3, and c2 is diagonal to c4
+  // corner[0] is diagonal to corner[2], corner[2] is diagonal to corner[3]
+  Vec corner[4];
 } Rectangle;
 
 typedef struct {
@@ -32,9 +33,9 @@ typedef struct {
 double
 vec_mag (Vec vec);
 
-// Return va scaled by scale_factor.  Be careful with this: scaling integer
-// vectors to small magnitudes can result in a lot of error.  Trying to
-// make unit vectors won't work for this reason.
+// Return vec scaled by scale_factor.  Be careful with this: scaling
+// integer vectors to small magnitudes can result in a lot of error.
+// Trying to make unit vectors won't work for this reason.
 Vec
 vec_scale (Vec vec, double scale_factor);
 
@@ -53,7 +54,7 @@ vec_dot (Vec va, Vec vb);
 Vec
 vec_proj (Vec va, Vec vb);
 
-// Normalize an angle into the [0, 2 * M_PI) range.
+// Normalize an angle into the [0, 2 pi) range.
 double
 normalize_angle_in_radians (double angle);
 

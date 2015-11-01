@@ -89,17 +89,21 @@ angle_in_span (double theta, double start_angle, double angle_delta)
 bool
 point_intersects_rectangle (Vec pt, Rectangle const *rect)
 {
-  // Distance between pairs of opposite sides
-  double d_c1_c2_to_c3_c4 = vec_mag (vec_from (rect->c1, rect->c4));
-  double d_c2_c3_to_c4_c1 = vec_mag (vec_from (rect->c1, rect->c2));
+  // It might be worth translating/rotating stuff to make this faster
 
   // Sides as line segments
-  LineSegment c1_c2 = { rect->c1, rect->c2 };
-  LineSegment c2_c3 = { rect->c2, rect->c3 };
-  LineSegment c3_c4 = { rect->c3, rect->c4 };
-  LineSegment c4_c1 = { rect->c4, rect->c1 };
+  LineSegment c1_c2 = { rect->corner[0], rect->corner[1] };
+  LineSegment c2_c3 = { rect->corner[1], rect->corner[2] };
+  LineSegment c3_c4 = { rect->corner[2], rect->corner[3] };
+  LineSegment c4_c1 = { rect->corner[3], rect->corner[0] };
+
+  // Distance between pairs of opposite sides
+  double d_c1_c2_to_c3_c4
+    = vec_mag (vec_from (rect->corner[0], rect->corner[3]));
+  double d_c2_c3_to_c4_c1
+    = vec_mag (vec_from (rect->corner[0], rect->corner[1]));
    
-  // Nearest Point (to point) On Sides
+  // Nearest Point (to pt) On Sides
   Vec npo_c1_c2 = nearest_point_on_line_segment (pt, &c1_c2);
   Vec npo_c2_c3 = nearest_point_on_line_segment (pt, &c2_c3);
   Vec npo_c3_c4 = nearest_point_on_line_segment (pt, &c3_c4);
@@ -242,9 +246,9 @@ circle_intersects_line_segment (
 
 bool
 circle_intersects_rectangle (
-    Circle const *circ,
+    Circle    const *circ,
     Rectangle const *rect,
-    Vec *pii )
+    Vec             *pii )
 {
   Vec cc = circ->center;
   double cr2 = pow (circ->radius, 2.0);
@@ -256,8 +260,7 @@ circle_intersects_rectangle (
     return true;
   }
 
-  // FIXME: the type should just have array to begin with
-  Vec *ca = (Vec *) rect;   // Probably the type should just have array
+  Vec const *ca = rect->corner;   // Convenience alias for the corner array
 
   // Check if any of the corners of the rect lie inside circ.  Note that
   // this catches the case where the rectangle is entirely inside the circle.
@@ -270,14 +273,11 @@ circle_intersects_rectangle (
     }
   }
  
-  // FIXME: the below code would probably be a tiny bit faster if it tested
-  // as it went but I doubt it's enough to matter anywhere
-
   // Line segments between corners of rectangle
-  LineSegment c1_c2 = { rect->c1, rect->c2 };
-  LineSegment c2_c3 = { rect->c2, rect->c3 };
-  LineSegment c3_c4 = { rect->c3, rect->c4 };
-  LineSegment c4_c1 = { rect->c4, rect->c1 };
+  LineSegment c1_c2 = { rect->corner[0], rect->corner[1] };
+  LineSegment c2_c3 = { rect->corner[1], rect->corner[2] };
+  LineSegment c3_c4 = { rect->corner[2], rect->corner[3] };
+  LineSegment c4_c1 = { rect->corner[3], rect->corner[0] };
 
   // Note that pii (if not NULL) is computed by the first short-circuit true
   // result here.
