@@ -86,7 +86,7 @@ typedef struct render_priv {
   Coord lead_user_x;
   Coord lead_user_y;
 
-  /* Feature for marking one or more locations with little cross-hairs */
+  /* Feature for marking one or more locations with fixed-pixel-size dots */
   guint debug_marker_count;
   DebugMarker *debug_markers;
 
