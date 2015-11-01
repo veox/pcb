@@ -86,7 +86,7 @@ typedef struct render_priv {
   Coord lead_user_x;
   Coord lead_user_y;
 
-  /* Feature for marking one or more locations with little cross-hairs */
+  /* Feature for marking one or more locations with fixed-pixel-size dots */
   guint debug_marker_count;
   DebugMarker *debug_markers;
 
@@ -1733,7 +1733,6 @@ ghid_add_debug_marker (Coord x, Coord y)
 static void
 draw_debug_markers (render_priv *priv)
 {
-  // FIXME: make constant or arg or something for size in pixels
   double radius = DEBUG_MARKER_RADIUS_PIXELS * gport->view.coord_per_px;
 
   if ( priv->debug_marker_count == 0 )
