@@ -2,6 +2,8 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -3896,6 +3898,33 @@ lesstif_beep (void)
   fflush (stdout);
 }
 
+// This gives a warning, and if debug is enabled an assertion violation.
+#define NOT_IMPLEMENTED_TRAP()                                            \
+  do {                                                                    \
+    fprintf (                                                             \
+        stderr,                                                           \
+        "%s: %s:%i: warning: function '%s' not imlemented in this hid\n", \
+        program_invocation_short_name,                                    \
+        __FILE__,                                                         \
+        __LINE__,                                                         \
+        __func__ );                                                       \
+    assert (0);                                                           \
+  } while ( 0 )
+
+static void lesstif_lead_user_to_location (Coord X, Coord Y)
+{
+  NOT_IMPLEMENTED_TRAP ();
+}
+
+static void lesstif_cancel_lead_user (void)
+{
+  NOT_IMPLEMENTED_TRAP ();
+}
+
+static void lesstif_add_debug_marker (Coord X, Coord Y)
+{
+  NOT_IMPLEMENTED_TRAP ();
+}
 
 static bool progress_cancelled = false;
 
@@ -4103,6 +4132,10 @@ hid_lesstif_init ()
   lesstif_hid.beep                    = lesstif_beep;
   lesstif_hid.progress                = lesstif_progress;
   lesstif_hid.edit_attributes         = lesstif_attributes_dialog;
+
+  lesstif_hid.lead_user_to_location   = lesstif_lead_user_to_location;
+  lesstif_hid.cancel_lead_user        = lesstif_cancel_lead_user;
+  lesstif_hid.add_debug_marker        = lesstif_add_debug_marker;
 
   lesstif_hid.request_debug_draw      = lesstif_request_debug_draw;
   lesstif_hid.flush_debug_draw        = lesstif_flush_debug_draw;
