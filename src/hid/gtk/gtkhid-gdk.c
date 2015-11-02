@@ -1344,8 +1344,8 @@ draw_lead_user (render_priv *priv)
 
       /* Draw an arc at radius */
       gdk_draw_arc (gport->drawable, lead_gc, FALSE,
-                    Vx (priv->lead_user_x - radius),
-                    Vy (priv->lead_user_y - radius),
+                    Vx (priv->lead_user_x) - radius / gport->view.coord_per_px,
+                    Vy (priv->lead_user_y) - radius / gport->view.coord_per_px,
                     Vz (2. * radius), Vz (2. * radius),
                     0, 360 * 64);
     }
