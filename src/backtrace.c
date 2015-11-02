@@ -1,5 +1,31 @@
 // Implementation of interface described in backtrace.h.
 
+/*
+ *                            COPYRIGHT
+ *
+ *  PCB, interactive printed circuit board design
+ *  Copyright (C) 1994,1995,1996 Thomas Nau
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Contact addresses for paper mail and Email:
+ *  Thomas Nau, Schlehenweg 15, 88471 Baustetten, Germany
+ *  Thomas.Nau@rz.uni-ulm.de
+ *
+ */
+
 #include <assert.h>
 #include <execinfo.h>
 #include <limits.h>
@@ -16,7 +42,7 @@ backtrace_with_line_numbers (void)
 {
   char executable_name[PATH_MAX + 1];
   ssize_t bytes_read;
-  size_t btrace_size;                 // Number or addresses
+  size_t btrace_size;                 // Number of addresses
   int return_code;
   // Backtrace Addresses (temporary file, initialized to template)
   char ba[] = "/tmp/baXXXXXX";  
@@ -26,9 +52,10 @@ backtrace_with_line_numbers (void)
   FILE *tfp;   // Trmporary FILE Pointer (reused for different things)
 #define BT_MAX_STACK 142
   void *btrace_array[BT_MAX_STACK];   // Actual addressess
-  int ii;   //  Index variable
+  int ii;      //  Index variable
 #define ADDR2LINE_COMMAND_MAX_LENGTH 242
-  char addr2line_command[ADDR2LINE_COMMAND_MAX_LENGTH];
+  char addr2line_command[ADDR2LINE_COMMAND_MAX_LENGTH + 1];
+  int bytes_printed;
   struct stat stat_buf;
   char *result;
 
@@ -55,19 +82,22 @@ backtrace_with_line_numbers (void)
   // Print the addresses to the address file
   tfp = fopen (ba, "w");
   assert (tfp != NULL);
-  for ( ii = 0 ; ii < btrace_size ; ii++ ) {
+  for ( ii = 1 ; ii < btrace_size ; ii++ ) {   // Skip 0 because that's us
     fprintf (tfp, "%p\n", btrace_array[ii]);
   } 
   return_code = fclose (tfp);
   assert (return_code == 0);
 
   // Run addr2line to convert addresses to show func, file, line
-  sprintf (
-      addr2line_command,
-      "cat %s | addr2line --exe %s -f -i >%s",
-      ba,
-      executable_name,
-      bt );
+  bytes_printed
+    = snprintf (
+        addr2line_command,
+        ADDR2LINE_COMMAND_MAX_LENGTH + 1,
+        "cat %s | addr2line --exe %s -f -i >%s",
+        ba,
+        executable_name,
+        bt );
+  assert (bytes_printed <= ADDR2LINE_COMMAND_MAX_LENGTH);
   return_code = system (addr2line_command);
   assert (return_code == 0);
 
