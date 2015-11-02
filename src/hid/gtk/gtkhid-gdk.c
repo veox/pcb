@@ -2,6 +2,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <stdio.h>
 
 #include "crosshair.h"
@@ -23,6 +24,15 @@ extern HID ghid_hid;
 static enum mask_mode cur_mask = HID_MASK_OFF;
 static int mask_seq = 0;
 
+// Support for constant-pixel size debug markers
+#define DEBUG_MARKER_RADIUS_PIXELS 8
+#define MAX_DEBUG_MARKER_COUNT 1042
+typedef struct {
+  Coord x, y;
+} DebugMarker;
+
+static DebugMarker debug_markers[MAX_DEBUG_MARKER_COUNT];
+
 typedef struct render_priv {
   GdkGC *bg_gc;
   GdkGC *offlimits_gc;
@@ -41,6 +51,10 @@ typedef struct render_priv {
   Coord lead_user_radius;
   Coord lead_user_x;
   Coord lead_user_y;
+  
+  /* Feature for marking one or more locations with fixed-pixel-size dots */
+  guint debug_marker_count;
+  DebugMarker *debug_markers;
 
   hidGC crosshair_gc;
 } render_priv;
@@ -59,9 +73,8 @@ typedef struct hid_gc_struct
 }
 hid_gc_struct;
 
-
 static void draw_lead_user (render_priv *priv);
-
+static void draw_debug_markers (render_priv *priv);
 
 int
 ghid_set_layer (const char *name, int group, int empty)
@@ -799,6 +812,8 @@ redraw_region (GdkRectangle *rect)
 
   draw_lead_user (priv);
 
+  draw_debug_markers (priv);
+
   priv->clip = false;
 
   /* Rest the clip for bg_gc, as it is used outside this function */
@@ -1286,6 +1301,11 @@ ghid_pcb_to_event_coords (Coord pcb_x, Coord pcb_y, int *event_x, int *event_y)
 static void
 draw_lead_user (render_priv *priv)
 {
+  // FIXME: this function doesn't work as intended when the board is flipped.
+  // The circles aren't concentric anymore, though they still end up pointing
+  // to the right spot :) The OpenGL version in gtkhid-gl.c does work right
+  // I think the radius value just need to be flip-compensated somehow
+
   GdkWindow *window = gtk_widget_get_window (gport->drawing_area);
   GtkStyle *style = gtk_widget_get_style (gport->drawing_area);
   int i;
@@ -1317,7 +1337,6 @@ draw_lead_user (render_priv *priv)
                               GDK_LINE_SOLID, GDK_CAP_BUTT, GDK_JOIN_MITER);
 
   /* arcs at the approrpriate radii */
-
   for (i = 0; i < LEAD_USER_ARC_COUNT; i++, radius -= separation)
     {
       if (radius < width)
@@ -1387,4 +1406,93 @@ ghid_cancel_lead_user (void)
   priv->lead_user_timeout = 0;
   priv->lead_user_timer = NULL;
   priv->lead_user = false;
+}
+
+void
+ghid_add_debug_marker (Coord x, Coord y)
+{
+  render_priv *priv = gport->render_priv;
+
+  // The priv structure is initialized to all zeros (g_new0()), so we use
+  // that to set things up on the first time through.
+  if ( priv->debug_marker_count == 0 ) {
+    assert (priv->debug_markers == NULL);   // This should be zeros also
+    priv->debug_marker_count = 0;
+    priv->debug_markers = debug_markers;
+  }
+    
+  // We only support a limited number of markers
+  assert (priv->debug_marker_count < MAX_DEBUG_MARKER_COUNT);
+
+  priv->debug_markers[priv->debug_marker_count].x = x;
+  priv->debug_markers[priv->debug_marker_count].y = y;
+
+  (priv->debug_marker_count)++;
+}
+
+static void
+draw_debug_markers (render_priv *priv)
+{
+  if ( priv->debug_marker_count == 0 )
+    return;
+
+  // Why a GdkPixmap is Needed
+  //
+  // Debug markers are color-wise XORed with background so that they are
+  // always visible.  Unfortunately, when XORed with themselves, even numbers
+  // of markers end up canceling out to nothing.  So we first draw them all
+  // in fixed color (GDK_COPY) to a GdkPixmap, then draw the pixmap just
+  // one time onto the canvas with GDK_XOR.  Hence the extra GdkGC.
+
+  GdkWindow *window = gtk_widget_get_window (gport->drawing_area);
+  GtkStyle *style = gtk_widget_get_style (gport->drawing_area);
+  static GdkGC *debug_marker_pixmap_gc = NULL;  // See above for why I exist
+  static GdkGC *debug_marker_window_gc = NULL;
+  GdkColor debug_marker_color;
+
+  if (debug_marker_pixmap_gc == NULL)
+    {
+      debug_marker_pixmap_gc = gdk_gc_new (window);
+      debug_marker_window_gc = gdk_gc_new (window);
+      gdk_gc_copy (debug_marker_window_gc, style->white_gc);
+      gdk_gc_copy (debug_marker_window_gc, style->white_gc);
+      gdk_gc_set_function (debug_marker_pixmap_gc, GDK_COPY);
+      gdk_gc_set_function (debug_marker_window_gc, GDK_XOR);
+      gdk_gc_set_clip_origin (debug_marker_pixmap_gc, 0, 0);
+      gdk_gc_set_clip_origin (debug_marker_window_gc, 0, 0);
+      // The lead_user color scheme works well, and we have a similar purpose
+      debug_marker_color.pixel = 0;
+      debug_marker_color.red   = (int)(65535. * LEAD_USER_COLOR_R);
+      debug_marker_color.green = (int)(65535. * LEAD_USER_COLOR_G);
+      debug_marker_color.blue  = (int)(65535. * LEAD_USER_COLOR_B);
+      gdk_color_alloc (gport->colormap, &debug_marker_color);
+      gdk_gc_set_foreground (debug_marker_window_gc, &debug_marker_color);
+      gdk_gc_set_foreground (debug_marker_pixmap_gc, &debug_marker_color);
+    }
+
+  set_clip (priv, debug_marker_window_gc);
+  set_clip (priv, debug_marker_pixmap_gc);
+      
+  gint daw, dah;   // Drawing Area Width/Height
+  gdk_drawable_get_size (gport->drawable, &daw, &dah);
+  GdkPixmap *pixmap = gdk_pixmap_new (gport->drawable, daw, dah, -1);
+
+  for ( int ii = 0 ; ii < priv->debug_marker_count ; ii++ ) {
+    gdk_draw_arc (
+        pixmap,
+        debug_marker_pixmap_gc,
+        TRUE,
+        Vx (priv->debug_markers[ii].x) - DEBUG_MARKER_RADIUS_PIXELS,
+        Vy (priv->debug_markers[ii].y) - DEBUG_MARKER_RADIUS_PIXELS,
+        2 * DEBUG_MARKER_RADIUS_PIXELS,
+        2 * DEBUG_MARKER_RADIUS_PIXELS,
+        0,
+        360 * 64 );
+  }
+  gdk_draw_drawable (
+      gport->drawable,
+      debug_marker_window_gc,
+      pixmap, 0, 0, 0, 0, -1, -1 );
+
+  g_object_unref (pixmap);
 }
