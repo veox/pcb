@@ -93,9 +93,9 @@ backtrace_with_line_numbers (void)
     = snprintf (
         addr2line_command,
         ADDR2LINE_COMMAND_MAX_LENGTH + 1,
-        "cat %s | addr2line --exe %s -f -i >%s",
-        ba,
+        "addr2line --exe %s -f -i <%s >%s",
         executable_name,
+        ba,
         bt );
   assert (bytes_printed <= ADDR2LINE_COMMAND_MAX_LENGTH);
   return_code = system (addr2line_command);
