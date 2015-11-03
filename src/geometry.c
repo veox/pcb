@@ -14,9 +14,6 @@ vec_mag (Vec vec)
   return round (hypot (vec.x, vec.y));
 }
 
-// Return va scaled by scale_factor.  Be careful with this: scaling integer
-// vectors to small magnitudes can result in a lot of error.  Trying to
-// make unit vectors won't work for this reason.
 Vec
 vec_scale (Vec vec, double scale_factor)
 {
@@ -26,6 +23,16 @@ vec_scale (Vec vec, double scale_factor)
   result.y = round (vec.y * scale_factor);
 
   return result;
+}
+
+Vec
+vec_extend (Vec vec, double distance)
+{
+  // FIXME: I'm dead simple but not tested yet
+
+  double im = vec_mag (vec);   // Initial Magnitude
+
+  return vec_scale (vec, (im + distance) / im);
 }
 
 Vec
@@ -39,12 +46,9 @@ vec_sum (Vec va, Vec vb)
   return result;
 }
 
-// Vector from va to vb, aka (vb - va)
 Vec
 vec_from (Vec va, Vec vb)
 {
-  // Return vector from va to vb.
-
   Vec result = { vb.x - va.x, vb.y - va.y };
   
   return result;
@@ -89,7 +93,8 @@ angle_in_span (double theta, double start_angle, double angle_delta)
 bool
 point_intersects_rectangle (Vec pt, Rectangle const *rect)
 {
-  // It might be worth translating/rotating stuff to make this faster
+  // FIXME: rotating and translating point to put rect relatively at origin
+  // or at least axis-aligned would be faster
 
   // Sides as line segments
   LineSegment c1_c2 = { rect->corner[0], rect->corner[1] };
@@ -138,13 +143,15 @@ nearest_point_on_line_segment (Vec pt, LineSegment const *seg)
   // FIXME: I don't do anything efficient for horizontal/vertical line
   // segments
 
-  // FIXME: I could be rewritten without so many vectors if I'm found to be
-  // slow enought to matter
+  // FIXME: Stack overflow has a somewhat more
+  // efficient solution using same basic idea:
+  // http://stackoverflow.com/questions/849211/
+  // shortest-distance-between-a-point-and-a-line-segment
 
   Vec spa_spb;   // Vector from segment point a to point b
-  double sm;     // Segment Magnitude
   Vec spa_pt;    // Vector from segment point a to pt
   Vec ptl;       // Projection of pt onto seg vector (onto spa_spb)
+  double sm;     // Segment Magnitude
   double pm;     // Projection Magnitude
   Vec pp;        // Projected Point
   double sppm;   // Magnitude spa_spb + spa_pt (Segment Plus Proj. Mag.)
@@ -205,9 +212,9 @@ nearest_point_on_arc (Vec pt, Arc const *arc)
   }
   else {
     // We should use sincos() here when it becomes standard
-    // End Point A.  round() probably isn't really worth it here
+    // End Point A.
     Vec epa = { round (rad * cos (sa)), round (rad * sin (sa)) };
-    // End Point B   round() probably isn't really worth it here
+    // End Point B
     Vec epb = { round (rad * cos (ea)), round (rad * sin (ea)) };
     double m_npoc_epa = vec_mag (vec_from (npoc, epa));
     double m_npoc_epb = vec_mag (vec_from (npoc, epb));
@@ -250,6 +257,7 @@ circle_intersects_rectangle (
     Rectangle const *rect,
     Vec             *pii )
 {
+  // FIXME: these aliases aren't worth it in this function
   Vec cc = circ->center;
   double cr2 = pow (circ->radius, 2.0);
 
@@ -260,10 +268,14 @@ circle_intersects_rectangle (
     return true;
   }
 
-  Vec const *ca = rect->corner;   // Convenience alias for the corner array
+  Vec const *ca = rect->corner;   // Convenience alias for the Corner Array
 
   // Check if any of the corners of the rect lie inside circ.  Note that
   // this catches the case where the rectangle is entirely inside the circle.
+  // FIXME: It might be better to use hypot(), since that function says it
+  // avoids over/under-flow.  The one extra sqrt() is probably worth that.
+  // But other methods in this interface use pow() and I'm not sure how to
+  // avoid it, so perhaps there's not really much point.
   // FIXME: check that this test work right
   for ( int ii = 0 ; ii < 4 ; ii++ ) {
     Vec tc = { ca[ii].x - cc.x, ca[ii].y - cc.y };   // Translated Corner
@@ -274,10 +286,10 @@ circle_intersects_rectangle (
   }
  
   // Line segments between corners of rectangle
-  LineSegment c1_c2 = { rect->corner[0], rect->corner[1] };
-  LineSegment c2_c3 = { rect->corner[1], rect->corner[2] };
-  LineSegment c3_c4 = { rect->corner[2], rect->corner[3] };
-  LineSegment c4_c1 = { rect->corner[3], rect->corner[0] };
+  LineSegment c1_c2 = { ca[0], ca[1] };
+  LineSegment c2_c3 = { ca[1], ca[2] };
+  LineSegment c3_c4 = { ca[2], ca[3] };
+  LineSegment c4_c1 = { ca[3], ca[0] };
 
   // Note that pii (if not NULL) is computed by the first short-circuit true
   // result here.
@@ -289,12 +301,15 @@ circle_intersects_rectangle (
 }
 
 bool
-circle_intersects_circle (Circle const *ca, Circle const *cb, Vec *pii)
+circle_intersects_circle (
+    Circle const *ca,
+    Circle const *cb,
+    Vec          *pii )
 {
 
-  Vec a_b = vec_from (ca->center, cb->center);      // Vector from a to b
-  double ma_b = vec_mag (a_b);                      // Magnitude of a_b
-  double overlap = ca->radius + cb->radius - ma_b;     // Overlap size (length)
+  Vec a_b = vec_from (ca->center, cb->center);       // Vector from a to b
+  double ma_b = vec_mag (a_b);                       // Magnitude of a_b
+  double overlap = ca->radius + cb->radius - ma_b;   // Overlap size (length)
 
   if ( overlap >= 0.0 ) {
     if ( pii != NULL ) {
@@ -321,9 +336,9 @@ circle_intersects_circle (Circle const *ca, Circle const *cb, Vec *pii)
 
 int
 circle_line_segment_intersection (
-    Circle const *circ,
+    Circle      const *circ,
     LineSegment const *seg,
-    Vec intersection[2] )
+    Vec                intersection[2] )
 {
   // Translated end point coordinates st circ is relatively situated at (0, 0).
   Coord x1 = seg->pa.x - circ->center.x;
@@ -434,9 +449,9 @@ arc_end_points (Arc *arc, Vec ep[2])
 
 int
 arc_line_segment_intersection (
-    Arc const *arc,
+    Arc         const *arc,
     LineSegment const *seg,
-    Vec intersection[2] )
+    Vec                intersection[2] )
 {
   Circle const *uc = &(arc->circle);   // Underlying Circle
    

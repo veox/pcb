@@ -15,7 +15,7 @@ typedef struct {
 } LineSegment;
 
 typedef struct {
-  // corner[0] is diagonal to corner[2], corner[2] is diagonal to corner[3]
+  // corner[0] is diagonal to corner[2], corner[1] is diagonal to corner[3]
   Vec corner[4];
 } Rectangle;
 
@@ -33,16 +33,20 @@ typedef struct {
 double
 vec_mag (Vec vec);
 
-// Return vec scaled by scale_factor.  Be careful with this: scaling
-// integer vectors to small magnitudes can result in a lot of error.
-// Trying to make unit vectors won't work for this reason.
+// Return vec scaled by scale_factor.  Note that scaling integer vectors
+// to small magnitudes can result in a lot of error.  Trying to make unit
+// vectors won't work for this reason.
 Vec
 vec_scale (Vec vec, double scale_factor);
+
+// Return vec extended by distance.  Like vec_scale(), but additive.
+Vec
+vec_extend (Vec vec, double distance);
 
 Vec
 vec_sum (Vec va, Vec vb);
 
-// Vector from va to vb, aka (vb - va)
+// Return vector from va to vb, aka (vb - va)
 Vec
 vec_from (Vec va, Vec vb);
 
@@ -54,17 +58,16 @@ vec_dot (Vec va, Vec vb);
 Vec
 vec_proj (Vec va, Vec vb);
 
-// Normalize an angle into the [0, 2 pi) range.
+// Return angle normalized into the [0, 2 pi) range.
 double
 normalize_angle_in_radians (double angle);
 
 // Return true iff theta is between start_angle and start_angle + angle_delta
-// in radians (winding positive angles from +x towards +y).  No angular
-// epsilon is implied here: clients must include one if they need it.
+// in radians (winding positive angles from +x towards +y).
 bool
 angle_in_span (double theta, double start_angle, double angle_delta);
 
-// Return true iff ppt is in rect (with rect regarded as filled).
+// Return true iff pt is in rect (with rect regarded as filled).
 bool
 point_intersects_rectangle (Vec pt, Rectangle const *rect);
 
@@ -99,9 +102,9 @@ circle_intersects_rectangle (
     Rectangle const *rect,
     Vec             *pii );
 
-// Return true iff circles ca and cb intersect.  If pii (Point In
-// Intersection) is not NULL, set *pii to a point in the middle of the
-// intersection (treating the circles as filled).
+// Return true iff filled circles ca and cb intersect.  If pii (Point
+// In Intersection) is not NULL, set *pii to a point in the intersection
+// (treating the circles as filled).
 bool
 circle_intersects_circle (
     Circle const *ca,
@@ -112,9 +115,9 @@ circle_intersects_circle (
 // or 2), assuming no floating point problems.  This function views circ as
 // unfilled: if seg lies entirely inside circ no intersection will be found.
 // If the result is non-zero and intersections is non-NULL, the intersection
-// point(s) are returned there.  Degenerate (zero length) seg arguments
-// are treated as point.  Degenerate (radius <= 0) circ arguments aren't
-// allowed.  Detection of the intersection for line segments tangent to circ
+// point(s) are returned there.  Degenerate (zero length) seg arguments are
+// treated as points.  Degenerate (radius <= 0) circ arguments aren't allowed.
+// Note that detection of the intersection for line segments tangent to circ
 // is subject to rounding error and a result of 1 is doubtful in this case.
 int
 circle_line_segment_intersection (
@@ -122,9 +125,8 @@ circle_line_segment_intersection (
     LineSegment const *seg,
     Vec                intersection[2] );
 
-// Return the end points of arc in *ep.  Note that arcs spanning > 2 pi
-// radians are still considered to have distinct end points according to
-// this function.
+// Return the end points of arc in *ep.  Arcs spanning > 2 pi radians are
+// still considered to have distinct end points.
 void
 arc_end_points (Arc *arc, Vec ep[2]);
 
