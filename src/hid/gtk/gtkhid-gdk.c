@@ -24,15 +24,6 @@ extern HID ghid_hid;
 static enum mask_mode cur_mask = HID_MASK_OFF;
 static int mask_seq = 0;
 
-// Support for constant-pixel size debug markers
-#define DEBUG_MARKER_RADIUS_PIXELS 8
-#define MAX_DEBUG_MARKER_COUNT 1042
-typedef struct {
-  Coord x, y;
-} DebugMarker;
-
-static DebugMarker debug_markers[MAX_DEBUG_MARKER_COUNT];
-
 typedef struct render_priv {
   GdkGC *bg_gc;
   GdkGC *offlimits_gc;

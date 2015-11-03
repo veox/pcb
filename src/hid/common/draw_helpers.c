@@ -6,6 +6,7 @@
 #include "polygon.h"
 #include "draw_helpers.h"
 
+DebugMarker debug_markers[MAX_DEBUG_MARKER_COUNT];
 
 static void
 common_draw_pcb_line (hidGC gc, LineType *line)

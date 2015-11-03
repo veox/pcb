@@ -61,14 +61,6 @@ static GLfloat last_modelview_matrix[4][4] = {{1.0, 0.0, 0.0, 0.0},
                                               {0.0, 0.0, 0.0, 1.0}};
 static int global_view_2d = 1;
 
-// Support for constant-pixel size debug markers
-#define DEBUG_MARKER_RADIUS_PIXELS 8
-#define MAX_DEBUG_MARKER_COUNT 1042
-typedef struct {
-  Coord x, y;
-} DebugMarker;
-static DebugMarker debug_markers[MAX_DEBUG_MARKER_COUNT];
-
 typedef struct render_priv {
   GdkGLConfig *glconfig;
   bool trans_lines;
