@@ -978,10 +978,11 @@ IsArcInRectangle (
 }
 
 static Rectangle
-rectangular_part_of_line (LineType *Line)
+rectangular_part_of_line (LineType *Line, Coord Bloat)
 {
-  // Return a new Rectangle consisting of the portion of Line that is
-  // a rectangle.  If Line has SQURE_FLAG, this rectangle incorporates
+  // Return a new Rectangle consisting of the portion of Line that is a
+  // rectangle, increased in size by ged in all four directions parallel to
+  // the rectangle edges.  If Line has SQURE_FLAG, this rectangle incorporates
   // the square end caps, otherwise it ends where the "Line" stops being
   // a rectangle.
   
@@ -1008,15 +1009,43 @@ rectangular_part_of_line (LineType *Line)
     cv = ((Vec) { 0, 0 });
   }
   
+  // Negatives (other direction) of cv and tv
+  Vec ncv = { -cv.x, -cv.y };
+  Vec ntv = { -tv.x, -tv.y };
+
+  // Bloat vectors
+  Vec ob, cdb, nob, ncdb;   // Orthogonal/cap direction bloat, and negatives
+  if ( Bloat > 0 ) {
+    ob   = vec_scale (ov, ((double) Bloat) / vec_mag (ov));   // Orthogonal 
+    nob  = (Vec) { -ob.x, -ob.y };   // Negative ob (for other side)
+    cdb  = (Vec) { -ob.y, ob.x};     // Cap-direction bloat
+    ncdb = (Vec) { -ob.y, ob.x};     // Negative cdb (for other side)
+  }
+  else {
+    ob   = (Vec) { 0, 0 };
+    nob  = (Vec) { 0, 0 };
+    cdb  = (Vec) { 0, 0 };
+    ncdb = (Vec) { 0, 0 };
+
+  }
+ 
+  Rectangle result = { 
+    { vec_sum (vec_sum (vec_sum (vec_sum (pa, tv),  cv),  ob),  cdb),
+      vec_sum (vec_sum (vec_sum (vec_sum (pb, tv),  ncv), ob),  ncdb),
+      vec_sum (vec_sum (vec_sum (vec_sum (pb, ntv), ncv), nob), ncdb),
+      vec_sum (vec_sum (vec_sum (vec_sum (pa, ntv), cv),  nob), cdb) } };
+
+  // FIXME: test then nuke this old form:
+  /*
   Rectangle result = { 
     { vec_sum (vec_sum (pa, tv),                   cv), 
       vec_sum (vec_sum (pb, tv),                   vec_scale (cv, -1.0)),
       vec_sum (vec_sum (pb, vec_scale (tv, -1.0)), vec_scale (cv, -1.0)), 
       vec_sum (vec_sum (pa, vec_scale (tv, -1.0)),  cv) } };
+      */
 
   return result;
 }
-
 
 /* ---------------------------------------------------------------------------
  * Check if a circle of Radius with center at (X, Y) intersects a Pad.
@@ -1041,7 +1070,7 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *pii)
   Vec piiav;  
 
   // Note that this includes the end caps if the line has square ends
-  Rectangle rpol = rectangular_part_of_line ((LineType *) Pad);
+  Rectangle rpol = rectangular_part_of_line ((LineType *) Pad, 0);
 
   if ( circle_intersects_rectangle (&circ, &rpol, &piiav) ) {
     if ( pii != NULL ) {

@@ -1666,10 +1666,11 @@ LineLineIntersect (LineType *Line1, LineType *Line2, PointType *pii)
 // additional adaptation functions to go from pcb types to related geometry
 // types or collections would be good.
 static Rectangle
-rectangular_part_of_line (LineType *Line)
+rectangular_part_of_line (LineType *Line, Coord ged)
 {
-  // Return a new Rectangle consisting of the portion of Line that is
-  // a rectangle.  If Line has SQURE_FLAG, this rectangle incorporates
+  // Return a new Rectangle consisting of the portion of Line that is a
+  // rectangle, increased in size by ged in all four directions parallel to
+  // the rectangle edges.  If Line has SQURE_FLAG, this rectangle incorporates
   // the square end caps, otherwise it ends where the "Line" stops being
   // a rectangle.
   
@@ -1696,11 +1697,40 @@ rectangular_part_of_line (LineType *Line)
     cv = ((Vec) { 0, 0 });
   }
   
+  // Negatives (other direction) of cv and tv
+  Vec ncv = { -cv.x, -cv.y };
+  Vec ntv = { -tv.x, -tv.y };
+
+  // Bloat vectors
+  Vec ob, cdb, nob, ncdb;   // Orthogonal/cap direction bloat, and negatives
+  if ( Bloat > 0 ) {
+    ob   = vec_scale (ov, ((double) Bloat) / vec_mag (ov));   // Orthogonal 
+    nob  = (Vec) { -ob.x, -ob.y };   // Negative ob (for other side)
+    cdb  = (Vec) { -ob.y, ob.x};     // Cap-direction bloat
+    ncdb = (Vec) { -ob.y, ob.x};     // Negative cdb (for other side)
+  }
+  else {
+    ob   = (Vec) { 0, 0 };
+    nob  = (Vec) { 0, 0 };
+    cdb  = (Vec) { 0, 0 };
+    ncdb = (Vec) { 0, 0 };
+
+  }
+ 
+  Rectangle result = { 
+    { vec_sum (vec_sum (vec_sum (vec_sum (pa, tv),  cv),  ob),  cdb),
+      vec_sum (vec_sum (vec_sum (vec_sum (pb, tv),  ncv), ob),  ncdb),
+      vec_sum (vec_sum (vec_sum (vec_sum (pb, ntv), ncv), nob), ncdb),
+      vec_sum (vec_sum (vec_sum (vec_sum (pa, ntv), cv),  nob), cdb) } };
+
+  // FIXME: test then nuke this old form:
+  /*
   Rectangle result = { 
     { vec_sum (vec_sum (pa, tv),                   cv), 
       vec_sum (vec_sum (pb, tv),                   vec_scale (cv, -1.0)),
       vec_sum (vec_sum (pb, vec_scale (tv, -1.0)), vec_scale (cv, -1.0)), 
       vec_sum (vec_sum (pa, vec_scale (tv, -1.0)),  cv) } };
+      */
 
   return result;
 }
@@ -1708,18 +1738,23 @@ rectangular_part_of_line (LineType *Line)
 bool
 LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
 {
-  // FIXME: now we have to honor Bloat here as well, so DRC can work right
+  // FIXME: WORK POINT: well we still get both potential for broken trace
+  // and copper areas too close with the foo.pcb.  The intersection locations
+  // found are suspiciously outside the objects as well, but that could just
+  // be do to the fact that the location is checked for at the worng point
+  // in the code.
 
   // We don't handle arc of ellipse at the moment
   assert (arc->Width == arc->Height);
+ 
+  // Note that Bloat doesn't change radius (arcs are shrunk "in place").
+  Coord radius = arc->Width;
   
   // We don't handle arcs with square ends
   assert (! TEST_FLAG (SQUAREFLAG, arc));
-  
-  Coord radius = arc->Width;
 
   // Rectangular Part Of Line
-  Rectangle rpol = rectangular_part_of_line (Line);
+  Rectangle rpol = rectangular_part_of_line (Line, Bloat / 2);
 
   LineSegment rectangle_edges[4] = {
     ((LineSegment) { rpol.corner[0], rpol.corner[1] }),
@@ -1735,19 +1770,45 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
   double sa = M_PI - ((M_PI / 180.0) * arc->StartAngle);
   double ad = -arc->Delta * (M_PI / 180.0);
  
-  Coord lto2 = Line->Thickness / 2;                      // Line Thickness / 2
-  Coord ato2 = arc->Thickness / 2;                       // Arc Thickness / 2
-  Coord sto2 = (Line->Thickness + arc->Thickness) / 2;   // Both thickness / 2
+  Coord lto2 = Bloat / 2 + Line->Thickness / 2;       // Line Thickness / 2
+  Coord ato2 = Bloat / 2 + arc->Thickness / 2;        // Arc Thickness / 2
+  // Both thickness / 2 (Sum of Thicknesses Over 2)
+  Coord sto2 = Bloat + (Line->Thickness + arc->Thickness) / 2;
+  
+  // If either the arc or line thickness has reached 0 at the current Bloat,
+  // then we're done.  In painful theory of course there could still be
+  // intersections at 0 thickness, and since we're on integer coordinates they
+  // could in some situation be detected, but not consistently.  FIXME: the
+  // question is, how does the existing code deal with negative bloats with
+  // absolute value greater than the thickness of lines/arcs?  Since Bloat
+  // is set to the minimum overlap required for the minimum overlap tests,
+  // these could easily occur.  In theory such features can never overlap
+  // enough to satify the design rules when they join as a T, but in practice
+  // the existing code does some 0 clamping that might effectively ignore
+  // this case...
+  if ( lto2 <= 0 || ato2 <= 0 ) {
+    printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
+    return false;
+  }
 
-  // FIXME: when ato2 >= radius the inner circle is degenerate or has negative
-  // radius, we should handle this case.
-  assert (ato2 < radius);
-
-  // Inner/Outer Arcs (of ArcType Arc, due to its thickness)
+  // Inner/Outer Arcs (of ArcType Arc, due to its thickness).  Note that ia
+  // might have radius <= 0 at Bloat == 0, and at negative bloat (shrink)
+  // ia might have radius <= 0 as well.
   Arc
     oa = { { { arc->X, arc->Y }, radius + ato2 }, sa, ad },
     ia = { { { arc->X, arc->Y }, radius - ato2 }, sa, ad };
-  
+
+  printf ("%s:%i:%s: oa radius: %li\n", __FILE__, __LINE__, __func__,
+      oa.circle.radius); 
+  printf ("%s:%i:%s: ia radius: %li\n", __FILE__, __LINE__, __func__,
+      ia.circle.radius); 
+  printf ("%s:%i:%s: lto2: %li\n", __FILE__, __LINE__, __func__, lto2);
+ 
+  if ( oa.circle.radius <= 0 ) {
+    printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
+    return false;
+  }
+
   Arc acl = { { { arc->X, arc->Y}, radius }, sa, ad };      // Arc Center Line
   Vec aep[2];                                               // Arc End Points
   arc_end_points (&acl, aep);
@@ -1764,15 +1825,19 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
         pii->X = ip[0].x;
         pii->Y = ip[0].y;
       }
+      printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
       return true;
     }
-    ipc = arc_line_segment_intersection (&ia, &(rectangle_edges[ii]), ip);
-    if ( ipc > 0 ) {
-      if ( pii != NULL ) {
-        pii->X = ip[0].x;
-        pii->Y = ip[0].y;
+    if ( ia.circle.radius > 0 ) {   // If ia isn't degenerate check it also
+      ipc = arc_line_segment_intersection (&ia, &(rectangle_edges[ii]), ip);
+      if ( ipc > 0 ) {
+        if ( pii != NULL ) {
+          pii->X = ip[0].x;
+          pii->Y = ip[0].y;
+        }
+        printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
+        return true;
       }
-      return true;
     }
 
     // Check arc end caps (which are always round).  Note that this catches
@@ -1785,6 +1850,7 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
           pii->X = npol.x;
           pii->Y = npol.y;
         }
+        printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
         return true;
       }
     }
@@ -1799,6 +1865,7 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
         pii->X = ctc.x;
         pii->Y = ctc.y;
       }
+      printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
       return true;
     }
   }
@@ -1827,12 +1894,14 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
           pii->X = pii_as_vector.x;
           pii->Y = pii_as_vector.y;
         }
+        printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
         return true;
       } 
     }
 
   } 
 
+  printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   return false;
 }
 
@@ -3654,10 +3723,13 @@ DRCFind (int What, void *ptr1, void *ptr2, void *ptr3)
       /* ok now the shrunk net has the SELECTEDFLAG set */
       DumpList ();
       ListStart (What, ptr1, ptr2, ptr3, FOUNDFLAG);
+      printf ("%s:%i:%s: Bloat: %li\n", __FILE__, __LINE__, __func__, Bloat); 
       Bloat = 0;
       drc = true;               /* abort the search if we find anything not already found */
       if (DoIt (FOUNDFLAG, true, false))
         {
+          printf ("%s:%i:%s: Bloat: %li\n", __FILE__, __LINE__, __func__, Bloat); 
+          assert (0);
           DumpList ();
           /* make the flag changes undoable */
           ClearFlagOnAllObjects (false, FOUNDFLAG | SELECTEDFLAG);
