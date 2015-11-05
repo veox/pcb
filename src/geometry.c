@@ -425,7 +425,7 @@ circle_line_segment_intersection (
 }
 
 void
-arc_end_points (Arc *arc, Vec ep[2])
+arc_end_points (Arc const *arc, Vec ep[2])
 {
   // Sines and cosines of Start Angle/End Angle
   double
@@ -453,6 +453,9 @@ arc_line_segment_intersection (
     LineSegment const *seg,
     Vec                intersection[2] )
 {
+  // Degenerate arcs aren't allowed.
+  assert (arc->circle.radius > 0);
+
   Circle const *uc = &(arc->circle);   // Underlying Circle
    
   // Get intersection count and intersection points 

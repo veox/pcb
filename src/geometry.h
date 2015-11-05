@@ -119,6 +119,10 @@ circle_intersects_circle (
 // treated as points.  Degenerate (radius <= 0) circ arguments aren't allowed.
 // Note that detection of the intersection for line segments tangent to circ
 // is subject to rounding error and a result of 1 is doubtful in this case.
+// FIXME: perhaps on radius < 0 should be disallowed, and let radius==0 just
+// naturally be unreliable, for consistency with other spots in interface
+// where radius==0 might be convenient (e.g. so are that are points work
+// without special junk, since the UI lets you create them)?
 int
 circle_line_segment_intersection (
     Circle      const *circ,
@@ -128,7 +132,7 @@ circle_line_segment_intersection (
 // Return the end points of arc in *ep.  Arcs spanning > 2 pi radians are
 // still considered to have distinct end points.
 void
-arc_end_points (Arc *arc, Vec ep[2]);
+arc_end_points (Arc const *arc, Vec ep[2]);
 
 // Like circle_line_segment_intersection(), but for an arc of a cirle.
 int
@@ -136,6 +140,5 @@ arc_line_segment_intersection (
     Arc         const *arc,
     LineSegment const *seg,
     Vec                intersection[2] );
-
 
 #endif   // PCB_GEOMETRY_H
