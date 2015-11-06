@@ -63,7 +63,7 @@ static int global_view_2d = 1;
 
 // Support for constant-pixel size debug markers
 #define DEBUG_MARKER_RADIUS_PIXELS 8
-#define MAX_DEBUG_MARKER_COUNT 10042
+#define MAX_DEBUG_MARKER_COUNT 1042
 typedef struct {
   Coord x, y;
 } DebugMarker;
