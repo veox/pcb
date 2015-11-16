@@ -37,10 +37,20 @@
 
 #include "backtrace.h"
 
+// To avoid the horror of spotty PATH_MAX define, pathconf(), etc.
+#define MY_PATH_MAX 4242
+
+// readlink() at least is only defined if we have this.  Some
+// innocent-sounding GCC options (e.g.e -std=c11) cause this to not be the
+// case, so we check for it here.
+#ifndef _POSIX_C_SOURCE
+#  error _POSIX_C_SOURCE not defined
+#endif
+
 char *
 backtrace_with_line_numbers (void)
 {
-  char executable_name[PATH_MAX + 1];
+  char executable_name[MY_PATH_MAX + 1];
   ssize_t bytes_read;
   size_t btrace_size;                 // Number of addresses
   int return_code;
@@ -60,9 +70,9 @@ backtrace_with_line_numbers (void)
   char *result;
 
   // Use /proc magic to find which binary we are
-  bytes_read = readlink ("/proc/self/exe", executable_name, PATH_MAX + 1);
+  bytes_read = readlink ("/proc/self/exe", executable_name, MY_PATH_MAX + 1);
   assert (bytes_read != -1);
-  assert (bytes_read <= PATH_MAX);      // Systems don't always honor PATH_MAX
+  assert (bytes_read <= MY_PATH_MAX);
   executable_name[bytes_read] = '\0';   // Readlink doesn't do this for us
   
   // Get the actual backtrace
