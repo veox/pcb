@@ -1,36 +1,75 @@
-// Interface of the implementation described in geometry.h.
+// Implementation of the interface described in geometry.h.
 
 #define _GNU_SOURCE
 
 #include <assert.h>
 #include <math.h>
+#include <stddef.h>
+// FIXME: should these headers be included in geometry.h instead, since
+// the macros which name the function from them that we want to use are
+// defined there?
+#include <stdlib.h>
+
+// If clients of the geometry.h module want to change the default types using
+// #define directives in a header (rather than with preprocessor -D options),
+// that header can be included here so this file gets the desired definitions.
+
+// The pcb-specific type settings happen in this header at the moment,
+// so we include this here.
+#include "pcb_geometry.h"
 
 #include "geometry.h"
 
-double
+// Readability aliases.  We undef them first to avoid possible clashes,
+// since we're only interested in our interpretation of them here.
+#undef  ABS
+#define ABS    GEOM_ABS
+#undef  ATAN2
+#define ATAN2  GEOM_ATAN2
+#undef  COS
+#define COS    GEOM_COS
+#undef  CT
+#define CT     GEOM_COORD_TYPE
+#undef  FABS
+#define FABS   GEOM_FABS
+#undef  FT
+#define FT     GEOM_FLOAT_TYPE
+#undef  HYPOT
+#define HYPOT  GEOM_HYPOT
+#undef  POW
+#define POW    GEOM_POW
+#undef  ROUND
+#define ROUND  GEOM_ROUND
+#undef  SIN
+#define SIN    GEOM_SIN
+#undef  SINCOS
+#define SINCOS GEOM_SINCOS
+#undef  SQRT
+#define SQRT   GEOM_SQRT
+
+GEOM_FLOAT_TYPE
 vec_mag (Vec vec)
 {
-  // FIXME: this hidden round is weird, should make clients do it at need
-  return round (hypot (vec.x, vec.y));
+  return HYPOT (vec.x, vec.y);
 }
 
 Vec
-vec_scale (Vec vec, double scale_factor)
+vec_scale (Vec vec, GEOM_FLOAT_TYPE scale_factor)
 {
   Vec result;
 
-  result.x = round (vec.x * scale_factor);
-  result.y = round (vec.y * scale_factor);
+  result.x = ROUND (vec.x * scale_factor);
+  result.y = ROUND (vec.y * scale_factor);
 
   return result;
 }
 
 Vec
-vec_extend (Vec vec, double distance)
+vec_extend (Vec vec, GEOM_FLOAT_TYPE distance)
 {
   // FIXME: I'm dead simple but not tested yet
 
-  double im = vec_mag (vec);   // Initial Magnitude
+  FT im = vec_mag (vec);   // Initial Magnitude
 
   return vec_scale (vec, (im + distance) / im);
 }
@@ -54,10 +93,15 @@ vec_from (Vec va, Vec vb)
   return result;
 }
 
-double
+#include <inttypes.h>
+
+GEOM_FLOAT_TYPE
 vec_dot (Vec va, Vec vb)
 {
-  return ((double) va.x) * vb.x + ((double) va.y) * vb.y;
+  // Note that by letting one of these comversion be implicit, we effectively
+  // arrange for a compiler warning under -Wconversion if FT isn't wider
+  // than CT.  I think this is a good thing and not something we want to mask.
+  return ((FT) va.x) * vb.x + ((FT) va.y) * vb.y;
 }
 
 Vec
@@ -66,8 +110,8 @@ vec_proj (Vec va, Vec vb)
   return vec_scale (vb, vec_dot (va, vb) / vec_dot (vb, vb));
 }
 
-double
-normalize_angle_in_radians (double angle)
+GEOM_FLOAT_TYPE
+normalize_angle_in_radians (GEOM_FLOAT_TYPE angle)
 {
   while ( angle < 0.0 ) {
     angle += 2.0 * M_PI;
@@ -80,7 +124,10 @@ normalize_angle_in_radians (double angle)
 }
 
 bool
-angle_in_span (double theta, double start_angle, double angle_delta)
+angle_in_span (
+    GEOM_FLOAT_TYPE theta,
+    GEOM_FLOAT_TYPE start_angle,
+    GEOM_FLOAT_TYPE angle_delta )
 {
   if ( angle_delta > 0.0 ) {
     return angle_delta >= normalize_angle_in_radians (theta - start_angle);
@@ -103,10 +150,8 @@ point_intersects_rectangle (Vec pt, Rectangle const *rect)
   LineSegment c4_c1 = { rect->corner[3], rect->corner[0] };
 
   // Distance between pairs of opposite sides
-  double d_c1_c2_to_c3_c4
-    = vec_mag (vec_from (rect->corner[0], rect->corner[3]));
-  double d_c2_c3_to_c4_c1
-    = vec_mag (vec_from (rect->corner[0], rect->corner[1]));
+  FT d_c1_c2_to_c3_c4 = vec_mag (vec_from (rect->corner[0], rect->corner[3]));
+  FT d_c2_c3_to_c4_c1 = vec_mag (vec_from (rect->corner[0], rect->corner[1]));
    
   // Nearest Point (to pt) On Sides
   Vec npo_c1_c2 = nearest_point_on_line_segment (pt, &c1_c2);
@@ -115,10 +160,10 @@ point_intersects_rectangle (Vec pt, Rectangle const *rect)
   Vec npo_c4_c1 = nearest_point_on_line_segment (pt, &c4_c1);
 
   // Distances from pt to nearest point on each side
-  double d_pt_c1_c2 = vec_mag (vec_from (pt, npo_c1_c2));
-  double d_pt_c2_c3 = vec_mag (vec_from (pt, npo_c2_c3));
-  double d_pt_c3_c4 = vec_mag (vec_from (pt, npo_c3_c4));
-  double d_pt_c4_c1 = vec_mag (vec_from (pt, npo_c4_c1));
+  FT d_pt_c1_c2 = vec_mag (vec_from (pt, npo_c1_c2));
+  FT d_pt_c2_c3 = vec_mag (vec_from (pt, npo_c2_c3));
+  FT d_pt_c3_c4 = vec_mag (vec_from (pt, npo_c3_c4));
+  FT d_pt_c4_c1 = vec_mag (vec_from (pt, npo_c4_c1));
 
   return (
       d_pt_c1_c2 <= d_c1_c2_to_c3_c4 &&
@@ -134,7 +179,7 @@ point_intersects_circle (Vec pt, Circle const *circ)
   pt.x -= circ->center.x;
   pt.y -= circ->center.y;
 
-  return hypot (pt.x, pt.y) <= circ->radius;
+  return HYPOT (pt.x, pt.y) <= circ->radius;
 }
 
 Vec
@@ -151,10 +196,10 @@ nearest_point_on_line_segment (Vec pt, LineSegment const *seg)
   Vec spa_spb;   // Vector from segment point a to point b
   Vec spa_pt;    // Vector from segment point a to pt
   Vec ptl;       // Projection of pt onto seg vector (onto spa_spb)
-  double sm;     // Segment Magnitude
-  double pm;     // Projection Magnitude
+  FT sm;         // Segment Magnitude
+  FT pm;         // Projection Magnitude
   Vec pp;        // Projected Point
-  double sppm;   // Magnitude spa_spb + spa_pt (Segment Plus Proj. Mag.)
+  FT sppm;       // Magnitude spa_spb + spa_pt (Segment Plus Proj. Mag.)
   Vec result;    // Result to be returned
 
   // Degenerate case: seg is a point
@@ -187,20 +232,20 @@ Vec
 nearest_point_on_arc (Vec pt, Arc const *arc)
 {
   Vec cent = arc->circle.center;
-  Coord rad = arc->circle.radius;
+  CT  rad  = arc->circle.radius;
 
   // Translate pt st Arc circle is centered at origin wrt it
   pt.x -= cent.x;
   pt.y -= cent.y;
 
-  double sa = arc->start_angle;
-  double ad = arc->angle_delta;
-  double ea = sa + ad;   // End Angle.   Note: in [0, 4.0 * M_PI)
+  FT sa = arc->start_angle;
+  FT ad = arc->angle_delta;
+  FT ea = sa + ad;   // End Angle.   Note: in [0, 4.0 * M_PI)
 
   // Nearest Point on Circle
   Vec npoc = vec_scale (pt, rad / vec_mag (pt));
 
-  double theta_npoc = atan2 (npoc.y, npoc.x);
+  FT theta_npoc = ATAN2 (npoc.y, npoc.x);
 
   Vec result;
 
@@ -213,11 +258,11 @@ nearest_point_on_arc (Vec pt, Arc const *arc)
   else {
     // We should use sincos() here when it becomes standard
     // End Point A.
-    Vec epa = { round (rad * cos (sa)), round (rad * sin (sa)) };
+    Vec epa = { ROUND (rad * COS (sa)), ROUND (rad * SIN (sa)) };
     // End Point B
-    Vec epb = { round (rad * cos (ea)), round (rad * sin (ea)) };
-    double m_npoc_epa = vec_mag (vec_from (npoc, epa));
-    double m_npoc_epb = vec_mag (vec_from (npoc, epb));
+    Vec epb = { ROUND (rad * COS (ea)), ROUND (rad * SIN (ea)) };
+    FT m_npoc_epa = vec_mag (vec_from (npoc, epa));
+    FT m_npoc_epb = vec_mag (vec_from (npoc, epb));
     result  = (m_npoc_epa < m_npoc_epb ? epa : epb);
   }
 
@@ -238,7 +283,7 @@ circle_intersects_line_segment (
 
   Vec cc_np = vec_from (circ->center, np);
 
-  double mcc_np = vec_mag (cc_np);
+  FT mcc_np = vec_mag (cc_np);
 
   if ( mcc_np <= circ->radius ) {
     if ( pii != NULL ) {
@@ -257,14 +302,15 @@ circle_intersects_rectangle (
     Rectangle const *rect,
     Vec             *pii )
 {
-  // FIXME: these aliases aren't worth it in this function
   Vec cc = circ->center;
-  double cr2 = pow (circ->radius, 2.0);
+  FT cr2 = POW (circ->radius, 2.0);
 
   // Check if the center of the circle is on the rectangle.  Note that this
   // catches the situation where the circle is entirely inside the rectangle.
   if ( point_intersects_rectangle (circ->center, rect) ) {
-    *pii = cc;
+    if ( pii != NULL ) {
+      *pii = cc;
+    }
     return true;
   }
 
@@ -272,15 +318,13 @@ circle_intersects_rectangle (
 
   // Check if any of the corners of the rect lie inside circ.  Note that
   // this catches the case where the rectangle is entirely inside the circle.
-  // FIXME: It might be better to use hypot(), since that function says it
-  // avoids over/under-flow.  The one extra sqrt() is probably worth that.
-  // But other methods in this interface use pow() and I'm not sure how to
-  // avoid it, so perhaps there's not really much point.
   // FIXME: check that this test work right
   for ( int ii = 0 ; ii < 4 ; ii++ ) {
     Vec tc = { ca[ii].x - cc.x, ca[ii].y - cc.y };   // Translated Corner
-    if ( pow (tc.x, 2.0) + pow (tc.y, 2.0) <= cr2 ) {
-      *pii = ca[ii];
+    if ( POW (tc.x, 2.0) + POW (tc.y, 2.0) <= cr2 ) {
+      if ( pii != NULL ) {
+        *pii = ca[ii];
+      }
      return true; 
     }
   }
@@ -307,9 +351,9 @@ circle_intersects_circle (
     Vec          *pii )
 {
 
-  Vec a_b = vec_from (ca->center, cb->center);       // Vector from a to b
-  double ma_b = vec_mag (a_b);                       // Magnitude of a_b
-  double overlap = ca->radius + cb->radius - ma_b;   // Overlap size (length)
+  Vec a_b = vec_from (ca->center, cb->center);   // Vector from a to b
+  FT ma_b = vec_mag (a_b);                       // Magnitude of a_b
+  FT overlap = ca->radius + cb->radius - ma_b;   // Overlap size (length)
 
   if ( overlap >= 0.0 ) {
     if ( pii != NULL ) {
@@ -340,13 +384,13 @@ circle_line_segment_intersection (
     LineSegment const *seg,
     Vec                intersection[2] )
 {
-  // Translated end point coordinates st circ is relatively situated at (0, 0).
-  Coord x1 = seg->pa.x - circ->center.x;
-  Coord y1 = seg->pa.y - circ->center.y;
-  Coord x2 = seg->pb.x - circ->center.x;
-  Coord y2 = seg->pb.y - circ->center.y;
+  // Translated end point coordinates st circ is relatively situated at (0, 0)
+  CT x1 = seg->pa.x - circ->center.x;
+  CT y1 = seg->pa.y - circ->center.y;
+  CT x2 = seg->pb.x - circ->center.x;
+  CT y2 = seg->pb.y - circ->center.y;
 
-  // Degenerate case: seg is a point.
+  // Degenerate case: seg is a point
   if ( x1 == x2 && y1 == y2 ) {
     if ( point_intersects_circle (seg->pa, circ) ) {
       if ( intersection != NULL ) {
@@ -360,62 +404,64 @@ circle_line_segment_intersection (
   assert (circ->radius > 0);
 
   // Straight from http://mathworld.wolfram.com/Circle-LineIntersection.html
-  Coord dx = x2 - x1;
-  Coord dy = y2 - y1;
-  double dr = hypot (dx, dy);
-  double determinant = ((double) x1) * y2 - ((double) x2) * y1;
-  double dr2 = pow (dr, 2.0);
-  double discriminant = pow (circ->radius, 2.0) * dr2 - pow (determinant, 2.0);
+  CT dx = x2 - x1;
+  CT dy = y2 - y1;
+  FT dr = HYPOT (dx, dy);
+  FT determinant = ((FT) x1) * y2 - ((FT) x2) * y1;
+  FT dr2 = POW (dr, 2.0);
+  FT discriminant = POW (circ->radius, 2.0) * dr2 - POW (determinant, 2.0);
   if ( discriminant < 0 ) {
     return 0;   // We aren't interested in imaginary intersections
   }
-  double sqrt_disc = sqrt (discriminant);
-  double temp = (dy < 0 ? -1.0 : 1.0) * dx * sqrt_disc;
-  Coord ip1x = round ((determinant * dy + temp) / dr2);
-  Coord ip2x = round ((determinant * dy - temp) / dr2);
-  temp = fabs (dy) * sqrt_disc;
-  Coord ip1y = round ((-determinant * dx + temp) / dr2);
-  Coord ip2y = round ((-determinant * dx - temp) / dr2);
+  FT sqrt_disc = SQRT (discriminant);
+  FT temp = (dy < 0 ? -1.0 : 1.0) * dx * sqrt_disc;
+  FT ip1x = (determinant * dy + temp) / dr2;
+  FT ip2x = (determinant * dy - temp) / dr2;
+  temp = FABS (dy) * sqrt_disc;
+  FT ip1y = (-determinant * dx + temp) / dr2;
+  FT ip2y = (-determinant * dx - temp) / dr2;
   
   int result = 0;
+
+  Vec cc = circ->center;   // Convenience alias
 
   // Now we just need to check which of the intersections are in our segment.
   // We only need to check one coordinate, since the intersection points are
   // known to be on the (infinite) underlying geomatrical line.  However,
   // because ip1x and ip2x are tainted by floating point and our lines are
   // likely to be parallel to the axes, we make sure to check the wider span.
-  if ( abs (dx) >= abs (dy) ) {
-    Coord lx = ( x1 < x2 ? x1 : x2);   // Lower x
-    Coord hx = ( x1 < x2 ? x2 : x1);   // Higher x
+  if ( ABS (dx) >= ABS (dy) ) {
+    CT lx = ( x1 < x2 ? x1 : x2);   // Lower x
+    CT hx = ( x1 < x2 ? x2 : x1);   // Higher x
     if ( lx <= ip1x && ip1x <= hx ) {
       if ( intersection != NULL ) {
         intersection[result]
-          = ((Vec) { ip1x + circ->center.x, ip1y + circ->center.y });
+          = ((Vec) { ROUND (ip1x) + cc.x, ROUND (ip1y) + cc.y });
       }
       result++;
     }
     if ( lx <= ip2x && ip2x <= hx ) {
       if ( intersection != NULL ) {
         intersection[result]
-          = ((Vec) { ip2x + circ->center.x, ip2y + circ->center.y });
+          = ((Vec) { ROUND (ip2x) + cc.x, ROUND (ip2y) + cc.y });
       }
       result++;
     }
   }
   else {
-    Coord ly = ( y1 < y2 ? y1 : y2);   // Lower y
-    Coord hy = ( y1 < y2 ? y2 : y1);   // Higher y
+    CT ly = ( y1 < y2 ? y1 : y2);   // Lower y
+    CT hy = ( y1 < y2 ? y2 : y1);   // Higher y
     if ( ly <= ip1y && ip1y <= hy ) {
       if ( intersection != NULL ) {
         intersection[result]
-          = ((Vec) { ip1x + circ->center.x, ip1y + circ->center.y });
+          = ((Vec) { ROUND (ip1x) + cc.x, ROUND (ip1y) + cc.y });
       }
       result++;
     }
     if ( ly <= ip2y && ip2y <= hy ) {
       if ( intersection != NULL ) {
         intersection[result]
-          = ((Vec) { ip2x + circ->center.x, ip2y + circ->center.y });
+          = ((Vec) { ROUND (ip2x) + cc.x, ROUND (ip2y) + cc.y });
       }
       result++;
     }
@@ -428,23 +474,23 @@ void
 arc_end_points (Arc const *arc, Vec ep[2])
 {
   // Sines and cosines of Start Angle/End Angle
-  double
-    sin_sa = sin (arc->start_angle),
-    cos_sa = cos (arc->start_angle),
-    sin_ea = sin (arc->start_angle + arc->angle_delta),
-    cos_ea = cos (arc->start_angle + arc->angle_delta);
+  FT
+    sin_sa = SIN (arc->start_angle),
+    cos_sa = COS (arc->start_angle),
+    sin_ea = SIN (arc->start_angle + arc->angle_delta),
+    cos_ea = COS (arc->start_angle + arc->angle_delta);
 
   // It would be nicer to do this but sincos() currently needs _GNU_SOURCE:
-  //double sin_sa, cos_sa, sin_ea, cos_ea;
-  //sincos (arc->start_angle, &sin_sa, &cos_sa);
-  //sincos (arc->start_angle + arc->angle_delta, &sin_ea, &cos_ea);
+  //FT sin_sa, cos_sa, sin_ea, cos_ea;
+  //SINCOS (arc->start_angle, &sin_sa, &cos_sa);
+  //SINCOS (arc->start_angle + arc->angle_delta, &sin_ea, &cos_ea);
 
-  double rad = arc->circle.radius;
+  FT rad = arc->circle.radius;
 
-  Coord cx = arc->circle.center.x, cy = arc->circle.center.y;
+  CT cx = arc->circle.center.x, cy = arc->circle.center.y;
 
-  ep[0] = ((Vec) { cx + round (rad * cos_sa), cy + round (rad * sin_sa) });
-  ep[1] = ((Vec) { cx + round (rad * cos_ea), cy + round (rad * sin_ea) });
+  ep[0] = ((Vec) { cx + ROUND (rad * cos_sa), cy + ROUND (rad * sin_sa) });
+  ep[1] = ((Vec) { cx + ROUND (rad * cos_ea), cy + ROUND (rad * sin_ea) });
 }
 
 int
@@ -468,7 +514,7 @@ arc_line_segment_intersection (
   while ( cic > 0 ) {
     bool iioa   // Intersection Is On Arc
       = angle_in_span (
-          atan2 (ci[cic - 1].y - uc->center.y, ci[cic - 1].x - uc->center.x),
+          ATAN2 (ci[cic - 1].y - uc->center.y, ci[cic - 1].x - uc->center.x),
           arc->start_angle,
           arc->angle_delta );
     if ( iioa ) {
