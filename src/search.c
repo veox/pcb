@@ -43,8 +43,8 @@
 #include "draw.h"
 #include "error.h"
 #include "find.h"
-#include "geometry.h"
 #include "misc.h"
+#include "pcb_geometry.h"
 #include "polygon.h"
 #include "rtree.h"
 #include "search.h"
@@ -977,76 +977,6 @@ IsArcInRectangle (
   return (false);
 }
 
-static Rectangle
-rectangular_part_of_line (LineType *Line, Coord Bloat)
-{
-  // Return a new Rectangle consisting of the portion of Line that is a
-  // rectangle, increased in size by ged in all four directions parallel to
-  // the rectangle edges.  If Line has SQURE_FLAG, this rectangle incorporates
-  // the square end caps, otherwise it ends where the "Line" stops being
-  // a rectangle.
-  
-  Vec   // End points of Line
-    pa = { Line->Point1.X, Line->Point1.Y },
-    pb = { Line->Point2.X, Line->Point2.Y };
-  
-  // Vector with direction and mag. of segment, not including end caps
-  Vec pa_pb = vec_from (pa, pb);
-  
-  // Orthogonol Vector (rotated CCW 90 degrees in +x towares +y direction)
-  Vec ov = { -pa_pb.y, pa_pb.x };   // Orthogonol Vector (to segment)
-
-  // "Thickness" vector.  
-  Vec tv = vec_scale (ov, Line->Thickness / (2.0 * vec_mag (ov)));
-
-  // Cap vector.  Has magnitude of either thickness / 2.0 or 0, and opposite
-  // direction of pa_pb
-  Vec cv;
-  if ( TEST_FLAG (SQUAREFLAG, Line) ) {
-    cv = ((Vec) { -tv.y, tv.x }); 
-  }
-  else {
-    cv = ((Vec) { 0, 0 });
-  }
-  
-  // Negatives (other direction) of cv and tv
-  Vec ncv = { -cv.x, -cv.y };
-  Vec ntv = { -tv.x, -tv.y };
-
-  // Bloat vectors
-  Vec ob, cdb, nob, ncdb;   // Orthogonal/cap direction bloat, and negatives
-  if ( Bloat > 0 ) {
-    ob   = vec_scale (ov, ((double) Bloat) / vec_mag (ov));   // Orthogonal 
-    nob  = (Vec) { -ob.x, -ob.y };   // Negative ob (for other side)
-    cdb  = (Vec) { -ob.y, ob.x};     // Cap-direction bloat
-    ncdb = (Vec) { -ob.y, ob.x};     // Negative cdb (for other side)
-  }
-  else {
-    ob   = (Vec) { 0, 0 };
-    nob  = (Vec) { 0, 0 };
-    cdb  = (Vec) { 0, 0 };
-    ncdb = (Vec) { 0, 0 };
-
-  }
- 
-  Rectangle result = { 
-    { vec_sum (vec_sum (vec_sum (vec_sum (pa, tv),  cv),  ob),  cdb),
-      vec_sum (vec_sum (vec_sum (vec_sum (pb, tv),  ncv), ob),  ncdb),
-      vec_sum (vec_sum (vec_sum (vec_sum (pb, ntv), ncv), nob), ncdb),
-      vec_sum (vec_sum (vec_sum (vec_sum (pa, ntv), cv),  nob), cdb) } };
-
-  // FIXME: test then nuke this old form:
-  /*
-  Rectangle result = { 
-    { vec_sum (vec_sum (pa, tv),                   cv), 
-      vec_sum (vec_sum (pb, tv),                   vec_scale (cv, -1.0)),
-      vec_sum (vec_sum (pb, vec_scale (tv, -1.0)), vec_scale (cv, -1.0)), 
-      vec_sum (vec_sum (pa, vec_scale (tv, -1.0)),  cv) } };
-      */
-
-  return result;
-}
-
 /* ---------------------------------------------------------------------------
  * Check if a circle of Radius with center at (X, Y) intersects a Pad.
  * Written to enable arbitrary pad directions; for rounded pads, too.
@@ -1068,6 +998,43 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *pii)
   // Point In Intersection As Vector (for adapting this fctn interface to
   // Vec interface)
   Vec piiav;  
+
+  // FIXME: this was a really wack part of the existing geometry code.
+  // Clients clamp Bloat st it doesn't make things smaller than 0.  But what
+  // happens at Thickness 0?  There's no general answer that's obvioulsy
+  // immune to the vissicitudes of floating point.  I would have avoided the
+  // clamping and declared lines with <= 0 Thickness to be intersection-free
+  // thereby dodging the issue.  The intention may have been to let Radius
+  // take up the slack, but unfortunately there are instances where where it's
+  // used for figures that have actualy size, rather than just to fatten up
+  // "virtual" points by a few nm.  Wen need to investigate the original
+  // IsPointInPad() did and decide whether we want to do something similar
+  // or not.  Here's what we do at the moment:
+  // Handle the case where the pad has 0 thickness.  We treat it as a true
+  // line segment in this case, and return a true result if (X, Y) is within
+  // Radius of that segment.  The intersection point is considered to be
+  // the nearest point on the true segment.
+  assert (Pad->Thickness >= 0);
+  if ( Pad->Thickness == 0 ) {
+    Vec pt = { X, Y };
+    PointType p1 = Pad->Point1, p2 = Pad->Point2; 
+    LineSegment pcl = { { p1.X, p1.Y }, { p2.X, p2.Y }  };
+    Vec npols = nearest_point_on_line_segment (pt, &pcl);
+    if ( vec_mag (vec_from (pt, npols)) <= Radius ) {
+      if ( pii != NULL ) {
+        pii->X = npols.x;
+        pii->Y = npols.y;
+      }
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+
+  // FIXME: WORK POINT: well can end up calling rectangular_part_of_line
+  // with a Pad of less than zero size here apparently, must sort out how
+  // now to do that either by giving up here or giving up at a higher level.
 
   // Note that this includes the end caps if the line has square ends
   Rectangle rpol = rectangular_part_of_line ((LineType *) Pad, 0);

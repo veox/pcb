@@ -86,10 +86,10 @@
 #include "draw.h"
 #include "error.h"
 #include "find.h"
-#include "geometry.h"
 #include "misc.h"
 #include "rtree.h"
 #include "polygon.h"
+#include "pcb_geometry.h"
 #include "pcb-printf.h"
 #include "search.h"
 #include "set.h"
@@ -1386,11 +1386,9 @@ ArcArcIntersect (ArcType *Arc1, ArcType *Arc2, PointType *pii)
 	  normalize_angles (&sa2, &d2);
 	  /* sa1 == sa2 was caught when checking endpoints */
 	  if (sa1 > sa2)
-            // FIXME: got to handle this one still
             if (sa1 < sa2 + d2 || sa1 + d1 - 360 > sa2)
               return true;
 	  if (sa2 > sa1)
-            // FIXME: got to handle this one still
 	    if (sa2 < sa1 + d1 || sa2 + d2 - 360 > sa1)
               return true;
         }
@@ -1412,7 +1410,6 @@ ArcArcIntersect (ArcType *Arc1, ArcType *Arc2, PointType *pii)
 
       if (radius_crosses_arc (Arc1->X + dx, Arc1->Y + dy, Arc1)
 	  && IsPointOnArc (Arc1->X + dx, Arc1->Y + dy, t, Arc2, pii)) {
-        // FIXME: verify this one.  Maybe point is translated or something
 	return true;
       }
 
@@ -1426,7 +1423,6 @@ ArcArcIntersect (ArcType *Arc1, ArcType *Arc2, PointType *pii)
 
       if (radius_crosses_arc (Arc2->X + dx, Arc2->Y + dy, Arc2)
 	  && IsPointOnArc (Arc2->X + dx, Arc2->Y + dy, t1, Arc1, pii)) {
-        // FIXME: verify this one.  Maybe point is translated or something
 	return true;
       }
       return false;
@@ -1450,23 +1446,19 @@ ArcArcIntersect (ArcType *Arc1, ArcType *Arc2, PointType *pii)
   dy = d * pdy;
   if (radius_crosses_arc (x + dy, y - dx, Arc1)
       && IsPointOnArc (x + dy, y - dx, t, Arc2, pii)) {
-    // FIXME: verify this one.  Maybe point is translated or something
     return true;
   }
   if (radius_crosses_arc (x + dy, y - dx, Arc2)
       && IsPointOnArc (x + dy, y - dx, t1, Arc1, pii)) {
-    // FIXME: verify this one.  Maybe point is translated or something
     return true;
   }
 
   if (radius_crosses_arc (x - dy, y + dx, Arc1)
       && IsPointOnArc (x - dy, y + dx, t, Arc2, pii)) {
-    // FIXME: verify this one.  Maybe point is translated or something
     return true;
   }
   if (radius_crosses_arc (x - dy, y + dx, Arc2)
       && IsPointOnArc (x - dy, y + dx, t1, Arc1, pii)) {
-    // FIXME: verify this one.  Maybe point is translated or something
     return true;
   }
   return false;
@@ -1661,83 +1653,13 @@ LineLineIntersect (LineType *Line1, LineType *Line2, PointType *pii)
   return false;
 }
 
-// FIXME: this function is currently duplicated in search.c.  I think a
-// header that wraps geometry.h, defining its base int and float types and
-// additional adaptation functions to go from pcb types to related geometry
-// types or collections would be good.
-static Rectangle
-rectangular_part_of_line (LineType *Line, Coord ged)
-{
-  // Return a new Rectangle consisting of the portion of Line that is a
-  // rectangle, increased in size by ged in all four directions parallel to
-  // the rectangle edges.  If Line has SQURE_FLAG, this rectangle incorporates
-  // the square end caps, otherwise it ends where the "Line" stops being
-  // a rectangle.
-
-  // FIXME: must determine what to do when this is not the case
-  assert (abs (ged) < Line->Thickness / 2);
-
-  Vec   // End points of Line
-    pa = { Line->Point1.X, Line->Point1.Y },
-    pb = { Line->Point2.X, Line->Point2.Y };
-  
-  // Vector with direction and mag. of segment, not including end caps
-  Vec pa_pb = vec_from (pa, pb);
-  
-  // Orthogonol Vector (rotated CCW 90 degrees in +x towares +y direction)
-  Vec ov = { -pa_pb.y, pa_pb.x };   // Orthogonol Vector (to segment)
-
-  // "Thickness" vector.  
-  Vec tv = vec_scale (ov, Line->Thickness / (2.0 * vec_mag (ov)));
-
-  // Cap vector.  Has magnitude of either thickness / 2.0 or 0, and opposite
-  // direction of pa_pb
-  Vec cv;
-  if ( TEST_FLAG (SQUAREFLAG, Line) ) {
-    cv = ((Vec) { -tv.y, tv.x }); 
-  }
-  else {
-    cv = ((Vec) { 0, 0 });
-  }
-  
-  // Negatives (other direction) of cv and tv
-  Vec ncv = { -cv.x, -cv.y };
-  Vec ntv = { -tv.x, -tv.y };
-
-  // Vectors to add ged.  These are used to implement Bloat of find.c
-  Vec ob, cdb, nob, ncdb;   // Orthogonal/cap direction bloat, and negatives
-  if ( ged != 0 ) {
-    ob   = vec_scale (ov, ((double) ged) / vec_mag (ov));   // Orthogonal 
-    nob  = (Vec) { -ob.x, -ob.y };   // Negative ob (for other side)
-    cdb  = (Vec) { -ob.y,  ob.x};     // Cap-direction bloat
-    ncdb = (Vec) {  ob.y, -ob.x};     // Negative cdb (for other side)
-  }
-  else {
-    ob   = (Vec) { 0, 0 };
-    nob  = (Vec) { 0, 0 };
-    cdb  = (Vec) { 0, 0 };
-    ncdb = (Vec) { 0, 0 };
-
-  }
- 
-  Rectangle result = { 
-    { vec_sum (vec_sum (vec_sum (vec_sum (pa, tv),  cv),  ob),  cdb),
-      vec_sum (vec_sum (vec_sum (vec_sum (pb, tv),  ncv), ob),  ncdb),
-      vec_sum (vec_sum (vec_sum (vec_sum (pb, ntv), ncv), nob), ncdb),
-      vec_sum (vec_sum (vec_sum (vec_sum (pa, ntv), cv),  nob), cdb) } };
-
-  // FIXME: test then nuke this old form:
-  /*
-  Rectangle result = { 
-    { vec_sum (vec_sum (pa, tv),                   cv), 
-      vec_sum (vec_sum (pb, tv),                   vec_scale (cv, -1.0)),
-      vec_sum (vec_sum (pb, vec_scale (tv, -1.0)), vec_scale (cv, -1.0)), 
-      vec_sum (vec_sum (pa, vec_scale (tv, -1.0)),  cv) } };
-      */
-
-  return result;
-}
-
+/*!
+ * \brief Check for line intersection with an arc.
+ *
+ * There are a lot of cases to consider due to square/round line end caps and
+ * arcs with thickness / 2 > radius, so almost a full constructive geometry
+ * solution is used, with checks between most combinations of sub-figures.
+ */ 
 bool
 LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
 {
@@ -1757,17 +1679,8 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
   
   // If either the arc or line thickness has reached 0 at the current Bloat,
   // then we're done.  In painful theory of course there could still be
-  // intersections at 0 thickness, and since we're on integer coordinates they
-  // could in some situation be detected, but not consistently.  FIXME: WORK
-  // POINT: the question is, how does the existing code deal with negative
-  // bloats with absolute value greater than the thickness of lines/arcs?
-  // Looks like it effectively ignores the issue: minimum overlap < line
-  // thickness doesn't trigger violations.  but uuuuuuuuug.  Since Bloat
-  // is set to the minimum overlap required for the minimum overlap tests,
-  // these could easily occur.  In theory such features can never overlap
-  // enough to satify the design rules when they join as a T, but in practice
-  // the existing code does some 0 clamping that might effectively ignore
-  // this case...
+  // intersections at 0 thickness, and since we're on integer coordinates
+  // they could in some situation be detected, but not consistently.
   if ( lto2 <= 0 || ato2 <= 0 ) {
     return false;
   }
@@ -1821,7 +1734,6 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
         pii->X = ip[0].x;
         pii->Y = ip[0].y;
       }
-      printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
       return true;
     }
     if ( ia.circle.radius > 0 ) {   // If ia isn't degenerate check it also
@@ -1831,7 +1743,6 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
           pii->X = ip[0].x;
           pii->Y = ip[0].y;
         }
-        printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
         return true;
       }
     }
@@ -1846,7 +1757,6 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
           pii->X = npol.x;
           pii->Y = npol.y;
         }
-        printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
         return true;
       }
     }
@@ -1861,7 +1771,6 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
         pii->X = ctc.x;
         pii->Y = ctc.y;
       }
-      printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
       return true;
     }
   }
@@ -1890,119 +1799,12 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
           pii->X = pii_as_vector.x;
           pii->Y = pii_as_vector.y;
         }
-        printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
         return true;
       } 
     }
 
   } 
 
-  printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
-  return false;
-}
-
-/*!
- * \brief Check for line intersection with an arc.
- *
- * Mostly this is like the circle/line intersection
- * found in IsPointOnLine (search.c) see the detailed
- * discussion for the basics there.
- *
- * Since this is only an arc, not a full circle we need
- * to find the actual points of intersection with the
- * circle, and see if they are on the arc.
- *
- * To do this, we translate along the line from the point Q
- * plus or minus a distance delta = sqrt(Radius^2 - d^2)
- * but it's handy to normalize with respect to l, the line
- * length so a single projection is done (e.g. we don't first
- * find the point Q.
- *
- * <pre>
- * The projection is now of the form:
- *
- *      Px = X1 + (r +- r2)(X2 - X1)
- *      Py = Y1 + (r +- r2)(Y2 - Y1)
- * </pre>
- *
- * Where r2 sqrt(Radius^2 l^2 - d^2)/l^2
- * note that this is the variable d, not the symbol d described in
- * IsPointOnLine (variable d = symbol d * l).
- *
- * The end points are hell so they are checked individually.
- */
-bool
-UnfixedLineArcIntersect (LineType *Line, ArcType *Arc, PointType *pii)
-{
-  double dx, dy, dx1, dy1, l, d, r, r2, Radius;
-  BoxType *box;
-
-  // FIXME: double check that a correct location is passed out of this
-  // function for all branches.  Should be fine once the underlying fctns
-  // are fully fixed up but double check
-
-  dx = Line->Point2.X - Line->Point1.X;
-  dy = Line->Point2.Y - Line->Point1.Y;
-  dx1 = Line->Point1.X - Arc->X;
-  dy1 = Line->Point1.Y - Arc->Y;
-  l = dx * dx + dy * dy;
-  d = dx * dy1 - dy * dx1;
-  d *= d;
-
-  /* use the larger diameter circle first */
-  Radius =
-    Arc->Width + MAX (0.5 * (Arc->Thickness + Line->Thickness) + Bloat, 0.0);
-  Radius *= Radius;
-  r2 = Radius * l - d;
-  /* projection doesn't even intersect circle when r2 < 0 */
-  if (r2 < 0)
-    return (false);
-  /* check the ends of the line in case the projected point */
-  /* of intersection is beyond the line end */
-  if ( IsPointOnArc (
-           Line->Point1.X, Line->Point1.Y,
-           MAX (0.5 * Line->Thickness + Bloat, 0.0),
-           Arc,
-           pii ) ) {
-    return true;
-  }
-  if ( IsPointOnArc (
-           Line->Point2.X, Line->Point2.Y,
-           MAX (0.5 * Line->Thickness + Bloat, 0.0),
-           Arc,
-           pii ) ) {
-    return true;
-  }
-  if (l == 0.0)
-    return (false);
-  r2 = sqrt (r2);
-  Radius = -(dx * dx1 + dy * dy1);
-  r = (Radius + r2) / l;
-  if ( r >= 0 && r <= 1
-       && IsPointOnArc (
-              Line->Point1.X + r * dx, Line->Point1.Y + r * dy,
-              MAX (0.5 * Line->Thickness + Bloat, 0.0),
-              Arc,
-              pii ) ) {
-    return true;
-  }
-  r = (Radius - r2) / l;
-  if ( r >= 0 && r <= 1
-       && IsPointOnArc (
-              Line->Point1.X + r * dx, Line->Point1.Y + r * dy,
-              MAX (0.5 * Line->Thickness + Bloat, 0.0),
-              Arc,
-              pii ) ) {
-    // FIXME: this one and the above should get a quick verify also should
-    // be good though
-    return true;
-  }
-  /* check arc end points */
-  box = GetArcEnds (Arc);
-  if (IsPointInPad (box->X1, box->Y1, Arc->Thickness * 0.5 + Bloat, (PadType *)Line, pii))
-    return true;
-  if (IsPointInPad (box->X2, box->Y2, Arc->Thickness * 0.5 + Bloat, (PadType *)Line, pii))
-    return true;
   return false;
 }
 
@@ -3719,12 +3521,10 @@ DRCFind (int What, void *ptr1, void *ptr2, void *ptr3)
       /* ok now the shrunk net has the SELECTEDFLAG set */
       DumpList ();
       ListStart (What, ptr1, ptr2, ptr3, FOUNDFLAG);
-      printf ("%s:%i:%s: Bloat: %li\n", __FILE__, __LINE__, __func__, Bloat); 
       Bloat = 0;
       drc = true;               /* abort the search if we find anything not already found */
       if (DoIt (FOUNDFLAG, true, false))
         {
-          printf ("%s:%i:%s: Bloat: %li\n", __FILE__, __LINE__, __func__, Bloat); 
           DumpList ();
           /* make the flag changes undoable */
           ClearFlagOnAllObjects (false, FOUNDFLAG | SELECTEDFLAG);
