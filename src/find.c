@@ -3525,6 +3525,25 @@ DRCFind (int What, void *ptr1, void *ptr2, void *ptr3)
       drc = true;               /* abort the search if we find anything not already found */
       if (DoIt (FOUNDFLAG, true, false))
         {
+          // We want to be sure to capture the location of the intersection
+          // that's actually causing the violation, so we do this before the
+          // below stuff that implements flag change undoability.  I think
+          // it doesn't matter because it's just re-running the same pair
+          // of tests at the same respective bloats, but there's no reason
+          // to not capture the location (from the global) immediately after
+          // the intersection that puts us on this violation branch.
+          if ( pimri.X != PIMRI_UNSET ) {
+            x = pimri.X;
+            y = pimri.Y;
+            // Clear to avoid confuse ourselves next time
+            pimri.X = PIMRI_UNSET; 
+          }
+          else {
+            // FIXME: once all the different intersection-detecting codes are
+            // fixed to return pimri stuff this fallback to LocateErrorObject
+            // could in theory go away, perhaps instead an assertion check
+            LocateErrorObject (&x, &y);
+          }
           DumpList ();
           /* make the flag changes undoable */
           ClearFlagOnAllObjects (false, FOUNDFLAG | SELECTEDFLAG);
@@ -3542,26 +3561,9 @@ DRCFind (int What, void *ptr1, void *ptr2, void *ptr3)
           User = false;
           drc = false;
           drcerr_count++;
-          // FIXME: well DoIt() runs a couple more times since the one
-          // that put us in the branch gauranteeing a violation.  I'm not
-          // clear what it's doing.  But perhaps it's finding the correct
-          // intersection point only by chance, and this location should get
-          // recorded right away instead?  Review the above code figure out
-          // what's going on and decide
-          if ( pimri.X != PIMRI_UNSET ) {
-            x = pimri.X;
-            y = pimri.Y;
-            // Clear to avoid confuse ourselves next time
-            pimri.X = PIMRI_UNSET; 
-          }
-          else {
-            // FIXME: once all the different intersection-detecting codes are
-            // fixed to return pimri stuff this fallback to LocateErrorObject
-            // could in theory go away, perhaps instead an assertion check
-            LocateErrorObject (&x, &y);
-          }
           BuildObjectList (&object_count, &object_id_list, &object_type_list);
-          violation = pcb_drc_violation_new (_("Potential for broken trace"),
+          violation = pcb_drc_violation_new (
+              _("Potential for broken trace"),
               _("Insufficient overlap between objects can lead to broken tracks\n"
                 "due to registration errors with old wheel style photo-plotters."),
               x, y,
@@ -3597,6 +3599,25 @@ DRCFind (int What, void *ptr1, void *ptr2, void *ptr3)
   drc = true;
   while (DoIt (flag, true, false))
     {
+      // We want to be sure to capture the location of the intersection
+      // that's actually causing the violation, so we do this before the
+      // below stuff that implements flag change undoability.  I think
+      // it doesn't matter because it's just re-running the same pair
+      // of tests at the same respective bloats, but there's no reason
+      // to not capture the location (from the global) immediately after
+      // the intersection that puts us on this violation branch.
+      if ( pimri.X != PIMRI_UNSET ) {
+        x = pimri.X;
+        y = pimri.Y;
+        // Clear to avoid confuse ourselves next time
+        pimri.X = PIMRI_UNSET; 
+      }
+      else {
+        // FIXME: once all the different intersection-detecting codes are
+        // fixed to return pimri stuff this fallback to LocateErrorObject
+        // could in theory go away, perhaps instead an assertion check
+        LocateErrorObject (&x, &y);
+      }
       DumpList ();
       /* make the flag changes undoable */
       ClearFlagOnAllObjects (false, FOUNDFLAG | SELECTEDFLAG);
@@ -3612,35 +3633,19 @@ DRCFind (int What, void *ptr1, void *ptr2, void *ptr3)
       DoIt (FOUNDFLAG, true, true);
       DumpList ();
       drcerr_count++;
-      // FIXME: well DoIt() runs a couple more times since the one
-      // that put us in the branch gauranteeing a violation.  I'm not
-      // clear what it's doing.  But perhaps it's finding the correct
-      // intersection point only by chance, and this location should get
-      // recorded right away instead?  Review the above code figure out
-      // what's going on and decide
-      if ( pimri.X != PIMRI_UNSET ) {
-        x = pimri.X;
-        y = pimri.Y;
-        pimri.X = PIMRI_UNSET;  // Clear to avoid confuse ourselves next time
-      }
-      else {
-        // FIXME: once all the different intersection-detecting codes are
-        // fixed to return pimri stuff this fallback to LocateErrorObject
-        // could in theory go away, perhaps instead an assertion check
-        LocateErrorObject (&x, &y);
-      }
       BuildObjectList (&object_count, &object_id_list, &object_type_list);
-      violation = pcb_drc_violation_new (_("Copper areas too close"),
-                                         _("Circuits that are too close may bridge during imaging, etching,\n"
-                                           "plating, or soldering processes resulting in a direct short."),
-                                         x, y,
-                                         0,     /* ANGLE OF ERROR UNKNOWN */
-                                         FALSE, /* MEASUREMENT OF ERROR UNKNOWN */
-                                         0,     /* MAGNITUDE OF ERROR UNKNOWN */
-                                         PCB->Bloat,
-                                         object_count,
-                                         object_id_list,
-                                         object_type_list);
+      violation = pcb_drc_violation_new (
+          _("Copper areas too close"),
+          _("Circuits that are too close may bridge during imaging, etching,\n"
+            "plating, or soldering processes resulting in a direct short."),
+          x, y,
+          0,     /* ANGLE OF ERROR UNKNOWN */
+          FALSE, /* MEASUREMENT OF ERROR UNKNOWN */
+          0,     /* MAGNITUDE OF ERROR UNKNOWN */
+          PCB->Bloat,
+          object_count,
+          object_id_list,
+          object_type_list);
       append_drc_violation (violation);
       pcb_drc_violation_free (violation);
       free (object_id_list);
