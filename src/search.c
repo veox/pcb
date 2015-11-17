@@ -1032,10 +1032,6 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *pii)
     }
   }
 
-  // FIXME: WORK POINT: well can end up calling rectangular_part_of_line
-  // with a Pad of less than zero size here apparently, must sort out how
-  // now to do that either by giving up here or giving up at a higher level.
-
   // Note that this includes the end caps if the line has square ends
   Rectangle rpol = rectangular_part_of_line ((LineType *) Pad, 0);
 
