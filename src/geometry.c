@@ -1,15 +1,5 @@
 // Implementation of the interface described in geometry.h.
 
-#define _GNU_SOURCE
-
-#include <assert.h>
-#include <math.h>
-#include <stddef.h>
-// FIXME: should these headers be included in geometry.h instead, since
-// the macros which name the function from them that we want to use are
-// defined there?
-#include <stdlib.h>
-
 // If clients of the geometry.h module want to change the default types using
 // #define directives in a header (rather than with preprocessor -D options),
 // that header can be included here so this file gets the desired definitions.
@@ -19,6 +9,12 @@
 #include "pcb_geometry.h"
 
 #include "geometry.h"
+
+#include <assert.h>
+#include <math.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdlib.h>
 
 // Readability aliases.  We undef them first to avoid possible clashes,
 // since we're only interested in our interpretation of them here.
@@ -62,16 +58,6 @@ vec_scale (Vec vec, GEOM_FLOAT_TYPE scale_factor)
   result.y = ROUND (vec.y * scale_factor);
 
   return result;
-}
-
-Vec
-vec_extend (Vec vec, GEOM_FLOAT_TYPE distance)
-{
-  // FIXME: I'm dead simple but not tested yet
-
-  FT im = vec_mag (vec);   // Initial Magnitude
-
-  return vec_scale (vec, (im + distance) / im);
 }
 
 Vec
@@ -136,6 +122,57 @@ angle_in_span (
     return -angle_delta >= normalize_angle_in_radians (-theta + start_angle);
   }
 }
+
+bool
+angular_spans_overlap (
+    GEOM_FLOAT_TYPE  start_angle_a,
+    GEOM_FLOAT_TYPE  angle_delta_a,
+    GEOM_FLOAT_TYPE  start_angle_b,
+    GEOM_FLOAT_TYPE  angle_delta_b,
+    GEOM_FLOAT_TYPE *overlap_start_angle,
+    GEOM_FLOAT_TYPE *overlap_angle_delta )
+{
+  // Start/End Angle A/B
+  FT
+    saa = start_angle_a,
+    eaa = saa + angle_delta_a,
+    sab = start_angle_b,
+    eab = sab + angle_delta_b;
+
+  // Start/End of A/B In B/A
+  bool
+    saib = angle_in_span (saa, sab, angle_delta_b),
+    eaib = angle_in_span (eaa, sab, angle_delta_b),
+    sbia = angle_in_span (sab, saa, angle_delta_a),
+    ebia = angle_in_span (eab, saa, angle_delta_a);
+
+  if ( ! (saib || eaib || sbia || ebia) ) {
+    return false;
+  }
+
+  if ( overlap_start_angle != NULL ) {
+    assert (overlap_angle_delta);  // If either is non-NULL both must be.
+    if ( saib && eaib ) {
+      *overlap_start_angle = start_angle_a;
+      *overlap_angle_delta = angle_delta_a;
+    }
+    else if ( sbia && ebia ) {
+      *overlap_start_angle = start_angle_b;
+      *overlap_angle_delta = angle_delta_b;
+    }
+    else if ( saib && ebia ) {
+      *overlap_start_angle = start_angle_a;
+      *overlap_angle_delta = eab - start_angle_a;
+    }
+    else if ( sbia && eaib ) {
+      *overlap_start_angle = start_angle_b;
+      *overlap_angle_delta = eaa - start_angle_b;
+    }
+  }
+    
+  return true; 
+}
+
 
 bool
 point_intersects_rectangle (Vec pt, Rectangle const *rect)
@@ -256,11 +293,20 @@ nearest_point_on_arc (Vec pt, Arc const *arc)
     result = npoc;
   }
   else {
-    // We should use sincos() here when it becomes standard
+    FT sin_sa, cos_sa, sin_ea, cos_ea;
+#ifdef _GNU_SOURCE
+    SINCOS (sa, &sin_sa, &cos_sa);
+    SINCOS (ea, &sin_ea, &cos_ea);
+#else
+    sin_sa = SIN (sa);
+    cos_sa = COS (sa);
+    sin_ea = SIN (ea);
+    cos_ea = COS (ea);
+#endif
     // End Point A.
-    Vec epa = { ROUND (rad * COS (sa)), ROUND (rad * SIN (sa)) };
+    Vec epa = { ROUND (rad * cos_sa), ROUND (rad * sin_sa) };
     // End Point B
-    Vec epb = { ROUND (rad * COS (ea)), ROUND (rad * SIN (ea)) };
+    Vec epb = { ROUND (rad * cos_ea), ROUND (rad * sin_ea) };
     FT m_npoc_epa = vec_mag (vec_from (npoc, epa));
     FT m_npoc_epb = vec_mag (vec_from (npoc, epb));
     result  = (m_npoc_epa < m_npoc_epb ? epa : epb);
@@ -318,7 +364,6 @@ circle_intersects_rectangle (
 
   // Check if any of the corners of the rect lie inside circ.  Note that
   // this catches the case where the rectangle is entirely inside the circle.
-  // FIXME: check that this test work right
   for ( int ii = 0 ; ii < 4 ; ii++ ) {
     Vec tc = { ca[ii].x - cc.x, ca[ii].y - cc.y };   // Translated Corner
     if ( POW (tc.x, 2.0) + POW (tc.y, 2.0) <= cr2 ) {
@@ -384,29 +429,20 @@ circle_line_segment_intersection (
     LineSegment const *seg,
     Vec                intersection[2] )
 {
+  // Degenerate circ arguments aren't allowed
+  assert (circ->radius >= 0);
+
   // Translated end point coordinates st circ is relatively situated at (0, 0)
   CT x1 = seg->pa.x - circ->center.x;
   CT y1 = seg->pa.y - circ->center.y;
   CT x2 = seg->pb.x - circ->center.x;
   CT y2 = seg->pb.y - circ->center.y;
 
-  // Degenerate case: seg is a point
-  if ( x1 == x2 && y1 == y2 ) {
-    if ( point_intersects_circle (seg->pa, circ) ) {
-      if ( intersection != NULL ) {
-        intersection[0] = seg->pa;
-      }
-      return 1;
-    }
-  }
-
-  // Degenerate circles aren't allowed.
-  assert (circ->radius > 0);
-
   // Straight from http://mathworld.wolfram.com/Circle-LineIntersection.html
   CT dx = x2 - x1;
   CT dy = y2 - y1;
   FT dr = HYPOT (dx, dy);
+  assert (dr > 0);   // Because degenerate (0-length) segs aren't allowed
   FT determinant = ((FT) x1) * y2 - ((FT) x2) * y1;
   FT dr2 = POW (dr, 2.0);
   FT discriminant = POW (circ->radius, 2.0) * dr2 - POW (determinant, 2.0);
@@ -470,20 +506,96 @@ circle_line_segment_intersection (
   return result;
 }
 
+int
+circle_circle_intersection (
+    Circle const *ca,
+    Circle const *cb,
+    Vec           intersection[2] )
+{
+  // Try to detect circles with identical centers.  Here we could presumably
+  // get floating point underflow exceptions or similar hideous stuff,
+  // we don't even pretend to handle it.
+  if ( ca->center.x - cb->center.x == 0 && ca->center.y - cb->center.y == 0 ) {
+    if ( ca->radius - cb->radius == 0 ) {
+      return INT_MAX;
+    }
+    else {
+      return 0;
+    }
+  }
+
+  // Circle A/B Radius
+  CT car = ca->radius, cbr = cb->radius;  
+
+  // Distance Between Centers
+  FT dbc = vec_mag (vec_from (ca->center, cb->center));
+
+  // Straight from http://mathworld.wolfram.com/Circle-CircleIntersection.html.
+  // We're going to imagine for now that ca is centered at the origin and cb
+  // has it's center on the x axis.
+  FT ix = (POW (dbc, 2.0) - POW (cbr, 2.0) + POW (car, 2.0)) / (2.0 * dbc);
+  FT clsra   // Chord Length Square Root Argument
+    = ( (-dbc + cbr - car) *
+        (-dbc - cbr + car) *
+        (-dbc + cbr + car) *
+        (+dbc + cbr + car) );
+  if ( clsra < 0.0 ) {
+    return 0;
+  }
+
+  // If the intersection points weren't requestion we can return now
+  if ( intersection == NULL ) {
+    return 2;
+  }
+
+  FT cl = SQRT (clsra) / dbc;   // Chord Length
+
+  // Intersection Point A/B X/Y
+  FT ipax = ix, ipay = cl / 2.0, ipbx = ix, ipby = -cl / 2.0;
+
+  // Now we have to rotate and translate back to the actual position
+
+  // (xp, yp) is the center of cb relative to an origin at ca->center
+  FT xp = cb->center.x - ca->center.x, yp = cb->center.y - ca->center.y;
+
+  FT theta = ATAN2 (yp, xp);
+  FT sin_th, cos_th;
+#ifdef _GNU_SOURCE
+  SINCOS (theta, &sin_th, &cos_th);
+#else
+  sin_th = SIN (theta);
+  cos_th = COS (theta);
+#endif
+ 
+  // (Un)Rotate intersection points back to actual position relative to ca
+  FT ipax_ur = ipax * cos_th - ipay * sin_th;
+  FT ipay_ur = ipax * sin_th + ipay * cos_th;
+  FT ipbx_ur = ipbx * cos_th - ipby * sin_th;
+  FT ipby_ur = ipbx * sin_th + ipby * cos_th;
+
+  Vec cac = ca->center;   // Convenience alias
+
+  intersection[0] = (Vec) { ROUND (ipax_ur + cac.x), ROUND (ipay_ur + cac.y) };
+  intersection[1] = (Vec) { ROUND (ipbx_ur + cac.x), ROUND (ipby_ur + cac.y) };
+
+  // As currently implemented we never end up returning one
+  return 2;  
+}
+
 void
 arc_end_points (Arc const *arc, Vec ep[2])
 {
   // Sines and cosines of Start Angle/End Angle
-  FT
-    sin_sa = SIN (arc->start_angle),
-    cos_sa = COS (arc->start_angle),
-    sin_ea = SIN (arc->start_angle + arc->angle_delta),
-    cos_ea = COS (arc->start_angle + arc->angle_delta);
-
-  // It would be nicer to do this but sincos() currently needs _GNU_SOURCE:
-  //FT sin_sa, cos_sa, sin_ea, cos_ea;
-  //SINCOS (arc->start_angle, &sin_sa, &cos_sa);
-  //SINCOS (arc->start_angle + arc->angle_delta, &sin_ea, &cos_ea);
+  FT sin_sa, cos_sa, sin_ea, cos_ea;
+#ifdef _GNU_SOURCE
+  SINCOS (arc->start_angle, &sin_sa, &cos_sa);
+  SINCOS (arc->start_angle + arc->angle_delta, &sin_ea, &cos_ea);
+#else
+  sin_sa = SIN (arc->start_angle);
+  cos_sa = COS (arc->start_angle);
+  sin_ea = SIN (arc->start_angle + arc->angle_delta);
+  cos_ea = COS (arc->start_angle + arc->angle_delta);
+#endif
 
   FT rad = arc->circle.radius;
 
@@ -524,6 +636,70 @@ arc_line_segment_intersection (
       result++;
     }
     cic--;
+  }
+
+  return result;
+}
+
+int
+arc_arc_intersection (
+    Arc const *aa,
+    Arc const *ab,
+    Vec        intersection[2] )
+{
+  FT   // Convenience aliases
+    aasa = aa->start_angle,
+    aaad = aa->angle_delta,
+    absa = ab->start_angle,
+    abad = ab->angle_delta;
+
+  // Underlying Circle's Intersection Count and Intersection Points
+  Vec ucip[2];
+  int ucic = circle_circle_intersection (&(aa->circle), &(ab->circle), ucip);
+
+  if ( ucic == 0 ) {
+    return 0;
+  }
+
+  // If the underlying circles are identical, the question is whether the
+  // angular spans of the arcs overlap.
+  if ( ucic == INT_MAX ) {
+    if ( angular_spans_overlap (aasa, aaad, absa, abad, NULL, NULL) ) {
+      // For arcs of identical underlying circles that intersect at exactly
+      // one point, this result is wrong.  Clients have been warned though.
+      return INT_MAX;
+    }
+    else {
+      return 0;
+    }
+  }
+
+  // Arc A/B Center
+  Vec aac = (aa->circle).center, abc = (ab->circle).center;
+
+  // (Underlying Circle) Intersection Point 0/1 On Arc A/B
+  bool ip0oaa
+    = angle_in_span (ATAN2 (ucip[0].y - aac.y, ucip[0].x - aac.x), aasa, aaad);
+  bool ip0oab
+    = angle_in_span (ATAN2 (ucip[0].y - abc.y, ucip[0].x - abc.x), absa, abad);
+  bool ip1oaa
+    = angle_in_span (ATAN2 (ucip[1].y - aac.y, ucip[1].x - aac.x), aasa, aaad);
+  bool ip1oab
+    = angle_in_span (ATAN2 (ucip[1].y - abc.y, ucip[1].x - abc.x), absa, abad);
+
+  int result = 0;
+
+  if ( ip0oaa && ip0oab ) {
+    if ( intersection != NULL ) {
+      intersection[0] = ucip[0];
+    }
+    result++;
+  }
+  if ( ip1oaa && ip1oab ) {
+    if ( intersection != NULL ) {
+      intersection[result] = ucip[1];
+    }
+    result++;
   }
 
   return result;
