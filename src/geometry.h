@@ -4,38 +4,23 @@
 // The associated .c file is supposed to compile cleanly with at least the
 // following GCC options:
 //
-//   -g -std=c1x -O2 -fstrict-aliasing -fstrict-overflow -Wall -Wextra
-//   -Wcast-qual -Wstrict-prototypes -Wno-declaration-after-statement -Wundef
-//   -Wfloat-equal -Wpointer-arith -Wcast-align -Wstrict-prototypes
-//   -Wmissing-prototypes -Wwrite-strings -Wcast-qual -Wswitch-default
-//   -Wswitch-enum -Wunreachable-code -Wconversion -Winline
-//   -Wmissing-format-attribute -Wredundant-decls -Wmultichar -Wnested-externs
-//   -Winit-self -Wundef -Wpointer-arith
+// -std=c99 -g -O2 -fstrict-aliasing -fstrict-overflow -Wall -Wextra
+// -Wcast-align -Wcast-qual -Wfloat-equal -Winit-self -Wmissing-prototypes
+// -Wstrict-prototypes -Wpointer-arith -Wstrict-prototypes -Wswitch-default
+// -Wswitch-enum -Wunreachable-code -Wwrite-strings -Wmissing-format-attribute
+// -Wmultichar -Wnested-externs -Wpointer-arith -Wredundant-decls -Wundef
 
-// FIXME: double-check the warning list again, order them nicely, and remove any warnings that are implied by -Wall or -Wextra
-
-// alias makepcb='make -j8 CFLAGS="-Wall -fstrict-aliasing -fstrict-overflow -Wextra -Wcast-qual -Wstrict-prototypes -std=c99 -g -O4 -Wno-declaration-after-statement -Wundef -Wfloat-equal -Wpointer-arith -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wwrite-strings -Wcast-qual -Wswitch-default -Wswitch-enum -Wunreachable-code -Wconversion -Winline -Wmissing-format-attribute -Wredundant-decls -Wmultichar -Wnested-externs -Winit-self -Wundef -Wpointer-arith"' ; rm geometry.o ; makepcb geometry.o
-//
-// The associated .c file should also compile cleanly under -Wconversion,
+// The associated .c file should also compile cleanly with -Wconversion,
 // provided GEOM_FLOAT_TYPE is wider than GEOM_COORD_TYPE.
 
 #ifndef	GEOMETRY_H
 #define	GEOMETRY_H
 
+#include <limits.h>
+#include <math.h>
 #include <stdbool.h>
-
-// FIXME: WORK POINT: compile and test this fancy parameterized version, then
-// give it a pcb-specific wrapper and more rectangular_part_of_line() there
-
-// FIXME: review this code for compatability
-// with the warning options described here:
-// http://stackoverflow.com/questions/3375697/useful-gcc-flags-for-c and
-// also the ones in our personal lib
-
-// FIXME: does it make sense to have these, given that other defaults
-// are still literal (e.g. 'labs')? its sorta confusing but otherwise the
-// _Static_assert might fall out of sync...  at the least these should get
-// a mention that they aren't the thing to change, which is weird...
+#include <stddef.h>
+#include <stdlib.h>
 
 // The default coordinate and floating point types used by this module.
 // Note that these defaults should never be changed themselves, but only
@@ -100,7 +85,6 @@ typedef struct {
 } LineSegment;
 
 typedef struct {
-  // corner[0] is diagonal to corner[2], corner[1] is diagonal to corner[3]
   Vec corner[4];
 } Rectangle;
 
@@ -123,10 +107,6 @@ vec_mag (Vec vec);
 // vectors won't work for this reason.
 Vec
 vec_scale (Vec vec, GEOM_FLOAT_TYPE scale_factor);
-
-// Return vec extended by distance.  Like vec_scale(), but additive.
-Vec
-vec_extend (Vec vec, GEOM_FLOAT_TYPE distance);
 
 Vec
 vec_sum (Vec va, Vec vb);
@@ -154,6 +134,19 @@ angle_in_span (
     GEOM_FLOAT_TYPE theta,
     GEOM_FLOAT_TYPE start_angle,
     GEOM_FLOAT_TYPE angle_delta );
+
+// Return true iff the angular spans A and B defined by Start Angle A/B and
+// Angle Delta A/B overlap.  The angles are normalized before being compared.
+// If there is overlap and overlap_start_angle and overlap_angle_delta are
+// not NULL, the angular span of the overlap is returned in them.
+bool
+angular_spans_overlap (
+    GEOM_FLOAT_TYPE  start_angle_a,
+    GEOM_FLOAT_TYPE  angle_delta_a,
+    GEOM_FLOAT_TYPE  start_angle_b,
+    GEOM_FLOAT_TYPE  angle_delta_b,
+    GEOM_FLOAT_TYPE *overlap_start_angle,
+    GEOM_FLOAT_TYPE *overlap_angle_delta );
 
 // Return true iff pt is in rect (with rect regarded as filled).
 bool
@@ -202,16 +195,37 @@ circle_intersects_circle (
 // Return the number of points in the intersection of circ and seg (0, 1,
 // or 2), assuming no floating point problems.  This function views circ as
 // unfilled: if seg lies entirely inside circ no intersection will be found.
-// If the result is non-zero and intersections is non-NULL, the intersection
-// point(s) are returned there.  Degenerate (zero length) seg arguments are
-// treated as points.  Degenerate (radius <= 0) circ arguments aren't allowed.
+// If the result is non-zero and intersection is non-NULL, the intersection
+// point(s) are returned there.  Degenerate seg or circ arguments are
+// not allowed (i.e. no zero-lenght segs or circles with radius <= 0).
 // Note that detection of the intersection for line segments tangent to circ
-// is subject to rounding error and a result of 1 is doubtful in this case.
+// is subject to rounding error and a result of 1 is doubtful in this case
+// (0 or 2 being more likely).
 int
 circle_line_segment_intersection (
     Circle      const *circ,
     LineSegment const *seg,
     Vec                intersection[2] );
+
+// Return the number of point in the intersection of of ca and cb.  The result
+// will be 0, 2, or possibly INT_MAX (but see below).  This function views
+// circles as unfilled: if one circle lies entirely inside the other no
+// intersection will be found.  If the result is non-zero and intersection
+// is non-NULL, the intersection points(s) are returned there.  Degenerate
+// (radius <= 0) circle arguments aren't allowed.  Note that the detection
+// of the intersection of circles that intersect at exactly one point is
+// subject to rounding error and this routine doesn't attempt to detect
+// this situation (0 or 2 is always returned, never 1).  The detection of
+// identical circles is doubtful if GEOM_COORD_TYPE is a floating point
+// type: INT_MAX might be returned (to represent the infinitely many
+// intersection points), or some other erroneous result might be returned.
+// If GEOM_COORD_TYPE is an integral type, 0 or INT_MAX will be returned
+// as appropriate, but the contents of intersection will be meaningless.
+int
+circle_circle_intersection (
+    Circle const *ca,
+    Circle const *cb,
+    Vec           intersection[2] );
 
 // Return the end points of arc in *ep.  Arcs spanning > 2 pi radians are
 // still considered to have distinct end points.
@@ -224,5 +238,26 @@ arc_line_segment_intersection (
     Arc         const *arc,
     LineSegment const *seg,
     Vec                intersection[2] );
+
+// Mostly like circle_circle_intersection(), but for arcs of circles.
+// Unlike circle_circle_intersection(), this function may return 1 (when
+// arcs cross at only one point, but not when arcs are mutually tangent at
+// a single point, or when arcs of identical underlying circles intersect
+// at a single point).  Intersection detection of arcs of identical circles
+// has all the problems described for circle_circle_intersection(), and this
+// function is not equipped to return the actual intersection set (another
+// potentially interesting arc) in this case.  If GEOM_COORD_TYPE is an
+// integer type, intersection detection is mostly correct even for arcs
+// of identical underlying circles.  However, arcs of identical underlying
+// circles that intersect at exactly one point are subject to rounding error,
+// and will only ever yield results of INT_MAX (representing the infinitely
+// many intersection points) or 0 (never the mathematically possible 1).
+// The contents of intersection are always undefined for arcs of identical
+// circles.
+int
+arc_arc_intersection (
+    Arc const *aa,
+    Arc const *ab,
+    Vec        intersection[2] );
 
 #endif   // GEOMETRY_H
