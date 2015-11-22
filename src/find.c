@@ -1273,195 +1273,176 @@ LookupPVConnectionsToLOList (int flag, bool AndRats)
   return (false);
 }
 
-/*!
- * \brief Reduce arc start angle and delta to 0..360.
- */
-static void
-normalize_angles (Angle *sa, Angle *d)
-{
-  if (*d < 0)
-    {
-      *sa += *d;
-      *d = - *d;
-    }
-  if (*d > 360) /* full circle */
-    *d = 360;
-  *sa = NormalizeAngle (*sa);
-}
+// Shorthand macro for conditional copy of some stuff between types
+#define SET_XY_IF_NOT_NULL(target, source) \
+  do {                                     \
+    if ( target != NULL ) {                \
+      (target)->X = (source).x;            \
+      (target)->Y = (source).y;            \
+    }                                      \
+  } while ( 0 )
 
-static int
-radius_crosses_arc (double x, double y, ArcType *arc)
-{
-  double alpha = atan2 (y - arc->Y, -x + arc->X) * RAD_TO_DEG;
-  Angle sa = arc->StartAngle, d = arc->Delta;
-
-  normalize_angles (&sa, &d);
-  if (alpha < 0)
-    alpha += 360;
-  if (sa <= alpha)
-    return (sa + d) >= alpha;
-  return (sa + d - 360) >= alpha;
-}
-
-static void
-get_arc_ends (Coord *box, ArcType *arc)
-{
-  box[0] = arc->X - arc->Width  * cos (M180 * arc->StartAngle);
-  box[1] = arc->Y + arc->Height * sin (M180 * arc->StartAngle);
-  box[2] = arc->X - arc->Width  * cos (M180 * (arc->StartAngle + arc->Delta));
-  box[3] = arc->Y + arc->Height * sin (M180 * (arc->StartAngle + arc->Delta));
-}
-
-/*!
- * \brief Check if two arcs intersect.
- *
- * First we check for circle intersections,
- * then find the actual points of intersection
- * and test them to see if they are on arcs.
- *
- * Consider a, the distance from the center of arc 1
- * to the point perpendicular to the intersecting points.
- *
- * \ta = (r1^2 - r2^2 + l^2)/(2l)
- *
- * The perpendicular distance to the point of intersection
- * is then:
- *
- * \td = sqrt(r1^2 - a^2)
- *
- * The points of intersection would then be:
- *
- * \tx = X1 + a/l dx +- d/l dy
- *
- * \ty = Y1 + a/l dy -+ d/l dx
- *
- * Where dx = X2 - X1 and dy = Y2 - Y1.
- */
 static bool
 ArcArcIntersect (ArcType *Arc1, ArcType *Arc2, PointType *pii)
 {
-  double x, y, dx, dy, r1, r2, a, d, l, t, t1, t2, dl;
-  Coord pdx, pdy;
-  Coord box[8];
+  // We're going to do this by detecting any intersections of the inner
+  // or outer edges of Arc1 with the inner or outer edges of Arc2 or with
+  // the end caps of Arc2, and vice versa.  Note that this doesn't catch
+  // cases where Arc1 is entirely contained withing Arc2 or vice versa,
+  // but we don't care because in that situation the contained arc can't
+  // change the overall connectivity anyway.  This is true (as required)
+  // even under non-zero bloat, since bloat is linear and therefore doesn't
+  // change containment.  For the (round) end caps area detection is used,
+  // which takes care of the potential problem of "chinks" at corners into
+  // which otheer edges might fall: they are plugged by the area end caps.
+  // The alternative of using area detection everywhere is a little more
+  // painful and can't be factored as easily into the terms of existing code.
 
-  t  = 0.5 * Arc1->Thickness + Bloat;
-  t2 = 0.5 * Arc2->Thickness;
-  t1 = t2 + Bloat;
+  // We don't handle arc of ellipse at the moment
+  assert (Arc1->Width == Arc1->Height);
+  assert (Arc2->Width == Arc2->Height);
   
-  // FIXME: there is breakage for arcs of different sizes Fat arc end cap
-  // near thin arc span leads to false intersetion Maybe other cases too,
-  // they need to be thouroughly checked out
+  // We don't handle arcs with square ends
+  assert (! TEST_FLAG (SQUAREFLAG, Arc1));
+  assert (! TEST_FLAG (SQUAREFLAG, Arc2));
 
-  /* too thin arc */
-  if (t < 0 || t1 < 0)
+  Coord a1to2 = Bloat / 2 + Arc1->Thickness / 2;        // Arc1 Thickness / 2
+  Coord a2to2 = Bloat / 2 + Arc2->Thickness / 2;        // Arc2 Thickness / 2
+  
+  // If either arc's thickness has reached 0 at the current Bloat, then
+  // we're done.  In painful theory there could still be intersections at 0
+  // thickness, and since we're on integer coordinates they could in some
+  // situation be detected, but not consistently because the underlying
+  // calculatios use floating point, making consistant tangent intersection
+  // detection impossible.
+  if ( a1to2 <= 0 || a2to2 <= 0 ) {
     return false;
-
-  /* try the end points first */
-  get_arc_ends (&box[0], Arc1);
-  get_arc_ends (&box[4], Arc2);
-  if (IsPointOnArc (box[0], box[1], t, Arc2, pii)
-      || IsPointOnArc (box[2], box[3], t, Arc2, pii)
-      || IsPointOnArc (box[4], box[5], t, Arc1, pii)
-      || IsPointOnArc (box[6], box[7], t, Arc1, pii)) {
-    return true;
   }
 
-  pdx = Arc2->X - Arc1->X;
-  pdy = Arc2->Y - Arc1->Y;
-  dl = Distance (Arc1->X, Arc1->Y, Arc2->X, Arc2->Y);
-  /* concentric arcs, simpler intersection conditions */
-  if (dl < 0.5)
-    {
-      if ((Arc1->Width - t >= Arc2->Width - t2
-           && Arc1->Width - t <= Arc2->Width + t2)
-          || (Arc1->Width + t >= Arc2->Width - t2
-              && Arc1->Width + t <= Arc2->Width + t2))
-        {
-	  Angle sa1 = Arc1->StartAngle, d1 = Arc1->Delta;
-	  Angle sa2 = Arc2->StartAngle, d2 = Arc2->Delta;
-	  /* NB the endpoints have already been checked,
-	     so we just compare the angles */
+  // Note that Bloat doesn't change radius.
+  Coord rad1 = Arc1->Width, rad2 = Arc2->Width;
+  
+  // ArcType type uses degrees, puts 0 degrees on -x axis and measures
+  // positive angles in the -x towards +y direction.  Arc type uses radians,
+  // puts 0 degrees on +x and measures positive angles in +x towards +y
+  // directon according to normal mathematical convention.  So here we
+  // convert.
+  double a1sa = M_PI - ((M_PI / 180.0) * Arc1->StartAngle);   // Start Angle
+  double a1ad = -Arc1->Delta * (M_PI / 180.0);                // Angle Delta
+  double a2sa = M_PI - ((M_PI / 180.0) * Arc2->StartAngle);   // Start Angle
+  double a2ad = -Arc2->Delta * (M_PI / 180.0);                // Angle Delta
 
-	  normalize_angles (&sa1, &d1);
-	  normalize_angles (&sa2, &d2);
-	  /* sa1 == sa2 was caught when checking endpoints */
-	  if (sa1 > sa2)
-            if (sa1 < sa2 + d2 || sa1 + d1 - 360 > sa2)
-              return true;
-	  if (sa2 > sa1)
-	    if (sa2 < sa1 + d1 || sa2 + d2 - 360 > sa1)
-              return true;
-        }
+  // These arcs go down the middle of the fat "arcs" Arc1 and Arc2
+  Arc
+    a1 = { { { Arc1->X, Arc1->Y }, rad1 }, a1sa, a1ad },
+    a2 = { { { Arc2->X, Arc2->Y }, rad2 }, a2sa, a2ad };
+    
+  // If we have arcs of identical circles just check if the arc center
+  // lines overlap.  The arc_arc_intersection() function doesn't try to
+  // return the details of the intersection in this case, so we can't use it.
+  if ( arc_arc_intersection (&a1, &a2, NULL) == INT_MAX ) {
+
+    double osa, oad;   // Overlap Start Angle, Overlap Angle Delta
+    // Angular Spans Overlap
+    bool aso = angular_spans_overlap (a1sa, a1ad, a2sa, a2ad, &osa, &oad);
+    if ( aso ) {
+      if ( pii != NULL ) {
+        double aocoo = osa + (oad / 2.0);   // Angle Of Center Of Overlap
+        // Point In Intersection As Vector
+        Vec piiav = {
+          a1.circle.center.x + a1.circle.radius * cos (aocoo),   
+          a1.circle.center.y + a1.circle.radius * sin (aocoo) };
+        pii->X = piiav.x;
+        pii->Y = piiav.y;
+      }
+      return true;
+    }
+    else {
       return false;
     }
-  r1 = Arc1->Width;
-  r2 = Arc2->Width;
-  /* arcs centerlines are too far or too near */
-  if (dl > r1 + r2 || dl + r1 < r2 || dl + r2 < r1)
-    {
-      /* check the nearest to the other arc's center point */
-      dx = pdx * r1 / dl;
-      dy = pdy * r1 / dl;
-      if (dl + r1 < r2) /* Arc1 inside Arc2 */
-	{
-	  dx = - dx;
-	  dy = - dy;
-	}
+  }
+  
+  // Inner/Outer Arcs (of ArcType Arc, due to its thickness).  Note that the
+  // inner arcs might have radius <= 0 even at Bloat == 0, but the outer
+  // arcs should never have radius <= 0 at this point since we've already
+  // returned false for thickness of 0 or less.
+  Arc
+    a1oa = { { a1.circle.center, rad1 + a1to2 }, a1sa, a1ad },
+    a1ia = { { a1.circle.center, rad1 - a1to2 }, a1sa, a1ad },
+    a2oa = { { a2.circle.center, rad2 + a2to2 }, a2sa, a2ad },
+    a2ia = { { a2.circle.center, rad2 - a2to2 }, a2sa, a2ad };
+  assert (a1oa.circle.radius > 0);
+  assert (a2oa.circle.radius > 0);
 
-      if (radius_crosses_arc (Arc1->X + dx, Arc1->Y + dy, Arc1)
-	  && IsPointOnArc (Arc1->X + dx, Arc1->Y + dy, t, Arc2, pii)) {
-	return true;
-      }
+  Vec intersection[2];
 
-      dx = - pdx * r2 / dl;
-      dy = - pdy * r2 / dl;
-      if (dl + r2 < r1) /* Arc2 inside Arc1 */
-	{
-	  dx = - dx;
-	  dy = - dy;
-	}
+  // Check if any of the arc edges intersect, skipping degenerate edges
+  if ( arc_arc_intersection (&a1oa, &a2oa, intersection) ) {
+    SET_XY_IF_NOT_NULL (pii, intersection[0]);
+    return TRUE;
+  } 
+  if ( a1ia.circle.radius > 0 ) {
+    if ( arc_arc_intersection (&a1ia, &a2oa, intersection) ) {
+      SET_XY_IF_NOT_NULL (pii, intersection[0]);
+      return TRUE;
+    } 
+  }
+  if ( a2ia.circle.radius > 0 ) {
+    if ( arc_arc_intersection (&a1oa, &a2ia, intersection) ) {
+      SET_XY_IF_NOT_NULL (pii, intersection[0]);
+      return TRUE;
+    } 
+  }
+  if ( a1ia.circle.radius > 0 && a2ia.circle.radius > 0 ) {
+    if ( arc_arc_intersection (&a1ia, &a2ia, intersection) ) {
+      SET_XY_IF_NOT_NULL (pii, intersection[0]);
+      return TRUE;
+    } 
+  }
 
-      if (radius_crosses_arc (Arc2->X + dx, Arc2->Y + dy, Arc2)
-	  && IsPointOnArc (Arc2->X + dx, Arc2->Y + dy, t1, Arc1, pii)) {
-	return true;
-      }
-      return false;
+  // Check if any of the end caps touch the other arc (including it's end caps)
+  {
+    Vec a1ep[2], a2ep[2];   // Arc 1/2 End Points
+    arc_end_points (&a1, a1ep);
+    arc_end_points (&a2, a2ep);
+    Vec np;                 // Nearest Point (reused)
+    Circle epc, apc;        // End/Arc Point Circle (reused)
+    Vec piiav;              // Point In Intersection As Vec
+
+    np = nearest_point_on_arc (a1ep[0], &a2);
+    epc = (Circle) { a1ep[0], a1to2 }; 
+    apc = (Circle) { np, a2to2 };
+    if ( circle_intersects_circle (&epc, &apc, &piiav) ) {
+      SET_XY_IF_NOT_NULL (pii, piiav);
+      return TRUE;
     }
 
-  l = dl * dl;
-  r1 *= r1;
-  r2 *= r2;
-  a = 0.5 * (r1 - r2 + l) / l;
-  r1 = r1 / l;
-  d = r1 - a * a;
-  /* the circles are too far apart to touch or probably just touch:
-     check the nearest point */
-  if (d < 0)
-    d = 0;
-  else
-    d = sqrt (d);
-  x = Arc1->X + a * pdx;
-  y = Arc1->Y + a * pdy;
-  dx = d * pdx;
-  dy = d * pdy;
-  if (radius_crosses_arc (x + dy, y - dx, Arc1)
-      && IsPointOnArc (x + dy, y - dx, t, Arc2, pii)) {
-    return true;
-  }
-  if (radius_crosses_arc (x + dy, y - dx, Arc2)
-      && IsPointOnArc (x + dy, y - dx, t1, Arc1, pii)) {
-    return true;
+    np = nearest_point_on_arc (a1ep[1], &a2);
+    epc = (Circle) { a1ep[1], a1to2 }; 
+    apc = (Circle) { np, a2to2 };
+    if ( circle_intersects_circle (&epc, &apc, &piiav) ) {
+      SET_XY_IF_NOT_NULL (pii, piiav);
+      return TRUE;
+    }
+
+    np = nearest_point_on_arc (a2ep[0], &a1);
+    epc = (Circle) { a2ep[0], a2to2 }; 
+    apc = (Circle) { np, a1to2 };
+    if ( circle_intersects_circle (&epc, &apc, &piiav) ) {
+      SET_XY_IF_NOT_NULL (pii, piiav);
+      return TRUE;
+    }
+    
+    np = nearest_point_on_arc (a2ep[1], &a1);
+    epc = (Circle) { a2ep[1], a2to2 }; 
+    apc = (Circle) { np, a1to2 };
+    if ( circle_intersects_circle (&epc, &apc, &piiav) ) {
+      SET_XY_IF_NOT_NULL (pii, piiav);
+      return TRUE;
+    }
   }
 
-  if (radius_crosses_arc (x - dy, y + dx, Arc1)
-      && IsPointOnArc (x - dy, y + dx, t, Arc2, pii)) {
-    return true;
-  }
-  if (radius_crosses_arc (x - dy, y + dx, Arc2)
-      && IsPointOnArc (x - dy, y + dx, t1, Arc1, pii)) {
-    return true;
-  }
-  return false;
+  return FALSE;
 }
 
 /*!
@@ -1680,7 +1661,8 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
   // If either the arc or line thickness has reached 0 at the current Bloat,
   // then we're done.  In painful theory of course there could still be
   // intersections at 0 thickness, and since we're on integer coordinates
-  // they could in some situation be detected, but not consistently.
+  // they could in some situation be detected, but not consistently because
+  // the underlying calculatios use floating point.
   if ( lto2 <= 0 || ato2 <= 0 ) {
     return false;
   }
@@ -1701,22 +1683,20 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
   // convert.
   double sa = M_PI - ((M_PI / 180.0) * arc->StartAngle);
   double ad = -arc->Delta * (M_PI / 180.0);
- 
-  // Inner/Outer Arcs (of ArcType Arc, due to its thickness).  Note that ia
-  // might have radius <= 0 at Bloat == 0, and at negative bloat (shrink)
-  // ia might have radius <= 0 as well.
+  
+  // Inner/Outer Arcs (of ArcType Arc, due to its thickness).  Note that
+  // ia might have radius <= 0 even at Bloat == 0, but oa should never
+  // have radius <= 0 at this point since we've already returned false for
+  // thickness of 0 or less above.
   Arc
     oa = { { { arc->X, arc->Y }, radius + ato2 }, sa, ad },
     ia = { { { arc->X, arc->Y }, radius - ato2 }, sa, ad };
+  assert (oa.circle.radius > 0);
 
-  // As with lines, arcs that have vanished entirely are regarded as
-  // not intersecting anything.  This is mathematically slightly bogus,
-  // but consistent with the limitation of floating point math.  Different
-  // functions for testing points exist, and if that's what's intended that's
-  // what clients should use.
-  if ( oa.circle.radius <= 0 ) {
-    return false;
-  }
+  // FIXME: The GUI doesn't allow creation of zero-radius arcs, but we also
+  // need to verify that the file loader refuses to load them.  We also need
+  // to make sure the loader rejects square-end arcs, negative-radius arcs,
+  // and arcs of ellipses.
 
   Arc acl = { { { arc->X, arc->Y}, radius }, sa, ad };      // Arc Center Line
   Vec aep[2];                                               // Arc End Points
