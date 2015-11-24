@@ -316,14 +316,12 @@ static bool IsPolygonInPolygon (PolygonType *, PolygonType *);
 bool
 LinePadIntersect (LineType *Line, PadType *Pad, PointType *pii)
 {
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
   return LineLineIntersect ((Line), (LineType *)Pad, pii);
 }
 
 bool
 ArcPadIntersect (ArcType *Arc, PadType *Pad, PointType *pii)
 {
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
   return LineArcIntersect ((LineType *) (Pad), (Arc), pii);
 }
 
@@ -454,10 +452,11 @@ BoxBoxIntersection (BoxType *b1, BoxType *b2)
 }
 
 static bool
-PadPadIntersect (PadType *p1, PadType *p2)
+PadPadIntersect (PadType *p1, PadType *p2, PointType *pii)
 {
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
-  return LinePadIntersect ((LineType *) p1, p2, NULL);
+  // FIXME: just needs tested now
+  assert (0);
+  return LinePadIntersect ((LineType *) p1, p2, pii);
 }
 
 static inline bool
@@ -1322,6 +1321,8 @@ ArcArcIntersect (ArcType *Arc1, ArcType *Arc2, PointType *pii)
   // puts 0 degrees on +x and measures positive angles in +x towards +y
   // directon according to normal mathematical convention.  So here we
   // convert.
+  // FIXME: this mess crops up several places we should factor it into
+  // pcb_geometry
   double a1sa = M_PI - ((M_PI / 180.0) * Arc1->StartAngle);   // Start Angle
   double a1ad = -Arc1->Delta * (M_PI / 180.0);                // Angle Delta
   double a2sa = M_PI - ((M_PI / 180.0) * Arc2->StartAngle);   // Start Angle
@@ -1551,7 +1552,6 @@ LineLineIntersect (LineType *Line1, LineType *Line2, PointType *pii)
     {
       PointType p[4];
       form_slanted_rectangle (p, Line1);
-      DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
       return IsLineInQuadrangle (p, Line2, pii);
     }
   /* here come only round Line1 because IsLineInQuadrangle()
@@ -1560,7 +1560,6 @@ LineLineIntersect (LineType *Line1, LineType *Line2, PointType *pii)
     {
       PointType p[4];
       form_slanted_rectangle (p, Line2);
-      DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
       return IsLineInQuadrangle (p, Line1, pii);
     }
   /* now all lines are round */
@@ -1569,7 +1568,6 @@ LineLineIntersect (LineType *Line1, LineType *Line2, PointType *pii)
    * cases where the "real" lines don't intersect but the
    * thick lines touch, and ensures that the dx/dy business
    * below does not cause a divide-by-zero. */
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (    IsPointInPad (Line2->Point1.X, Line2->Point1.Y,
                         MAX (Line2->Thickness / 2 + Bloat, 0),
                         (PadType *) Line1, pii)
@@ -1780,7 +1778,6 @@ LOCtoArcLine_callback (const BoxType * b, void *cl)
   LineType *line = (LineType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (!TEST_FLAG (i->flag, line) && LineArcIntersect (line, i->arc, &pimri))
     {
       if (ADD_LINE_TO_LIST (i->layer, line, i->flag))
@@ -1795,7 +1792,6 @@ LOCtoArcArc_callback (const BoxType * b, void *cl)
   ArcType *arc = (ArcType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (!arc->Thickness)
     return 0;
   if (!TEST_FLAG (i->flag, arc) && ArcArcIntersect (i->arc, arc, &pimri))
@@ -1812,7 +1808,6 @@ LOCtoArcPad_callback (const BoxType * b, void *cl)
   PadType *pad = (PadType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (!TEST_FLAG (i->flag, pad) && i->layer ==
       (TEST_FLAG (ONSOLDERFLAG, pad) ? BOTTOM_SIDE : TOP_SIDE)
       && ArcPadIntersect (i->arc, pad, &pimri) && ADD_PAD_TO_LIST (i->layer, pad, i->flag))
@@ -1895,7 +1890,6 @@ LOCtoLineLine_callback (const BoxType * b, void *cl)
   LineType *line = (LineType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
   if (!TEST_FLAG (i->flag, line) && LineLineIntersect (i->line, line, &pimri))
     {
       if (ADD_LINE_TO_LIST (i->layer, line, i->flag))
@@ -1910,7 +1904,6 @@ LOCtoLineArc_callback (const BoxType * b, void *cl)
   ArcType *arc = (ArcType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (!arc->Thickness)
     return 0;
   if (!TEST_FLAG (i->flag, arc) && LineArcIntersect (i->line, arc, &pimri))
@@ -1951,10 +1944,13 @@ LOCtoLinePad_callback (const BoxType * b, void *cl)
   PadType *pad = (PadType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
+  // FIXME: this one used to pass NULL to LinePadIntersect.  It probably just
+  // should not have done that, and never got tested.  Now it's theoretically
+  // right but needs tested.
+  assert (0);
   if (!TEST_FLAG (i->flag, pad) && i->layer ==
       (TEST_FLAG (ONSOLDERFLAG, pad) ? BOTTOM_SIDE : TOP_SIDE)
-      && LinePadIntersect (i->line, pad, NULL) && ADD_PAD_TO_LIST (i->layer, pad, i->flag))
+      && LinePadIntersect (i->line, pad, &pimri) && ADD_PAD_TO_LIST (i->layer, pad, i->flag))
     longjmp (i->env, 1);
   return 0;
 }
@@ -2162,7 +2158,6 @@ LOCtoPadLine_callback (const BoxType * b, void *cl)
   LineType *line = (LineType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (!TEST_FLAG (i->flag, line) && LinePadIntersect (line, i->pad, &pimri))
     {
       if (ADD_LINE_TO_LIST (i->layer, line, i->flag))
@@ -2177,7 +2172,6 @@ LOCtoPadArc_callback (const BoxType * b, void *cl)
   ArcType *arc = (ArcType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (!arc->Thickness)
     return 0;
   if (!TEST_FLAG (i->flag, arc) && ArcPadIntersect (arc, i->pad, &pimri))
@@ -2244,7 +2238,7 @@ LOCtoPadPad_callback (const BoxType * b, void *cl)
   DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (!TEST_FLAG (i->flag, pad) && i->layer ==
       (TEST_FLAG (ONSOLDERFLAG, pad) ? BOTTOM_SIDE : TOP_SIDE)
-      && PadPadIntersect (pad, i->pad) && ADD_PAD_TO_LIST (i->layer, pad, i->flag))
+      && PadPadIntersect (pad, i->pad, &pimri) && ADD_PAD_TO_LIST (i->layer, pad, i->flag))
     longjmp (i->env, 1);
   return 0;
 }
