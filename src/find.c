@@ -1273,6 +1273,9 @@ LookupPVConnectionsToLOList (int flag, bool AndRats)
   return (false);
 }
 
+// FIXME: convert SET_XY_IF_NOT_NULL to take sourceX and sourceY args so
+// its more widely applicable maybe?
+
 // Shorthand macro for conditional copy of some stuff between types
 #define SET_XY_IF_NOT_NULL(target, source) \
   do {                                     \
@@ -1710,19 +1713,13 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
     int ipc;     // Intersection Point Count
     ipc = arc_line_segment_intersection (&oa, &(rectangle_edges[ii]), ip);
     if ( ipc > 0 ) {
-      if ( pii != NULL ) {
-        pii->X = ip[0].x;
-        pii->Y = ip[0].y;
-      }
+      SET_XY_IF_NOT_NULL (pii, ip[0]);
       return true;
     }
     if ( ia.circle.radius > 0 ) {   // If ia isn't degenerate check it also
       ipc = arc_line_segment_intersection (&ia, &(rectangle_edges[ii]), ip);
       if ( ipc > 0 ) {
-        if ( pii != NULL ) {
-          pii->X = ip[0].x;
-          pii->Y = ip[0].y;
-        }
+        SET_XY_IF_NOT_NULL (pii, ip[0]);
         return true;
       }
     }
@@ -1733,10 +1730,7 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
       Vec npol
         = nearest_point_on_line_segment (aep[jj], &(rectangle_edges[ii]));
       if ( vec_mag (vec_from (aep[jj], npol) ) <= ato2 ) {
-        if ( pii != NULL ) {
-          pii->X = npol.x;
-          pii->Y = npol.y;
-        }
+        SET_XY_IF_NOT_NULL (pii, npol);
         return true;
       }
     }
@@ -1747,10 +1741,7 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
     Vec ctc = rpol.corner[0];                      // Corner To Check
     Vec nptc = nearest_point_on_arc (ctc, &acl);   // Nearest Point To Corner
     if ( vec_mag (vec_from (ctc, nptc)) <= ato2 ) {
-      if ( pii != NULL ) {
-        pii->X = ctc.x;
-        pii->Y = ctc.y;
-      }
+      SET_XY_IF_NOT_NULL (pii, ctc);
       return true;
     }
   }

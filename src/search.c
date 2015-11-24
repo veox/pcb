@@ -933,6 +933,7 @@ IsLineInQuadrangle (PointType p[4], LineType *Line, PointType *pii)
 
   return (false);
 }
+
 /* ---------------------------------------------------------------------------
  * checks if an arc crosses a square
  */
@@ -976,6 +977,15 @@ IsArcInRectangle (
 
   return (false);
 }
+
+// Shorthand macro for conditional copy of some stuff between types
+#define SET_XY_IF_NOT_NULL(target, source) \
+  do {                                     \
+    if ( target != NULL ) {                \
+      (target)->X = (source).x;            \
+      (target)->Y = (source).y;            \
+    }                                      \
+  } while ( 0 )
 
 /* ---------------------------------------------------------------------------
  * Check if a circle of Radius with center at (X, Y) intersects a Pad.
@@ -1021,10 +1031,7 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *pii)
     LineSegment pcl = { { p1.X, p1.Y }, { p2.X, p2.Y }  };
     Vec npols = nearest_point_on_line_segment (pt, &pcl);
     if ( vec_mag (vec_from (pt, npols)) <= Radius ) {
-      if ( pii != NULL ) {
-        pii->X = npols.x;
-        pii->Y = npols.y;
-      }
+      SET_XY_IF_NOT_NULL (pii, npols);
       return true;
     }
     else {
@@ -1036,10 +1043,7 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *pii)
   Rectangle rpol = rectangular_part_of_line ((LineType *) Pad, 0);
 
   if ( circle_intersects_rectangle (&circ, &rpol, &piiav) ) {
-    if ( pii != NULL ) {
-      pii->X = piiav.x;
-      pii->Y = piiav.y;
-    }
+    SET_XY_IF_NOT_NULL (pii, piiav);
     return true;
   }
 
@@ -1053,10 +1057,7 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *pii)
         circle_intersects_circle (&cac, &circ, &piiav) ||
         circle_intersects_circle (&cbc, &circ, &piiav) );
     if ( ci ) {
-      if ( pii != NULL ) {
-        pii->X = piiav.x;
-        pii->Y = piiav.y;
-      }
+      SET_XY_IF_NOT_NULL (pii, piiav);
       return true;
     }
   }
