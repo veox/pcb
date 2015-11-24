@@ -70,6 +70,9 @@
 /* ---------------------------------------------------------------------------
  * prototypes
  */
+// FIXME: given their forms, it seems likely that all these need pii args.
+// At the very least it seems IsPointOnPin must have, pin intersections
+// haven't been tested yet.
 bool IsPointOnLine (Coord, Coord, Coord, LineType *);
 bool IsPointOnPin (Coord, Coord, Coord, PinType *);
 bool IsPointOnArc (Coord, Coord, Coord, ArcType *, PointType *pii);

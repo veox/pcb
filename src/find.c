@@ -11,10 +11,6 @@
  *   Coarse searching is accomplished with the data rtrees.</li>
  * <li> There's no 'speed-up' mechanism for polygons because they are
  *   not used as often as other objects.</li> 
- * <li> The maximum distance between line and pin ... would depend on
- *   the angle between them. To speed up computation the limit is set
- *   to one half of the thickness of the objects (cause of square
- *   pins).</li>
  * </ul>
  *
  * PV:  means pin or via (objects that connect layers).\n
@@ -30,16 +26,6 @@
  * <li> Lookup all PVs connected to the LOs from (2) and (3).</li>
  * <li> Start again with (1) for all new PVs from (4).</li>
  * </ol>
- *
- * Intersection of line <--> circle:\n
- * <ul>
- * <li> Calculate the signed distance from the line to the center,
- *   return false if abs(distance) > R.</li>
- * <li> Get the distance from the line <--> distancevector intersection
- *   to (X1,Y1) in range [0,1], return true if 0 <= distance <= 1.</li>
- * <li> Depending on (r > 1.0 or r < 0.0) check the distance of X2,Y2 or
- *   X1,Y1 to X,Y.</li>
- * </ul>
  *
  * Intersection of line <--> line:\n
  * <ul>
@@ -102,7 +88,7 @@
 
 #undef DEBUG
 
-//#define ENABLE_DEBUG_OUTPUT_THIS_FILE
+#define ENABLE_DEBUG_OUTPUT_THIS_FILE
 #ifdef ENABLE_DEBUG_OUTPUT_THIS_FILE
 #define DBG(format, ...) printf (format, ## __VA_ARGS__)
 #else
@@ -455,10 +441,15 @@ bool
 BoxBoxIntersection (BoxType *b1, BoxType *b2)
 {
   DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
-  if (b2->X2 < b1->X1 || b2->X1 > b1->X2)
+  if (b2->X2 < b1->X1 || b2->X1 > b1->X2) {
+    DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
     return false;
-  if (b2->Y2 < b1->Y1 || b2->Y1 > b1->Y2)
+  }
+  if (b2->Y2 < b1->Y1 || b2->Y1 > b1->Y2) {
+    DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
     return false;
+  }
+  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
   return true;
 }
 
@@ -475,6 +466,7 @@ PV_TOUCH_PV (PinType *PV1, PinType *PV2)
   double t1, t2;
   BoxType b1, b2;
 
+  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   t1 = MAX (PV1->Thickness / 2.0 + Bloat, 0);
   t2 = MAX (PV2->Thickness / 2.0 + Bloat, 0);
   if (IsPointOnPin (PV1->X, PV1->Y, t1, PV2)
@@ -681,8 +673,10 @@ LOCtoPVpad_callback (const BoxType * b, void *cl)
   if (!TEST_FLAG (i->flag, pad) && IS_PV_ON_PAD (i->pv, pad, &pimri) &&
       !TEST_FLAG (HOLEFLAG, i->pv) &&
       ADD_PAD_TO_LIST (TEST_FLAG (ONSOLDERFLAG, pad) ? BOTTOM_SIDE :
-                       TOP_SIDE, pad, i->flag))
+                       TOP_SIDE, pad, i->flag)) {
+    DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
     longjmp (i->env, 1);
+  }
   return 0;
 }
 
@@ -1036,6 +1030,7 @@ pv_pad_callback (const BoxType * b, void *cl)
   DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
   if (!TEST_FLAG (i->flag, pv) && IS_PV_ON_PAD (pv, i->pad, &pimri))
     {
+      DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
       if (TEST_FLAG (HOLEFLAG, pv))
         {
           SET_FLAG (WARNFLAG, pv);
@@ -1272,9 +1267,6 @@ LookupPVConnectionsToLOList (int flag, bool AndRats)
     }
   return (false);
 }
-
-// FIXME: convert SET_XY_IF_NOT_NULL to take sourceX and sourceY args so
-// its more widely applicable maybe?
 
 // Shorthand macro for conditional copy of some stuff between types
 #define SET_XY_IF_NOT_NULL(target, source) \
@@ -1559,6 +1551,7 @@ LineLineIntersect (LineType *Line1, LineType *Line2, PointType *pii)
     {
       PointType p[4];
       form_slanted_rectangle (p, Line1);
+      DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
       return IsLineInQuadrangle (p, Line2, pii);
     }
   /* here come only round Line1 because IsLineInQuadrangle()
@@ -1567,6 +1560,7 @@ LineLineIntersect (LineType *Line1, LineType *Line2, PointType *pii)
     {
       PointType p[4];
       form_slanted_rectangle (p, Line2);
+      DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
       return IsLineInQuadrangle (p, Line1, pii);
     }
   /* now all lines are round */
@@ -1575,6 +1569,7 @@ LineLineIntersect (LineType *Line1, LineType *Line2, PointType *pii)
    * cases where the "real" lines don't intersect but the
    * thick lines touch, and ensures that the dx/dy business
    * below does not cause a divide-by-zero. */
+  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (    IsPointInPad (Line2->Point1.X, Line2->Point1.Y,
                         MAX (Line2->Thickness / 2 + Bloat, 0),
                         (PadType *) Line1, pii)
@@ -1785,6 +1780,7 @@ LOCtoArcLine_callback (const BoxType * b, void *cl)
   LineType *line = (LineType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
+  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (!TEST_FLAG (i->flag, line) && LineArcIntersect (line, i->arc, &pimri))
     {
       if (ADD_LINE_TO_LIST (i->layer, line, i->flag))
@@ -1799,6 +1795,7 @@ LOCtoArcArc_callback (const BoxType * b, void *cl)
   ArcType *arc = (ArcType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
+  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (!arc->Thickness)
     return 0;
   if (!TEST_FLAG (i->flag, arc) && ArcArcIntersect (i->arc, arc, &pimri))
@@ -1815,6 +1812,7 @@ LOCtoArcPad_callback (const BoxType * b, void *cl)
   PadType *pad = (PadType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
+  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (!TEST_FLAG (i->flag, pad) && i->layer ==
       (TEST_FLAG (ONSOLDERFLAG, pad) ? BOTTOM_SIDE : TOP_SIDE)
       && ArcPadIntersect (i->arc, pad, &pimri) && ADD_PAD_TO_LIST (i->layer, pad, i->flag))
@@ -1912,6 +1910,7 @@ LOCtoLineArc_callback (const BoxType * b, void *cl)
   ArcType *arc = (ArcType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
+  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (!arc->Thickness)
     return 0;
   if (!TEST_FLAG (i->flag, arc) && LineArcIntersect (i->line, arc, &pimri))
@@ -1952,6 +1951,7 @@ LOCtoLinePad_callback (const BoxType * b, void *cl)
   PadType *pad = (PadType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
+  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (!TEST_FLAG (i->flag, pad) && i->layer ==
       (TEST_FLAG (ONSOLDERFLAG, pad) ? BOTTOM_SIDE : TOP_SIDE)
       && LinePadIntersect (i->line, pad, NULL) && ADD_PAD_TO_LIST (i->layer, pad, i->flag))
@@ -2162,6 +2162,7 @@ LOCtoPadLine_callback (const BoxType * b, void *cl)
   LineType *line = (LineType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
+  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (!TEST_FLAG (i->flag, line) && LinePadIntersect (line, i->pad, &pimri))
     {
       if (ADD_LINE_TO_LIST (i->layer, line, i->flag))
@@ -2176,6 +2177,7 @@ LOCtoPadArc_callback (const BoxType * b, void *cl)
   ArcType *arc = (ArcType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
+  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (!arc->Thickness)
     return 0;
   if (!TEST_FLAG (i->flag, arc) && ArcPadIntersect (arc, i->pad, &pimri))
@@ -2239,6 +2241,7 @@ LOCtoPadPad_callback (const BoxType * b, void *cl)
   PadType *pad = (PadType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
+  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (!TEST_FLAG (i->flag, pad) && i->layer ==
       (TEST_FLAG (ONSOLDERFLAG, pad) ? BOTTOM_SIDE : TOP_SIDE)
       && PadPadIntersect (pad, i->pad) && ADD_PAD_TO_LIST (i->layer, pad, i->flag))
@@ -3510,9 +3513,11 @@ DRCFind (int What, void *ptr1, void *ptr2, void *ptr3)
             pimri.X = PIMRI_UNSET; 
           }
           else {
-            // FIXME: once all the different intersection-detecting codes are
-            // fixed to return pimri stuff this fallback to LocateErrorObject
-            // could in theory go away, perhaps instead an assertion check
+            // If we end up here it means some code somewhere hasn't been
+            // rewritten to set pimri yet.  Once we're certain all the
+            // different intersection-detecting paths are fixed to set pimri
+            // stuff this fallback to LocateErrorObject could in theory go
+            // away, perhaps instead an assertion check
             LocateErrorObject (&x, &y);
           }
           DumpList ();
@@ -3584,9 +3589,11 @@ DRCFind (int What, void *ptr1, void *ptr2, void *ptr3)
         pimri.X = PIMRI_UNSET; 
       }
       else {
-        // FIXME: once all the different intersection-detecting codes are
-        // fixed to return pimri stuff this fallback to LocateErrorObject
-        // could in theory go away, perhaps instead an assertion check
+        // If we end up here it means some code somewhere hasn't been
+        // rewritten to set pimri yet.  Once we're certain all the different
+        // intersection-detecting paths are fixed to set pimri this fallback
+        // to LocateErrorObject could in theory go away, perhaps instead an
+        // assertion check
         LocateErrorObject (&x, &y);
       }
       DumpList ();
