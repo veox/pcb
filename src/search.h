@@ -70,18 +70,19 @@
 /* ---------------------------------------------------------------------------
  * prototypes
  */
-// FIXME: given their forms, it seems likely that all these need pii args.
-// At the very least it seems IsPointOnPin must have, pin intersections
-// haven't been tested yet.
+// Note: the only IsFooIn/OnBar functions that don't get a pii argument to
+// report the intersection position are the ones that only end up being used
+// for rat line intersection tests.  We don't need to report DRC violation
+// positions for these, so they don't need the extra argument.
 bool IsPointOnLine (Coord, Coord, Coord, LineType *);
-bool IsPointOnPin (Coord, Coord, Coord, PinType *);
+bool IsPointOnPin (Coord, Coord, Coord, PinType *, PointType *pii);
 bool IsPointOnArc (Coord, Coord, Coord, ArcType *, PointType *pii);
 bool IsPointOnLineEnd (Coord, Coord, RatType *);
 bool IsLineInRectangle (Coord, Coord, Coord, Coord, LineType *, PointType *pii);
 bool IsLineInQuadrangle (PointType p[4], LineType * Line, PointType *pii);
 bool IsArcInRectangle (Coord, Coord, Coord, Coord, ArcType *, PointType *pii);
 bool IsPointInPad (Coord, Coord, Coord, PadType *, PointType *pii);
-bool IsPointInBox (Coord, Coord, BoxType *, Coord);
+bool IsPointInBox (Coord, Coord, BoxType *, Coord, PointType *pii);
 int SearchObjectByLocation (unsigned, void **, void **, void **, Coord, Coord, Coord);
 int SearchScreen (Coord, Coord, int, void **, void **, void **);
 int SearchObjectByID (DataType *, void **, void **, void **, int, int);

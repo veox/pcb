@@ -403,10 +403,20 @@ expand_bounds (BoxType *box_in)
 bool
 PinLineIntersect (PinType *PV, LineType *Line, PointType *pii)
 {
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
- 
   /* IsLineInRectangle already has Bloat factor */
 
+  // FIXME: BUT NOT NOW: so we have all these points where we test for
+  // "square" pins.  But we never check for octagonal pins.  pcb will
+  // render and produce them, but it doesn't really do the intersection
+  // and DRC tests for them completely correctly.  It comes close, since
+  // they're almost circular, but the failure can be seen by putting a round
+  // line end cap just slightly on one of the octagon verticies and using
+  // Connects->Lookup connection (Cntrl-F) on either the line or the pin.
+  // The connection isn't detected.  Since it probably only fails for
+  // overlaps smaller than any sensible DRC minimum overlap setting this
+  // is maybe not worth fixing given the many code points involved.  Still,
+  // it's unfortunate to have connection detection not quite catch everything.
+  
   return 
     TEST_FLAG (SQUAREFLAG, PV) ?
       IsLineInRectangle (
@@ -436,41 +446,63 @@ SetThing (int type, void *ptr1, void *ptr2, void *ptr3)
 }
 
 bool
-BoxBoxIntersection (BoxType *b1, BoxType *b2)
+BoxBoxIntersection (BoxType *b1, BoxType *b2, PointType *pii)
 {
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
   if (b2->X2 < b1->X1 || b2->X1 > b1->X2) {
-    DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
     return false;
   }
   if (b2->Y2 < b1->Y1 || b2->Y1 > b1->Y2) {
-    DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
     return false;
   }
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
+
+  // We have an intersection. 
+
+  if ( pii != NULL ) {
+
+    // We'll report the intersection point as the center of area.
+    Coord ix, iy;   // Intersection X/Y
+
+    if ( b1->X1 <= b2->X2 && b2->X2 <= b1->X2 ) {
+      ix = b2->X2 - (b2->X2 - b1->X1) / 2;
+    }
+    else {
+      ix = b1->X2 - (b1->X2 - b2->X1) / 2;
+    }
+    
+    if ( b1->Y1 <= b2->Y2 && b2->Y2 <= b1->Y2 ) {
+      iy = b2->Y2 - (b2->Y2 - b1->Y1) / 2;
+    }
+    else {
+      iy = b1->Y2 - (b1->Y2 - b2->Y1) / 2;
+    }
+
+    pii->X = ix;
+    pii->Y = iy;
+  }
+
   return true;
 }
 
 static bool
 PadPadIntersect (PadType *p1, PadType *p2, PointType *pii)
 {
-  // FIXME: just needs tested now
-  assert (0);
   return LinePadIntersect ((LineType *) p1, p2, pii);
 }
 
 static inline bool
-PV_TOUCH_PV (PinType *PV1, PinType *PV2)
+PV_TOUCH_PV (PinType *PV1, PinType *PV2, PointType *pii)
 {
   double t1, t2;
   BoxType b1, b2;
 
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   t1 = MAX (PV1->Thickness / 2.0 + Bloat, 0);
   t2 = MAX (PV2->Thickness / 2.0 + Bloat, 0);
-  if (IsPointOnPin (PV1->X, PV1->Y, t1, PV2)
-      || IsPointOnPin (PV2->X, PV2->Y, t2, PV1))
+  if ( IsPointOnPin (PV1->X, PV1->Y, t1, PV2, pii) ) {
     return true;
+  }
+  if ( IsPointOnPin (PV2->X, PV2->Y, t2, PV1, pii) ) {
+    return true;
+  }
   if (!TEST_FLAG (SQUAREFLAG, PV1) || !TEST_FLAG (SQUAREFLAG, PV2))
     return false;
   /* check for square/square overlap */
@@ -483,7 +515,7 @@ PV_TOUCH_PV (PinType *PV1, PinType *PV2)
   b2.X2 = PV2->X + t2;
   b2.Y1 = PV2->Y - t2;
   b2.Y2 = PV2->Y + t2;
-  return BoxBoxIntersection (&b1, &b2);
+  return BoxBoxIntersection (&b1, &b2, pii);
 }
 
 /*!
@@ -637,7 +669,6 @@ LOCtoPVline_callback (const BoxType * b, void *cl)
   LineType *line = (LineType *) b;
   struct pv_info *i = (struct pv_info *) cl;
 
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (!TEST_FLAG (i->flag, line) && PinLineIntersect (i->pv, line, &pimri) &&
       !TEST_FLAG (HOLEFLAG, i->pv))
     {
@@ -668,11 +699,11 @@ LOCtoPVpad_callback (const BoxType * b, void *cl)
   PadType *pad = (PadType *) b;
   struct pv_info *i = (struct pv_info *) cl;
 
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
   if (!TEST_FLAG (i->flag, pad) && IS_PV_ON_PAD (i->pv, pad, &pimri) &&
       !TEST_FLAG (HOLEFLAG, i->pv) &&
       ADD_PAD_TO_LIST (TEST_FLAG (ONSOLDERFLAG, pad) ? BOTTOM_SIDE :
                        TOP_SIDE, pad, i->flag)) {
+    // FIXME: foo.pcb doesn't exercise this
     DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
     longjmp (i->env, 1);
   }
@@ -900,9 +931,6 @@ LookupLOConnectionsToLOList (int flag, bool AndRats)
                     }
                   position = &padposition[layer];
                   for (; *position < PadList[layer].Number; (*position)++) {
-                    DBG (
-                        "%s:%i:%s: checkpoint\n",
-                        __FILE__, __LINE__, __func__ );
                     if (LookupLOConnectionsToPad
                         (PADLIST_ENTRY (layer, *position), group, flag, AndRats))
                       return (true);
@@ -933,7 +961,7 @@ pv_pv_callback (const BoxType * b, void *cl)
   PinType *pin = (PinType *) b;
   struct pv_info *i = (struct pv_info *) cl;
 
-  if (!TEST_FLAG (i->flag, pin) && PV_TOUCH_PV (i->pv, pin))
+  if (!TEST_FLAG (i->flag, pin) && PV_TOUCH_PV (i->pv, pin, &pimri))
     {
       if (TEST_FLAG (HOLEFLAG, pin) || TEST_FLAG (HOLEFLAG, i->pv))
         {
@@ -1005,18 +1033,18 @@ pv_line_callback (const BoxType * b, void *cl)
   PinType *pv = (PinType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
-  if (!TEST_FLAG (i->flag, pv) && PinLineIntersect (pv, i->line, &pimri))
-    {
-      if (TEST_FLAG (HOLEFLAG, pv))
-        {
-          SET_FLAG (WARNFLAG, pv);
-          Settings.RatWarn = true;
-          Message (_("WARNING: Hole too close to line.\n"));
-        }
-      else if (ADD_PV_TO_LIST (pv, i->flag))
-        longjmp (i->env, 1);
+  if (!TEST_FLAG (i->flag, pv) && PinLineIntersect (pv, i->line, &pimri)) {
+    if (TEST_FLAG (HOLEFLAG, pv)) {
+      SET_FLAG (WARNFLAG, pv);
+      Settings.RatWarn = true;
+      Message (_("WARNING: Hole too close to line.\n"));
     }
+    else if (ADD_PV_TO_LIST (pv, i->flag)) {
+      // FIXME: foo.pcb doesn't exercise this
+      DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
+      longjmp (i->env, 1);
+    }
+  }
   return 0;
 }
 
@@ -1026,10 +1054,8 @@ pv_pad_callback (const BoxType * b, void *cl)
   PinType *pv = (PinType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
   if (!TEST_FLAG (i->flag, pv) && IS_PV_ON_PAD (pv, i->pad, &pimri))
     {
-      DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
       if (TEST_FLAG (HOLEFLAG, pv))
         {
           SET_FLAG (WARNFLAG, pv);
@@ -1037,7 +1063,11 @@ pv_pad_callback (const BoxType * b, void *cl)
           Message (_("WARNING: Hole too close to pad.\n"));
         }
       else if (ADD_PV_TO_LIST (pv, i->flag))
-        longjmp (i->env, 1);
+        {
+          // FIXME: foo.pcb doesn't exercise this
+          DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
+          longjmp (i->env, 1);
+        }
     }
   return 0;
 }
@@ -1944,14 +1974,13 @@ LOCtoLinePad_callback (const BoxType * b, void *cl)
   PadType *pad = (PadType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
-  // FIXME: this one used to pass NULL to LinePadIntersect.  It probably just
-  // should not have done that, and never got tested.  Now it's theoretically
-  // right but needs tested.
-  assert (0);
   if (!TEST_FLAG (i->flag, pad) && i->layer ==
       (TEST_FLAG (ONSOLDERFLAG, pad) ? BOTTOM_SIDE : TOP_SIDE)
-      && LinePadIntersect (i->line, pad, &pimri) && ADD_PAD_TO_LIST (i->layer, pad, i->flag))
+      && LinePadIntersect (i->line, pad, &pimri) && ADD_PAD_TO_LIST (i->layer, pad, i->flag)) {
+    // FIXME: foo.pcb doesn't exercise this
+    DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
     longjmp (i->env, 1);
+  }
   return 0;
 }
 
@@ -2235,11 +2264,13 @@ LOCtoPadPad_callback (const BoxType * b, void *cl)
   PadType *pad = (PadType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (!TEST_FLAG (i->flag, pad) && i->layer ==
       (TEST_FLAG (ONSOLDERFLAG, pad) ? BOTTOM_SIDE : TOP_SIDE)
-      && PadPadIntersect (pad, i->pad, &pimri) && ADD_PAD_TO_LIST (i->layer, pad, i->flag))
+      && PadPadIntersect (pad, i->pad, &pimri) && ADD_PAD_TO_LIST (i->layer, pad, i->flag)) {
+    // FIXME: foo.pcb doesn't exercise this
+    DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
     longjmp (i->env, 1);
+  }
   return 0;
 }
 
@@ -3507,11 +3538,12 @@ DRCFind (int What, void *ptr1, void *ptr2, void *ptr3)
             pimri.X = PIMRI_UNSET; 
           }
           else {
-            // If we end up here it means some code somewhere hasn't been
-            // rewritten to set pimri yet.  Once we're certain all the
-            // different intersection-detecting paths are fixed to set pimri
-            // stuff this fallback to LocateErrorObject could in theory go
-            // away, perhaps instead an assertion check
+            // If we end up here it means some code somewhere hasn't
+            // been rewritten to set pimri yet.  Hopefully all the
+            // intersection-detecting paths are fixed to set pimri now.
+            // If debugging is enabled we fire an assertion if not, but in
+            // normal use just fall back to using the object position.
+            assert (false);
             LocateErrorObject (&x, &y);
           }
           DumpList ();
@@ -3583,11 +3615,12 @@ DRCFind (int What, void *ptr1, void *ptr2, void *ptr3)
         pimri.X = PIMRI_UNSET; 
       }
       else {
-        // If we end up here it means some code somewhere hasn't been
-        // rewritten to set pimri yet.  Once we're certain all the different
-        // intersection-detecting paths are fixed to set pimri this fallback
-        // to LocateErrorObject could in theory go away, perhaps instead an
-        // assertion check
+        // If we end up here it means some code somewhere hasn't
+        // been rewritten to set pimri yet.  Hopefully all the
+        // intersection-detecting paths are fixed to set pimri now.
+        // If debugging is enabled we fire an assertion if not, but in normal
+        // use just fall back to using the object position.
+        assert (false);
         LocateErrorObject (&x, &y);
       }
       DumpList ();

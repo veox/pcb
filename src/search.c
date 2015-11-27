@@ -123,8 +123,7 @@ pinorvia_callback (const BoxType * box, void *cl)
   if (TEST_FLAG (i->locked, ptr1))
     return 0;
 
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
-  if (!IsPointOnPin (PosX, PosY, SearchRadius, pin))
+  if (!IsPointOnPin (PosX, PosY, SearchRadius, pin, NULL))
     return 0;
   *i->ptr1 = ptr1;
   *i->ptr2 = *i->ptr3 = pin;
@@ -190,7 +189,6 @@ pad_callback (const BoxType * b, void *cl)
   AnyObjectType *ptr1 = pad->Element;
   double sq_dist;
 
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   /* Reject locked pads, backside pads (if !BackToo), and non-hit pads */
   if (TEST_FLAG (i->locked, ptr1) ||
       (!FRONT (pad) && !i->BackToo) ||
@@ -259,7 +257,6 @@ line_callback (const BoxType * box, void *cl)
   if (TEST_FLAG (i->locked, l))
     return 0;
 
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
   if (!IsPointInPad (PosX, PosY, SearchRadius, (PadType *)l, NULL))
     return 0;
   *i->Line = l;
@@ -298,7 +295,6 @@ rat_callback (const BoxType * box, void *cl)
   if (TEST_FLAG (i->locked, line))
     return 0;
 
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (TEST_FLAG (VIAFLAG, line) ?
       (Distance (line->Point1.X, line->Point1.Y, PosX, PosY) <=
 	   line->Thickness * 2 + SearchRadius) :
@@ -353,7 +349,6 @@ arc_callback (const BoxType * box, void *cl)
   if (TEST_FLAG (i->locked, a))
     return 0;
 
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (!IsPointOnArc (PosX, PosY, SearchRadius, a, NULL))
     return 0;
   *i->Arc = a;
@@ -714,9 +709,8 @@ SearchElementByLocation (int locked,
  * checks if a point is on a pin
  */
 bool
-IsPointOnPin (Coord X, Coord Y, Coord Radius, PinType *pin)
+IsPointOnPin (Coord X, Coord Y, Coord Radius, PinType *pin, PointType *pii)
 {
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   Coord t = PIN_SIZE (pin) / 2;
   if (TEST_FLAG (SQUAREFLAG, pin))
     {
@@ -726,12 +720,16 @@ IsPointOnPin (Coord X, Coord Y, Coord Radius, PinType *pin)
       b.X2 = pin->X + t;
       b.Y1 = pin->Y - t;
       b.Y2 = pin->Y + t;
-      DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
-      if (IsPointInBox (X, Y, &b, Radius))
+      if (IsPointInBox (X, Y, &b, Radius, pii))
 	return true;
     }
-  else if (Distance (pin->X, pin->Y, X, Y) <= Radius + t)
+  else if (Distance (pin->X, pin->Y, X, Y) <= Radius + t) {
+    if ( pii != NULL ) {
+      pii->X = X;
+      pii->Y = Y;
+    }
     return true;
+  }
   return false;
 }
 
@@ -741,7 +739,6 @@ IsPointOnPin (Coord X, Coord Y, Coord Radius, PinType *pin)
 bool
 IsPointOnLineEnd (Coord X, Coord Y, RatType *Line)
 {
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (((X == Line->Point1.X) && (Y == Line->Point1.Y)) ||
       ((X == Line->Point2.X) && (Y == Line->Point2.Y)))
     return (true);
@@ -784,7 +781,6 @@ bool
 IsPointOnLine (Coord X, Coord Y, Coord Radius, LineType *Line)
 {
   double D1, D2, L;
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
 
   /* Get length of segment */
   L = Distance (Line->Point1.X, Line->Point1.Y, Line->Point2.X, Line->Point2.Y);
@@ -814,8 +810,6 @@ IsLineInRectangle (
 {
   LineType line;
 
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
-
   /* first, see if point 1 is inside the rectangle */
   /* in case the whole line is inside the rectangle */
   if (X1 < Line->Point1.X && X2 > Line->Point1.X &&
@@ -834,7 +828,6 @@ IsLineInRectangle (
   line.Point1.Y = line.Point2.Y = Y1;
   line.Point1.X = X1;
   line.Point2.X = X2;
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (LineLineIntersect (&line, Line, pii))
     return (true);
 
@@ -842,7 +835,6 @@ IsLineInRectangle (
   line.Point1.X = X2;
   line.Point1.Y = Y1;
   line.Point2.Y = Y2;
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (LineLineIntersect (&line, Line, pii))
     return (true);
 
@@ -850,7 +842,6 @@ IsLineInRectangle (
   line.Point1.Y = Y2;
   line.Point1.X = X1;
   line.Point2.X = X2;
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (LineLineIntersect (&line, Line, pii))
     return (true);
 
@@ -858,22 +849,18 @@ IsLineInRectangle (
   line.Point2.X = X1;
   line.Point1.Y = Y1;
   line.Point2.Y = Y2;
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (LineLineIntersect (&line, Line, pii))
     return (true);
 
   return (false);
 }
 
-// FIXME: using l for point here is just stupid
 static int /*checks if a point (of null radius) is in a slanted rectangle*/
 IsPointInQuadrangle(PointType p[4], PointType *l, PointType *pii)
 {
   Coord dx, dy, x, y;
   double prod0, prod1;
   
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
-
   dx = p[1].X - p[0].X;
   dy = p[1].Y - p[0].Y;
   x = l->X - p[0].X;
@@ -952,7 +939,6 @@ bool
 IsArcInRectangle (
     Coord X1, Coord Y1, Coord X2, Coord Y2, ArcType *Arc, PointType *pii )
 {
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   LineType line;
 
   /* construct a set of dummy lines and check each of them */
@@ -963,7 +949,6 @@ IsArcInRectangle (
   line.Point1.Y = line.Point2.Y = Y1;
   line.Point1.X = X1;
   line.Point2.X = X2;
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (LineArcIntersect (&line, Arc, pii))
     return (true);
 
@@ -971,7 +956,6 @@ IsArcInRectangle (
   line.Point1.X = line.Point2.X = X2;
   line.Point1.Y = Y1;
   line.Point2.Y = Y2;
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (LineArcIntersect (&line, Arc, pii))
     return (true);
 
@@ -979,7 +963,6 @@ IsArcInRectangle (
   line.Point1.Y = line.Point2.Y = Y2;
   line.Point1.X = X1;
   line.Point2.X = X2;
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (LineArcIntersect (&line, Arc, pii))
     return (true);
 
@@ -987,7 +970,6 @@ IsArcInRectangle (
   line.Point1.X = line.Point2.X = X1;
   line.Point1.Y = Y1;
   line.Point2.Y = Y2;
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   if (LineArcIntersect (&line, Arc, pii))
     return (true);
 
@@ -1029,13 +1011,14 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *pii)
   // Clients clamp Bloat st it doesn't make things smaller than 0.  But what
   // happens at Thickness 0?  There's no general answer that's obvioulsy
   // immune to the vissicitudes of floating point.  I would have avoided the
-  // clamping and declared lines with <= 0 Thickness to be intersection-free
+  // clamping and declared lines with <= 0 Thickness to be intersection-free,
   // thereby dodging the issue.  The intention may have been to let Radius
   // take up the slack, but unfortunately there are instances where it's
-  // used for figures that have actualy size, rather than just to fatten
-  // up "virtual" points by a few nm.  We need to investigate the original
+  // used for figures that have actual size, rather than just to fatten up
+  // "virtual" points by a few nm.  We need to investigate the original
   // IsPointInPad() did and decide whether we want to do something similar
   // or not.  Here's what we do at the moment:
+  //
   // Handle the case where the pad has 0 thickness.  We treat it as a true
   // line segment in this case, and return a true result if (X, Y) is within
   // Radius of that segment.  The intersection point is considered to be
@@ -1085,9 +1068,8 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *pii)
 }
 
 bool
-IsPointInBox (Coord X, Coord Y, BoxType *box, Coord Radius)
+IsPointInBox (Coord X, Coord Y, BoxType *box, Coord Radius, PointType *pii)
 {
-  DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
   Coord width, height, range;
 
   /* NB: Assumes box has point1 with numerically lower X and Y coordinates */
@@ -1099,35 +1081,90 @@ IsPointInBox (Coord X, Coord Y, BoxType *box, Coord Radius)
   width =  box->X2 - box->X1;
   height = box->Y2 - box->Y1;
 
-  if (X <= 0)
+  if ( X <= 0 )
     {
-      if (Y < 0)
-        return Radius > Distance (0, 0, X, Y);
+      if ( Y < 0 )
+        if ( Radius > Distance (0, 0, X, Y) ) {
+          if ( pii != NULL ) {
+            pii->X = X + box->X1;
+            pii->Y = Y + box->Y1;
+          }
+          return true;
+        }
+        else {
+          return false;
+        }
       else if (Y > height)
-        return Radius > Distance (0, height, X, Y);
+        if ( Radius > Distance (0, height, X, Y) ) {
+          if ( pii != NULL ) {
+            pii->X = X + box->X1;
+            pii->Y = Y + box->Y1;
+          }
+          return true;
+        }
+        else {
+          return false;
+        }
       else
         range = -X;
     }
-  else if (X >= width)
+  else if ( X >= width )
     {
-      if (Y < 0)
-        return Radius > Distance (width, 0, X, Y);
-      else if (Y > height)
-        return Radius > Distance (width, height, X, Y);
-      else
+      if ( Y < 0 ) {
+        if ( Radius > Distance (width, 0, X, Y) ) {
+          if ( pii != NULL ) {
+            pii->X = X + box->X1;
+            pii->Y = Y + box->Y1;
+          }
+          return true;
+        }
+        else {
+          return false;
+        }
+      }
+      else if ( Y > height ) {
+        if ( Radius > Distance (width, height, X, Y) ) {
+          if ( pii != NULL ) {
+            pii->X = X + box->X1;
+            pii->Y = Y + box->Y1;
+          }
+          return true;
+        }
+        else {
+          return false;
+        }
+      }
+      else {
         range = X - width;
+      }
     }
   else
     {
-      if (Y < 0)
+      if (Y < 0) {
         range = -Y;
-      else if (Y > height)
+      }
+      else if (Y > height) {
         range = Y - height;
-      else
+      }
+      else {
+        if ( pii != NULL ) {
+          pii->X = X + box->X1;
+          pii->Y = Y + box->Y1;
+        }
         return true;
+      }
     }
 
-  return range < Radius;
+  if ( range < Radius ) {
+    if ( pii != NULL ) {
+      pii->X = X + box->X1;
+      pii->Y = Y + box->Y1;
+    }
+    return true;
+  }
+  else {
+    return false;
+  }
 }
 
 bool
