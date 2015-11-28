@@ -1176,13 +1176,9 @@ IsPointOnArc (
 
   Vec pt = { X, Y };
 
-  // ArcType type uses degrees, puts 0 degrees on -x axis and measures
-  // positive angles in the -x towards +y direction.  Arc type uses radians,
-  // puts 0 degrees on +x and measures positive angles in +x towards +y
-  // directon according to normal mathematical convention.  So here we
-  // convert.
-  double sa = M_PI - ((M_PI / 180.0) * arc->StartAngle);
-  double ad = -arc->Delta * (M_PI / 180.0);
+  // Convert the arc angles to the conventions used in geometry.h
+  double sa, ad;   // Start Angle, Angle Delta
+  pcb_to_geometry_angle_range (arc->StartAngle, arc->Delta, &sa, &ad);
 
   Arc sarc = { { { arc->X, arc->Y }, arc->Width }, sa, ad };
 

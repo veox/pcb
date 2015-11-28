@@ -33,6 +33,19 @@ pcb_abs (Coord arg);
 
 #include "geometry.h"
 
+// Convert an start_angle/angle_delta pair using pcb conventions to one
+// using normal mathematical conventions (as understood by geometry.h).
+// The pcb ArcType type uses degrees, puts 0 degrees on -x axis and measures
+// positive angles in the -x towards +y direction.  The geometry.h Arc type
+// uses radians, puts 0 degrees on +x and measures positive angles in the
+// +x towards +y directon.
+void
+pcb_to_geometry_angle_range (
+    double  pcb_start_angle,
+    double  pcb_angle_delta,
+    double *geo_start_angle,
+    double *geo_angle_delta );
+
 // Return a new Rectangle consisting of the portion of Line that is a
 // rectangle, increased in size by ged (Growth in Each Direction) in all
 // four directions parallel to the rectangle edges.  If Line has SQURE_FLAG,

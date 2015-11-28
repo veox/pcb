@@ -103,6 +103,17 @@ pcb_abs (Coord arg)
 
 }
 
+void
+pcb_to_geometry_angle_range (
+    double  pcb_start_angle,
+    double  pcb_angle_delta,
+    double *geo_start_angle,
+    double *geo_angle_delta )
+{
+  *geo_start_angle = M_PI - ((M_PI / 180.0) * pcb_start_angle);
+  *geo_angle_delta = -pcb_angle_delta * (M_PI / 180.0);
+}
+
 Rectangle
 rectangular_part_of_line (LineType *Line, Coord ged)
 {

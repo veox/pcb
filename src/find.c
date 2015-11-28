@@ -1346,17 +1346,11 @@ ArcArcIntersect (ArcType *Arc1, ArcType *Arc2, PointType *pii)
   // Note that Bloat doesn't change radius.
   Coord rad1 = Arc1->Width, rad2 = Arc2->Width;
   
-  // ArcType type uses degrees, puts 0 degrees on -x axis and measures
-  // positive angles in the -x towards +y direction.  Arc type uses radians,
-  // puts 0 degrees on +x and measures positive angles in +x towards +y
-  // directon according to normal mathematical convention.  So here we
-  // convert.
-  // FIXME: this mess crops up several places we should factor it into
-  // pcb_geometry
-  double a1sa = M_PI - ((M_PI / 180.0) * Arc1->StartAngle);   // Start Angle
-  double a1ad = -Arc1->Delta * (M_PI / 180.0);                // Angle Delta
-  double a2sa = M_PI - ((M_PI / 180.0) * Arc2->StartAngle);   // Start Angle
-  double a2ad = -Arc2->Delta * (M_PI / 180.0);                // Angle Delta
+  // Convert the arc angles to the conventions used in geometry.h
+  double a1sa, a1ad;   // Arc1 Start Angle/Angle Delta
+  pcb_to_geometry_angle_range (Arc1->StartAngle, Arc1->Delta, &a1sa, &a1ad);
+  double a2sa, a2ad;   // Arc1 Start Angle/Angle Delta
+  pcb_to_geometry_angle_range (Arc2->StartAngle, Arc2->Delta, &a2sa, &a2ad);
 
   // These arcs go down the middle of the fat "arcs" Arc1 and Arc2
   Arc
@@ -1702,14 +1696,10 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
     ((LineSegment) { rpol.corner[2], rpol.corner[3] }),
     ((LineSegment) { rpol.corner[3], rpol.corner[0] }) };
   
-  // ArcType type uses degrees, puts 0 degrees on -x axis and measures
-  // positive angles in the -x towards +y direction.  Arc type uses radians,
-  // puts 0 degrees on +x and measures positive angles in +x towards +y
-  // directon according to normal mathematical convention.  So here we
-  // convert.
-  double sa = M_PI - ((M_PI / 180.0) * arc->StartAngle);
-  double ad = -arc->Delta * (M_PI / 180.0);
-  
+  // Convert the arc angles to the conventions used in geometry.h
+  double sa, ad;   // Start Angle, Angle Delta
+  pcb_to_geometry_angle_range (arc->StartAngle, arc->Delta, &sa, &ad);
+
   // Inner/Outer Arcs (of ArcType Arc, due to its thickness).  Note that
   // ia might have radius <= 0 even at Bloat == 0, but oa should never
   // have radius <= 0 at this point since we've already returned false for
