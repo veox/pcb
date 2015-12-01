@@ -37,6 +37,8 @@
 /* grammar to parse ASCII input of PCB description
  */
 
+#include <assert.h>
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -1028,8 +1030,26 @@ arc_hi_format
 			/* x, y, width, height, thickness, clearance, startangle, delta, flags */
 		: T_ARC '[' measure measure measure measure measure measure number number flags ']'
 			{
-			  CreateNewArcOnLayer(Layer, NU ($3), NU ($4), NU ($5), NU ($6), $9, $10,
-			                             NU ($7), NU ($8), $11);
+                          // FIXME: unrelated to this location, but lines in
+                          // the message log should really wrap so the entire
+                          // message is seen no matter how wide the window,
+                          // so error message can't be cut off at confusing
+                          // spots
+                          if ( NU ($5) != NU ($6) ) {
+                            yyerror (
+                              "Arc Width != arc Height.  Arcs of Ellipses "
+                              "are not allowed, skipping this arc" );
+                          }
+                          else if ( NU ($5) == 0 ) {
+                            yyerror (
+                              "Arc Width == 0.  Zero-radius arcs are "
+                              "not allowed, skipping this arc" );
+                          }
+                          else {
+			    CreateNewArcOnLayer (
+                                Layer, NU ($3), NU ($4), NU ($5), NU ($6),
+                                $9, $10, NU ($7), NU ($8), $11 );
+                          }
 			}
 		;
 
@@ -1037,6 +1057,8 @@ arc_1.7_format
 			/* x, y, width, height, thickness, clearance, startangle, delta, flags */
 		: T_ARC '(' measure measure measure measure measure measure number number INTEGER ')'
 			{
+                                yyerror ("foo foo fooooo");
+                                YYABORT;
 				CreateNewArcOnLayer(Layer, OU ($3), OU ($4), OU ($5), OU ($6), $9, $10,
 						    OU ($7), OU ($8), OldFlags($11));
 			}
@@ -1046,6 +1068,8 @@ arc_oldformat
 			/* x, y, width, height, thickness, startangle, delta, flags */
 		: T_ARC '(' measure measure measure measure measure measure number INTEGER ')'
 			{
+                                yyerror ("foo foo fooooo");
+                                YYABORT;
 				CreateNewArcOnLayer(Layer, OU ($3), OU ($4), OU ($5), OU ($5), IV ($8), $9,
 					OU ($7), 200*GROUNDPLANEFRAME, OldFlags($10));
 			}
