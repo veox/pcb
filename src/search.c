@@ -1011,11 +1011,11 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *pii)
   // Clients of this routine clamp the Radius arg st it doesn't make things
   // smaller than 0 regardless of negative Bloat.  But what happens at
   // Thickness 0?  There's no general answer that's obvioulsy immune to the
-  // vissicitudes of floating point.  I would have avoided the clamping and
-  // declared lines with <= 0 Thickness to be intersection-free, thereby
-  // dodging the issue.  We need to investigate the original IsPointInPad()
-  // did and decide whether we want to do something similar or not.
-  // Here's what we do at the moment:
+  // vissicitudes of floating point.  I would have avoided the clamping
+  // and declared lines with <= 0 Thickness to be intersection-free,
+  // thereby dodging the issue.  We need to investigate what the original
+  // IsPointInPad() did and decide whether we want to do something similar
+  // or not.  Here's what we do at the moment:
   //
   // Handle the case where the pad has 0 thickness.  We treat it as a true
   // line segment in this case, and return a true result if (X, Y) is within
