@@ -1008,16 +1008,14 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *pii)
   Vec piiav;  
 
   // FIXME: this was a really wack part of the existing geometry code.
-  // Clients clamp Bloat st it doesn't make things smaller than 0.  But what
-  // happens at Thickness 0?  There's no general answer that's obvioulsy
-  // immune to the vissicitudes of floating point.  I would have avoided the
-  // clamping and declared lines with <= 0 Thickness to be intersection-free,
-  // thereby dodging the issue.  The intention may have been to let Radius
-  // take up the slack, but unfortunately there are instances where it's
-  // used for figures that have actual size, rather than just to fatten up
-  // "virtual" points by a few nm.  We need to investigate the original
-  // IsPointInPad() did and decide whether we want to do something similar
-  // or not.  Here's what we do at the moment:
+  // Clients of this routine clamp the Radius arg st it doesn't make things
+  // smaller than 0 regardless of negative Bloat.  But what happens at
+  // Thickness 0?  There's no general answer that's obvioulsy immune to the
+  // vissicitudes of floating point.  I would have avoided the clamping and
+  // declared lines with <= 0 Thickness to be intersection-free, thereby
+  // dodging the issue.  We need to investigate the original IsPointInPad()
+  // did and decide whether we want to do something similar or not.
+  // Here's what we do at the moment:
   //
   // Handle the case where the pad has 0 thickness.  We treat it as a true
   // line segment in this case, and return a true result if (X, Y) is within

@@ -1709,10 +1709,7 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
     ia = { { { arc->X, arc->Y }, radius - ato2 }, sa, ad };
   assert (oa.circle.radius > 0);
 
-  // FIXME: The GUI doesn't allow creation of zero-radius arcs, but we also
-  // need to verify that the file loader refuses to load them.  We also need
-  // to make sure the loader rejects square-end arcs, negative-radius arcs,
-  // and arcs of ellipses.
+  // FIXME: We still need to make sure the loader rejects square-end arcs.
 
   Arc acl = { { { arc->X, arc->Y}, radius }, sa, ad };      // Arc Center Line
   Vec aep[2];                                               // Arc End Points
