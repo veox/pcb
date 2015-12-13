@@ -85,7 +85,7 @@ typedef struct {
 } LineSegment;
 
 typedef struct {
-  Vec corner[4];
+  Vec corner[4];   // corner[0] is diagonal to corner[2], etc.
 } Rectangle;
 
 typedef struct {
@@ -159,6 +159,16 @@ point_intersects_circle (Vec pt, Circle const *circ);
 // Return the point on seg closest to pt.
 Vec
 nearest_point_on_line_segment (Vec pt, LineSegment const *seg);
+
+// Like nearest_point_on_line_segment(), but seg is assumed to be horizontal
+// (parallel to the X axis) so we can go faster.
+Vec
+nearest_point_on_horizontal_line_segment (Vec pt, LineSegment const *seg);
+
+// Like nearest_point_on_horizontal_line_segment(), but for horizontal
+// line segments.
+Vec
+nearest_point_on_vertical_line_segment (Vec pt, LineSegment const *seg);
 
 // Return the point on Arc closest to pt.
 Vec

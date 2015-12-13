@@ -177,36 +177,41 @@ angular_spans_overlap (
 bool
 point_intersects_rectangle (Vec pt, Rectangle const *rect)
 {
-  // FIXME: rotating and translating point to put rect relatively at origin
-  // or at least axis-aligned would be faster
+  // We're going to translate then rotate pt (about the origin) such that
+  // rect is relatively centered at the origin, with (an arbitrarily chosen)
+  // side "A" parallel to the X axis.
 
-  // Sides as line segments
-  LineSegment c1_c2 = { rect->corner[0], rect->corner[1] };
-  LineSegment c2_c3 = { rect->corner[1], rect->corner[2] };
-  LineSegment c3_c4 = { rect->corner[2], rect->corner[3] };
-  LineSegment c4_c1 = { rect->corner[3], rect->corner[0] };
+  // Direction A Side
+  Vec das = vec_from (rect->corner[0], rect->corner[1]);
 
-  // Distance between pairs of opposite sides
-  FT d_c1_c2_to_c3_c4 = vec_mag (vec_from (rect->corner[0], rect->corner[3]));
-  FT d_c2_c3_to_c4_c1 = vec_mag (vec_from (rect->corner[0], rect->corner[1]));
-   
-  // Nearest Point (to pt) On Sides
-  Vec npo_c1_c2 = nearest_point_on_line_segment (pt, &c1_c2);
-  Vec npo_c2_c3 = nearest_point_on_line_segment (pt, &c2_c3);
-  Vec npo_c3_c4 = nearest_point_on_line_segment (pt, &c3_c4);
-  Vec npo_c4_c1 = nearest_point_on_line_segment (pt, &c4_c1);
+  // (Rectangle) Length in Direction A/B
+  FT lda = vec_mag (das); 
+  FT ldb = vec_mag (vec_from (rect->corner[0], rect->corner[3])); 
 
-  // Distances from pt to nearest point on each side
-  FT d_pt_c1_c2 = vec_mag (vec_from (pt, npo_c1_c2));
-  FT d_pt_c2_c3 = vec_mag (vec_from (pt, npo_c2_c3));
-  FT d_pt_c3_c4 = vec_mag (vec_from (pt, npo_c3_c4));
-  FT d_pt_c4_c1 = vec_mag (vec_from (pt, npo_c4_c1));
+  // (Rectangle) Center X/Y
+  FT cx = 0.0, cy = 0.0;
+  for ( int ii = 0 ; ii < 4 ; ii++ ) {
+    cx += rect->corner[ii].x; 
+    cy += rect->corner[ii].y; 
+  }
+  cx /= 4.0;
+  cy /= 4.0;
+  
+  FT theta = -ATAN2 (das.y, das.x);   // Angle of X axis with respect to side A
+ 
+  FT sin_th, cos_th;
+#ifdef _GNU_SOURCE
+  SINCOS (theta, &sin_th, &cos_th);
+#else
+  sin_th = SIN (theta);
+  cos_th = COS (theta);
+#endif
 
-  return (
-      d_pt_c1_c2 <= d_c1_c2_to_c3_c4 &&
-      d_pt_c3_c4 <= d_c1_c2_to_c3_c4 &&
-      d_pt_c2_c3 <= d_c2_c3_to_c4_c1 &&
-      d_pt_c4_c1 <= d_c2_c3_to_c4_c1 );
+  // Translated and rotated version of pt (X/Y Prime).
+  FT xp = (pt.x - cx) * cos_th - (pt.y - cy) * sin_th;
+  FT yp = (pt.x - cx) * sin_th + (pt.y - cy) * cos_th;
+ 
+  return (FABS (xp) <= lda / 2.0) && (FABS (yp) <= ldb / 2.0);
 }
 
 bool
@@ -222,13 +227,15 @@ point_intersects_circle (Vec pt, Circle const *circ)
 Vec
 nearest_point_on_line_segment (Vec pt, LineSegment const *seg)
 {
-  // FIXME: I don't do anything efficient for horizontal/vertical line
-  // segments
-
-  // FIXME: Stack overflow has a somewhat more
-  // efficient solution using same basic idea:
-  // http://stackoverflow.com/questions/849211/
-  // shortest-distance-between-a-point-and-a-line-segment
+  // Stack overflow has a somewhat more efficient solution using the same
+  // basic idea:
+  //
+  //   http://stackoverflow.com/questions/849211/
+  //   shortest-distance-between-a-point-and-a-line-segment
+  //
+  // It's also possile that it would be faster to do translate, rotate,
+  // nearest_point_on_vertical_line_segment, unrotate, and untranslate,
+  // but I doubt its a big savings if any.
 
   Vec spa_spb;   // Vector from segment point a to point b
   Vec spa_pt;    // Vector from segment point a to pt
@@ -264,6 +271,51 @@ nearest_point_on_line_segment (Vec pt, LineSegment const *seg)
     return pp;       // Projection landed on line, so projected point
   }
 }
+
+Vec
+nearest_point_on_horizontal_line_segment (Vec pt, LineSegment const *seg)
+{
+  // Lowest and highest X coordinates of points on seg
+  CT lx = seg->pa.x, hx = seg->pb.x, temp;
+  if ( lx > hx ) {
+    temp = lx;
+    lx = hx;
+    hx = temp;
+  }
+
+  if      ( pt.x > hx ) {
+    return (Vec) { hx, seg->pa.y };
+  }
+  else if ( pt.x < lx ) {
+    return (Vec) { lx, seg->pa.y };
+  }
+  else {
+    return (Vec) { pt.x, seg->pa.y };
+  }
+}
+
+Vec
+nearest_point_on_vertical_line_segment (Vec pt, LineSegment const *seg)
+{
+  // Lowest and highest Y coordinates of points on seg
+  CT ly = seg->pa.y, hy = seg->pb.y, temp;
+  if ( ly > hy ) {
+    temp = ly;
+    ly = hy;
+    hy = temp;
+  }
+
+  if      ( pt.y > hy ) {
+    return (Vec) { seg->pa.x, hy };
+  }
+  else if ( pt.y < ly ) {
+    return (Vec) { seg->pa.x, ly };
+  }
+  else {
+    return (Vec) { seg->pa.x, pt.y };
+  }
+}
+
 
 Vec
 nearest_point_on_arc (Vec pt, Arc const *arc)
