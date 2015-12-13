@@ -1709,7 +1709,8 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
     ia = { { { arc->X, arc->Y }, radius - ato2 }, sa, ad };
   assert (oa.circle.radius > 0);
 
-  // FIXME: We still need to make sure the loader rejects square-end arcs.
+  // FIXME: We still need to make sure the loader rejects square-end arcs
+  // since we don't currently handle them.
 
   Arc acl = { { { arc->X, arc->Y}, radius }, sa, ad };      // Arc Center Line
   Vec aep[2];                                               // Arc End Points
@@ -1960,6 +1961,8 @@ LOCtoLinePad_callback (const BoxType * b, void *cl)
 {
   PadType *pad = (PadType *) b;
   struct lo_info *i = (struct lo_info *) cl;
+
+  printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
 
   if (!TEST_FLAG (i->flag, pad) && i->layer ==
       (TEST_FLAG (ONSOLDERFLAG, pad) ? BOTTOM_SIDE : TOP_SIDE)
