@@ -4,12 +4,13 @@
 // The associated .c file is supposed to compile cleanly with at least the
 // following GCC options:
 //
-// -std=c99 -g -O2 -fstrict-aliasing -fstrict-overflow -Wall -Wextra
-// -Wcast-align -Wcast-qual -Wfloat-equal -Winit-self -Wmissing-prototypes
-// -Wstrict-prototypes -Wpointer-arith -Wstrict-prototypes -Wswitch-default
-// -Wswitch-enum -Wunreachable-code -Wwrite-strings -Wmissing-format-attribute
-// -Wmultichar -Wnested-externs -Wpointer-arith -Wredundant-decls -Wundef
-
+//   -std=c99 -g -O2 -fstrict-aliasing -fstrict-overflow -Wall -Wextra
+//   -Wcast-align -Wcast-qual -Wfloat-equal -Winit-self -Wmissing-prototypes
+//   -Wstrict-prototypes -Wpointer-arith -Wstrict-prototypes -Wswitch-default
+//   -Wswitch-enum -Wunreachable-code -Wwrite-strings
+//   -Wmissing-format-attribute -Wmultichar -Wnested-externs -Wpointer-arith
+//   -Wredundant-decls -Wundef
+// 
 // The associated .c file should also compile cleanly with -Wconversion,
 // provided GEOM_FLOAT_TYPE is wider than GEOM_COORD_TYPE.
 
