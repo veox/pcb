@@ -1016,7 +1016,7 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *pii)
     Vec pt = { X, Y };
     PointType p1 = Pad->Point1, p2 = Pad->Point2; 
     LineSegment pcl = { { p1.X, p1.Y }, { p2.X, p2.Y }  };
-    Vec npols = nearest_point_on_line_segment (pt, &pcl);
+    Vec npols = nearest_point_on_probably_axis_aligned_line_segment (pt, &pcl);
     if ( vec_mag (vec_from (pt, npols)) <= Radius ) {
       SET_XY_IF_NOT_NULL (pii, npols);
       return true;

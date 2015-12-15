@@ -278,11 +278,12 @@ static Cardinal TotalP, TotalV;
 static ListType LineList[MAX_LAYER],    /*!< List of objects to. */
   PolygonList[MAX_LAYER], ArcList[MAX_LAYER], PadList[2], RatList, PVList;
 
-// Magic number meaning that we don't have the most recent intersection point
+// Magic number meaning that we don't have the most recent intersection point.
+// If any field of pimri is set to this, the whole value is invalid.
 #define PIMRI_UNSET -2
 
 // Point In Most Recent Intersection.  Currently this is just used for
-// accurately reporting the position of DRV violations involing intersections.
+// accurately reporting the position of DRC violations involing intersections.
 static PointType pimri
   = { PIMRI_UNSET, PIMRI_UNSET, PIMRI_UNSET, PIMRI_UNSET }; 
 
@@ -703,8 +704,6 @@ LOCtoPVpad_callback (const BoxType * b, void *cl)
       !TEST_FLAG (HOLEFLAG, i->pv) &&
       ADD_PAD_TO_LIST (TEST_FLAG (ONSOLDERFLAG, pad) ? BOTTOM_SIDE :
                        TOP_SIDE, pad, i->flag)) {
-    // FIXME: foo.pcb doesn't exercise this
-    DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
     longjmp (i->env, 1);
   }
   return 0;
@@ -726,6 +725,8 @@ LOCtoPVpoly_callback (const BoxType * b, void *cl)
 {
   PolygonType *polygon = (PolygonType *) b;
   struct pv_info *i = (struct pv_info *) cl;
+
+  // FIXME: BUT NOT NOW: pimri isn't set at all for polygons at the moment
 
   /* if the pin doesn't have a therm and polygon is clearing
    * then it can't touch due to clearance, so skip the expensive
@@ -1040,8 +1041,6 @@ pv_line_callback (const BoxType * b, void *cl)
       Message (_("WARNING: Hole too close to line.\n"));
     }
     else if (ADD_PV_TO_LIST (pv, i->flag)) {
-      // FIXME: foo.pcb doesn't exercise this
-      DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
       longjmp (i->env, 1);
     }
   }
@@ -1064,8 +1063,6 @@ pv_pad_callback (const BoxType * b, void *cl)
         }
       else if (ADD_PV_TO_LIST (pv, i->flag))
         {
-          // FIXME: foo.pcb doesn't exercise this
-          DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__); 
           longjmp (i->env, 1);
         }
     }
@@ -1739,7 +1736,9 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
     // the case in which the line is entirely contained within an arc end cap.
     for ( int jj = 0 ; jj < 2 ; jj++ ) {
       Vec npol
-        = nearest_point_on_line_segment (aep[jj], &(rectangle_edges[ii]));
+        = nearest_point_on_probably_axis_aligned_line_segment (
+            aep[jj],
+            &(rectangle_edges[ii]) );
       if ( vec_mag (vec_from (aep[jj], npol) ) <= ato2 ) {
         SET_XY_IF_NOT_NULL (pii, npol);
         return true;
@@ -1826,10 +1825,12 @@ LOCtoArcPad_callback (const BoxType * b, void *cl)
   PadType *pad = (PadType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
-  if (!TEST_FLAG (i->flag, pad) && i->layer ==
-      (TEST_FLAG (ONSOLDERFLAG, pad) ? BOTTOM_SIDE : TOP_SIDE)
-      && ArcPadIntersect (i->arc, pad, &pimri) && ADD_PAD_TO_LIST (i->layer, pad, i->flag))
+  if ( !TEST_FLAG (i->flag, pad) &&
+        i->layer == (TEST_FLAG (ONSOLDERFLAG, pad) ? BOTTOM_SIDE : TOP_SIDE) &&
+        ArcPadIntersect (i->arc, pad, &pimri) &&
+        ADD_PAD_TO_LIST (i->layer, pad, i->flag) ) {
     longjmp (i->env, 1);
+  }
   return 0;
 }
 
@@ -1962,13 +1963,10 @@ LOCtoLinePad_callback (const BoxType * b, void *cl)
   PadType *pad = (PadType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
-  printf ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
-
-  if (!TEST_FLAG (i->flag, pad) && i->layer ==
-      (TEST_FLAG (ONSOLDERFLAG, pad) ? BOTTOM_SIDE : TOP_SIDE)
-      && LinePadIntersect (i->line, pad, &pimri) && ADD_PAD_TO_LIST (i->layer, pad, i->flag)) {
-    // FIXME: foo.pcb doesn't exercise this
-    DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
+  if ( !TEST_FLAG (i->flag, pad) &&
+       i->layer == (TEST_FLAG (ONSOLDERFLAG, pad) ? BOTTOM_SIDE : TOP_SIDE) &&
+       LinePadIntersect (i->line, pad, &pimri) &&
+       ADD_PAD_TO_LIST (i->layer, pad, i->flag) ) {
     longjmp (i->env, 1);
   }
   return 0;
@@ -2103,6 +2101,13 @@ LOCtoPad_callback (const BoxType * b, void *cl)
 {
   PadType *pad = (PadType *) b;
   struct rat_info *i = (struct rat_info *) cl;
+
+  // Note: this one doesn't need to worry about setting pimri at the moment
+  // because it's currently only called from LookupLOConnectionsToRatEnd()
+  // (which we don't care about because violations shouldn't happen for rat
+  // intersections themselves, though I think they can be produced when a
+  // violation in a rat-connected set changes connectivity via something
+  // real).
 
   if (!TEST_FLAG (i->flag, pad) && i->layer ==
 	(TEST_FLAG (ONSOLDERFLAG, pad) ? BOTTOM_SIDE : TOP_SIDE) &&
@@ -2254,11 +2259,10 @@ LOCtoPadPad_callback (const BoxType * b, void *cl)
   PadType *pad = (PadType *) b;
   struct lo_info *i = (struct lo_info *) cl;
 
-  if (!TEST_FLAG (i->flag, pad) && i->layer ==
-      (TEST_FLAG (ONSOLDERFLAG, pad) ? BOTTOM_SIDE : TOP_SIDE)
-      && PadPadIntersect (pad, i->pad, &pimri) && ADD_PAD_TO_LIST (i->layer, pad, i->flag)) {
-    // FIXME: foo.pcb doesn't exercise this
-    DBG ("%s:%i:%s: checkpoint\n", __FILE__, __LINE__, __func__);
+  if ( !TEST_FLAG (i->flag, pad) &&
+       i->layer == (TEST_FLAG (ONSOLDERFLAG, pad) ? BOTTOM_SIDE : TOP_SIDE) &&
+       PadPadIntersect (pad, i->pad, &pimri) &&
+       ADD_PAD_TO_LIST (i->layer, pad, i->flag) ) {
     longjmp (i->env, 1);
   }
   return 0;
@@ -3791,6 +3795,10 @@ DRCAll (void)
   int nopastecnt = 0;
   bool IsBad;
   struct drc_info info;
+
+  // Make sure pimri starts out unset.  It's should be cleared by code that
+  // consumes it's setting, so this is just defensive programming.
+  pimri.X = PIMRI_UNSET;   // Mark the entire pimri value as unset
 
   reset_drc_dialog_message();
 

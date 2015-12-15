@@ -114,6 +114,22 @@ pcb_to_geometry_angle_range (
   *geo_angle_delta = -pcb_angle_delta * (M_PI / 180.0);
 }
 
+Vec
+nearest_point_on_probably_axis_aligned_line_segment (
+    Vec pt,
+    LineSegment const *seg )
+{
+  if ( seg->pa.y == seg->pb.y ) {
+    return nearest_point_on_horizontal_line_segment (pt, seg);
+  }
+  else if ( seg->pa.x == seg->pb.x ) {
+    return nearest_point_on_vertical_line_segment (pt, seg);
+  }
+  else {
+    return nearest_point_on_line_segment (pt, seg);
+  }
+}
+
 Rectangle
 rectangular_part_of_line (LineType *Line, Coord ged)
 {
