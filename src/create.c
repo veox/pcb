@@ -551,6 +551,9 @@ CreateNewArcOnLayer (LayerType *Layer,
   // Degenerate 0-radius arcs aren't supported
   assert (width > 0);
 
+  // Arcs with square end caps aren't supported
+  assert (!FLAG_SET_HAS_FLAG (Flags, SQUAREFLAG));
+
   ArcType *Arc;
 
   ARC_LOOP (Layer);
