@@ -1047,6 +1047,8 @@ arc_hi_format
                               "not allowed, skipping this arc" );
                           }
                           else {
+                            // FIXME: other types besides Arc should check
+                            // flags
                             clear_any_invalid_flags_and_log_errors (
                                 ARC_TYPE, &($11), yyerror );
                             CreateNewArcOnLayer (
