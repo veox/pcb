@@ -53,13 +53,6 @@
 #include <dmalloc.h>
 #endif
 
-#define ENABLE_DEBUG_OUTPUT_THIS_FILE
-#ifdef ENABLE_DEBUG_OUTPUT_THIS_FILE
-#define DBG(format, ...) printf (format, ## __VA_ARGS__)
-#else
-#define DBG(format, ...) do { ; } while ( 0 )
-#endif
-
 /* ---------------------------------------------------------------------------
  * some local identifiers
  */
