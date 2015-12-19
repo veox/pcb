@@ -97,31 +97,6 @@ static int integer_value (PLMeasure m);
 static Coord old_units (PLMeasure m);
 static Coord new_units (PLMeasure m);
 
-// FIXME: compile and test with this guy used to detect the square
-// flags on arcs that we want to disallow.  Actually I think we don't need
-// this as maybe the parser is parsing the flags for us.
-// Return true iff flag is in flags.
-static bool
-has_flag (char const *flags, char const *flag)
-{
-
-  char *cur_string = strdup (flags);   // See strtok() man page for usage info
-  char *cur_tok = NULL;                // Gets set to tokens in turn
-  do {
-    cur_tok = strtok (cur_string, " ,");
-    cur_string = NULL;   // strtok() wants this NULL for subsequent calls
-    if ( cur_tok != NULL ) {
-      if ( strncmp (cur_tok, flag, strlen (flag)) == 0 ) {
-        free (cur_string);
-        return true;
-      }
-    }
-  } while ( cur_tok != NULL);
-
-  free (cur_string);
-  return false;
-}
-
 #define YYDEBUG 1
 #define YYERROR_VERBOSE 1
 
@@ -1060,26 +1035,23 @@ arc_hi_format
                           // message is seen no matter how wide the window,
                           // so error message can't be cut off at confusing
                           // spots
-
+                          
                           if ( NU ($5) != NU ($6) ) {
                             yyerror (
                               "Arc Width != arc Height.  Arcs of Ellipses "
                               "are not allowed, skipping this arc" );
                           }
-                          else if ( NU ($5) == 0 ) {
+                          else if ( NU ($5) <= 0 ) {
                             yyerror (
-                              "Arc Width == 0.  Zero-radius arcs are "
+                              "Arc Width <= 0.  Non-positive-radius arcs are "
                               "not allowed, skipping this arc" );
                           }
-                          else if ( FLAG_SET_HAS_FLAG ($11, SQUAREFLAG) ) {
-                            yyerror (
-                              "\"square\" flag not allowed for arcs, skipping "
-                              "this arc" );
-                          }
                           else {
-			    CreateNewArcOnLayer (
-                                Layer, NU ($3), NU ($4), NU ($5), NU ($6),
-                                $9, $10, NU ($7), NU ($8), $11 );
+                            clear_any_invalid_flags_and_log_errors (
+                                ARC_TYPE, &($11), yyerror );
+                            CreateNewArcOnLayer (
+                                  Layer, NU ($3), NU ($4), NU ($5), NU ($6),
+                                  $9, $10, NU ($7), NU ($8), $11 );
                           }
 			}
 		;
@@ -1088,8 +1060,6 @@ arc_1.7_format
 			/* x, y, width, height, thickness, clearance, startangle, delta, flags */
 		: T_ARC '(' measure measure measure measure measure measure number number INTEGER ')'
 			{
-                                yyerror ("foo foo fooooo");
-                                YYABORT;
 				CreateNewArcOnLayer(Layer, OU ($3), OU ($4), OU ($5), OU ($6), $9, $10,
 						    OU ($7), OU ($8), OldFlags($11));
 			}
@@ -1099,8 +1069,6 @@ arc_oldformat
 			/* x, y, width, height, thickness, startangle, delta, flags */
 		: T_ARC '(' measure measure measure measure measure measure number INTEGER ')'
 			{
-                                yyerror ("foo foo fooooo");
-                                YYABORT;
 				CreateNewArcOnLayer(Layer, OU ($3), OU ($4), OU ($5), OU ($5), IV ($8), $9,
 					OU ($7), 200*GROUNDPLANEFRAME, OldFlags($10));
 			}
