@@ -114,9 +114,9 @@ pcb_to_geometry_angle_range (
   *geo_angle_delta = -pcb_angle_delta * (M_PI / 180.0);
 }
 
-Vec
+Point
 nearest_point_on_probably_axis_aligned_line_segment (
-    Vec pt,
+    Point pt,
     LineSegment const *seg )
 {
   if ( seg->pa.y == seg->pb.y ) {
@@ -137,7 +137,7 @@ rectangular_part_of_line (LineType *Line, Coord ged)
   // the rectangle is 0 or less.
   assert (Line->Thickness / 2 + ged > 0);
 
-  Vec   // End points of Line
+  Point   // End points of Line
     pa = { Line->Point1.X, Line->Point1.Y },
     pb = { Line->Point2.X, Line->Point2.Y };
   

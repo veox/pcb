@@ -49,9 +49,9 @@ pcb_to_geometry_angle_range (
 // Like nearest_point_on_line_segment() from geometry.h, but we first check
 // if seg is axis-aligned and call a more efficient routine for this case
 // if it is.  Usually more than 50% of pcb lines are axis-aligned.
-Vec
+Point
 nearest_point_on_probably_axis_aligned_line_segment (
-    Vec pt,
+    Point pt,
     LineSegment const *seg );
 
 // Return a new Rectangle consisting of the portion of Line that is a
