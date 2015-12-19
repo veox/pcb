@@ -991,14 +991,14 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *pii)
   Circle circ = { {X, Y}, Radius };
 
   // Ends of line defining extent of rectangle in one dimension.
-  Vec pa = { Pad->Point1.X, Pad->Point1.Y };   // Pad (end) A
-  Vec pb = { Pad->Point2.X, Pad->Point2.Y };   // Pad (end) B
+  Point pa = { Pad->Point1.X, Pad->Point1.Y };   // Pad (end) A
+  Point pb = { Pad->Point2.X, Pad->Point2.Y };   // Pad (end) B
 
   Coord pt = Pad->Thickness;   // Convenience alias
 
-  // Point In Intersection As Vector (for adapting this fctn interface to
-  // Vec interface)
-  Vec piiav;  
+  // Point In Intersection As Point (for adapting this fctn interface to
+  // geometry.h interface)
+  Point piiap;  
 
   // Handle the case where the pad has 0 thickness.  We treat it as a true
   // line segment in this case, and return a true result if (X, Y) is within
@@ -1006,10 +1006,11 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *pii)
   // the nearest point on the true segment.
   assert (Pad->Thickness >= 0);
   if ( Pad->Thickness == 0 ) {
-    Vec pt = { X, Y };
+    Point pt = { X, Y };
     PointType p1 = Pad->Point1, p2 = Pad->Point2; 
     LineSegment pcl = { { p1.X, p1.Y }, { p2.X, p2.Y }  };
-    Vec npols = nearest_point_on_probably_axis_aligned_line_segment (pt, &pcl);
+    Point npols
+      = nearest_point_on_probably_axis_aligned_line_segment (pt, &pcl);
     if ( vec_mag (vec_from (pt, npols)) <= Radius ) {
       SET_XY_IF_NOT_NULL (pii, npols);
       return true;
@@ -1022,8 +1023,8 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *pii)
   // Note that this includes the end caps if the line has square ends
   Rectangle rpol = rectangular_part_of_line ((LineType *) Pad, 0);
 
-  if ( circle_intersects_rectangle (&circ, &rpol, &piiav) ) {
-    SET_XY_IF_NOT_NULL (pii, piiav);
+  if ( circle_intersects_rectangle (&circ, &rpol, &piiap) ) {
+    SET_XY_IF_NOT_NULL (pii, piiap);
     return true;
   }
 
@@ -1031,13 +1032,13 @@ IsPointInPad (Coord X, Coord Y, Coord Radius, PadType *Pad, PointType *pii)
   if ( ! TEST_FLAG (SQUAREFLAG, Pad) ) {
     Circle cac = { pa, (pt + 1) / 2 };   // Cap A Circle
     Circle cbc = { pb, (pt + 1) / 2 };   // Cap B Circle
-    // Note that piiav (if not NULL) is computed by the first short-circuit
+    // Note that piiap (if not NULL) is computed by the first short-circuit
     // true result here.
     bool ci = (   // Circles Intersect
-        circle_intersects_circle (&cac, &circ, &piiav) ||
-        circle_intersects_circle (&cbc, &circ, &piiav) );
+        circle_intersects_circle (&cac, &circ, &piiap) ||
+        circle_intersects_circle (&cbc, &circ, &piiap) );
     if ( ci ) {
-      SET_XY_IF_NOT_NULL (pii, piiav);
+      SET_XY_IF_NOT_NULL (pii, piiap);
       return true;
     }
   }
@@ -1152,7 +1153,7 @@ IsPointOnArc (
   // Currently we can only handle arcs of circles
   assert (arc->Width == arc->Height);
 
-  Vec pt = { X, Y };
+  Point pt = { X, Y };
 
   // Convert the arc angles to the conventions used in geometry.h
   double sa, ad;   // Start Angle, Angle Delta
@@ -1160,7 +1161,7 @@ IsPointOnArc (
 
   Arc sarc = { { { arc->X, arc->Y }, arc->Width }, sa, ad };
 
-  Vec np = nearest_point_on_arc (pt, &sarc);
+  Point np = nearest_point_on_arc (pt, &sarc);
 
   Vec np_pt = vec_from (np, pt);      //  Vector from np to pt
   

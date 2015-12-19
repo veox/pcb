@@ -1365,12 +1365,12 @@ ArcArcIntersect (ArcType *Arc1, ArcType *Arc2, PointType *pii)
     if ( aso ) {
       if ( pii != NULL ) {
         double aocoo = osa + (oad / 2.0);   // Angle Of Center Of Overlap
-        // Point In Intersection As Vector
-        Vec piiav = {
+        // Point In Intersection As Point (not yet PointType :)
+        Point piiap = {
           a1.circle.center.x + a1.circle.radius * cos (aocoo),   
           a1.circle.center.y + a1.circle.radius * sin (aocoo) };
-        pii->X = piiav.x;
-        pii->Y = piiav.y;
+        pii->X = piiap.x;
+        pii->Y = piiap.y;
       }
       return true;
     }
@@ -1391,7 +1391,7 @@ ArcArcIntersect (ArcType *Arc1, ArcType *Arc2, PointType *pii)
   assert (a1oa.circle.radius > 0);
   assert (a2oa.circle.radius > 0);
 
-  Vec intersection[2];
+  Point intersection[2];
 
   // Check if any of the arc edges intersect, skipping degenerate edges
   if ( arc_arc_intersection (&a1oa, &a2oa, intersection) ) {
@@ -1419,42 +1419,42 @@ ArcArcIntersect (ArcType *Arc1, ArcType *Arc2, PointType *pii)
 
   // Check if any of the end caps touch the other arc (including it's end caps)
   {
-    Vec a1ep[2], a2ep[2];   // Arc 1/2 End Points
+    Point a1ep[2], a2ep[2];   // Arc 1/2 End Points
     arc_end_points (&a1, a1ep);
     arc_end_points (&a2, a2ep);
-    Vec np;                 // Nearest Point (reused)
-    Circle epc, apc;        // End/Arc Point Circle (reused)
-    Vec piiav;              // Point In Intersection As Vec
+    Point np;                 // Nearest Point (reused)
+    Circle epc, apc;          // End/Arc Point Circle (reused)
+    Point piiap;              // Point In Intersection As Point
 
     np = nearest_point_on_arc (a1ep[0], &a2);
     epc = (Circle) { a1ep[0], a1to2 }; 
     apc = (Circle) { np, a2to2 };
-    if ( circle_intersects_circle (&epc, &apc, &piiav) ) {
-      SET_XY_IF_NOT_NULL (pii, piiav);
+    if ( circle_intersects_circle (&epc, &apc, &piiap) ) {
+      SET_XY_IF_NOT_NULL (pii, piiap);
       return TRUE;
     }
 
     np = nearest_point_on_arc (a1ep[1], &a2);
     epc = (Circle) { a1ep[1], a1to2 }; 
     apc = (Circle) { np, a2to2 };
-    if ( circle_intersects_circle (&epc, &apc, &piiav) ) {
-      SET_XY_IF_NOT_NULL (pii, piiav);
+    if ( circle_intersects_circle (&epc, &apc, &piiap) ) {
+      SET_XY_IF_NOT_NULL (pii, piiap);
       return TRUE;
     }
 
     np = nearest_point_on_arc (a2ep[0], &a1);
     epc = (Circle) { a2ep[0], a2to2 }; 
     apc = (Circle) { np, a1to2 };
-    if ( circle_intersects_circle (&epc, &apc, &piiav) ) {
-      SET_XY_IF_NOT_NULL (pii, piiav);
+    if ( circle_intersects_circle (&epc, &apc, &piiap) ) {
+      SET_XY_IF_NOT_NULL (pii, piiap);
       return TRUE;
     }
     
     np = nearest_point_on_arc (a2ep[1], &a1);
     epc = (Circle) { a2ep[1], a2to2 }; 
     apc = (Circle) { np, a1to2 };
-    if ( circle_intersects_circle (&epc, &apc, &piiav) ) {
-      SET_XY_IF_NOT_NULL (pii, piiav);
+    if ( circle_intersects_circle (&epc, &apc, &piiap) ) {
+      SET_XY_IF_NOT_NULL (pii, piiap);
       return TRUE;
     }
   }
@@ -1709,16 +1709,16 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
   // FIXME: We still need to make sure the loader rejects square-end arcs
   // since we don't currently handle them.
 
-  Arc acl = { { { arc->X, arc->Y}, radius }, sa, ad };      // Arc Center Line
-  Vec aep[2];                                               // Arc End Points
+  Arc acl = { { { arc->X, arc->Y}, radius }, sa, ad };   // Arc Center Line
+  Point aep[2];                                          // Arc End Points
   arc_end_points (&acl, aep);
  
   // Check if the rectangular part of line intersects anything
   for ( int ii = 0 ; ii < 4 ; ii++ ) {
 
     // Check arc edges
-    Vec ip[2];   // Intersection Points
-    int ipc;     // Intersection Point Count
+    Point ip[2];   // Intersection Points
+    int ipc;       // Intersection Point Count
     ipc = arc_line_segment_intersection (&oa, &(rectangle_edges[ii]), ip);
     if ( ipc > 0 ) {
       SET_XY_IF_NOT_NULL (pii, ip[0]);
@@ -1735,7 +1735,7 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
     // Check arc end caps (which are always round).  Note that this catches
     // the case in which the line is entirely contained within an arc end cap.
     for ( int jj = 0 ; jj < 2 ; jj++ ) {
-      Vec npol
+      Point npol
         = nearest_point_on_probably_axis_aligned_line_segment (
             aep[jj],
             &(rectangle_edges[ii]) );
@@ -1748,8 +1748,8 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
     // The rectangular line might be entirely contained between the inner and
     // outer edges of the arc.  In this case all the corners of the rectangle
     // will be within ato2 of acl, so it's sufficient to check one of them.
-    Vec ctc = rpol.corner[0];                      // Corner To Check
-    Vec nptc = nearest_point_on_arc (ctc, &acl);   // Nearest Point To Corner
+    Point ctc = rpol.corner[0];                      // Corner To Check
+    Point nptc = nearest_point_on_arc (ctc, &acl);   // Nearest Point To Corner
     if ( vec_mag (vec_from (ctc, nptc)) <= ato2 ) {
       SET_XY_IF_NOT_NULL (pii, ctc);
       return true;
@@ -1761,24 +1761,24 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
   // the line)...
   if ( ! TEST_FLAG (SQUAREFLAG, Line) ) {
 
-    Vec leccs[2] = {   // Line End Cap Centers
+    Point leccs[2] = {   // Line End Cap Centers
       { Line->Point1.X, Line->Point1.Y },
       { Line->Point2.X, Line->Point2.Y } };
     
     // Check if the line end caps intersect the arc.  Note that this catches
     // intersections with the arc end caps, since they are always round.
     for ( int ii = 0 ; ii < 2 ; ii++ ) {
-      Vec lecc = leccs[ii];   // Line End Cap Center
-      Vec np2lep;   // Nearest Point to Line End Point
+      Point lecc = leccs[ii];   // Line End Cap Center
+      Point np2lep;   // Nearest Point to Line End Point
       np2lep = nearest_point_on_arc (lecc, &acl);
       // (Vector from) Line Cap Center to Nearest Point (on acl)
       Vec lcc_np = vec_from (lecc, np2lep);
       if ( vec_mag (lcc_np) <= sto2 ) {
         if ( pii != NULL ) {
-          Vec pii_as_vector
+          Point piiap   // Point In Intersection As Point
             = vec_sum (lecc, vec_scale (lcc_np, (lto2 / vec_mag (lcc_np))));
-          pii->X = pii_as_vector.x;
-          pii->Y = pii_as_vector.y;
+          pii->X = piiap.x;
+          pii->Y = piiap.y;
         }
         return true;
       } 
