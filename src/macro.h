@@ -110,6 +110,8 @@
 #define TEST_FLAGS(F,P)         (((P)->Flags.f & (F)) == (F) ? 1 : 0)
 
 #define FLAGS_EQUAL(F1,F2)	(memcmp (&F1, &F2, sizeof(FlagType)) == 0)
+
+// Like TEST_FLAG() but for naked FlagType values (which are really flag sets)
 #define FLAG_SET_HAS_FLAG(FS,F) (((FS).f & (F)) ? true : false)
 
 #define THERMFLAG(L)		(0xf << (4 *((L) % 2)))
