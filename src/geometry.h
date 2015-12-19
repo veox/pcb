@@ -80,16 +80,20 @@ typedef struct {
   GEOM_COORD_TYPE x, y;
 } Vec;
 
+// A Point is-a specific type of Vec.  They have identical data so we don't
+// tell the compiler so it can't complain.  Point is used for readability.
+#define Point Vec
+
 typedef struct {
-  Vec pa, pb;
+  Point pa, pb;
 } LineSegment;
 
 typedef struct {
-  Vec corner[4];   // corner[0] is diagonal to corner[2], etc.
+  Point corner[4];   // corner[0] is diagonal to corner[2], etc.
 } Rectangle;
 
 typedef struct {
-  Vec center;
+  Point center;
   GEOM_COORD_TYPE radius;
 } Circle;
 
@@ -102,9 +106,9 @@ typedef struct {
 GEOM_FLOAT_TYPE
 vec_mag (Vec vec);
 
-// Return vec scaled by scale_factor.  Note that scaling integer vectors
-// to small magnitudes can result in a lot of error.  Trying to make unit
-// vectors won't work for this reason.
+// Return vec scaled by scale_factor.  Note that if GEOM_COORD_TYPE is an
+// integer type, scaling vectors to small magnitudes can result in a lot
+// of error.  Trying to make unit vectors fails badly for integer coordinates.
 Vec
 vec_scale (Vec vec, GEOM_FLOAT_TYPE scale_factor);
 
@@ -150,29 +154,29 @@ angular_spans_overlap (
 
 // Return true iff pt is in rect (with rect regarded as filled).
 bool
-point_intersects_rectangle (Vec pt, Rectangle const *rect);
+point_intersects_rectangle (Point pt, Rectangle const *rect);
 
 // Return true iff pt is in circ (with circ regarded as filled).
 bool
-point_intersects_circle (Vec pt, Circle const *circ);
+point_intersects_circle (Point pt, Circle const *circ);
 
 // Return the point on seg closest to pt.
-Vec
-nearest_point_on_line_segment (Vec pt, LineSegment const *seg);
+Point
+nearest_point_on_line_segment (Point pt, LineSegment const *seg);
 
 // Like nearest_point_on_line_segment(), but seg is assumed to be horizontal
 // (parallel to the X axis) so we can go faster.
-Vec
-nearest_point_on_horizontal_line_segment (Vec pt, LineSegment const *seg);
+Point
+nearest_point_on_horizontal_line_segment (Point pt, LineSegment const *seg);
 
 // Like nearest_point_on_horizontal_line_segment(), but for horizontal
 // line segments.
-Vec
-nearest_point_on_vertical_line_segment (Vec pt, LineSegment const *seg);
+Point
+nearest_point_on_vertical_line_segment (Point pt, LineSegment const *seg);
 
 // Return the point on Arc closest to pt.
-Vec
-nearest_point_on_arc (Vec pt, Arc const *arc);
+Point
+nearest_point_on_arc (Point pt, Arc const *arc);
 
 // Return true iff filled circ intersects seg.  If pii (Point In Intersection)
 // is not NULL, set *pii to a point in the intersection.  Note that it's
@@ -181,7 +185,7 @@ bool
 circle_intersects_line_segment (
     Circle      const *circ,
     LineSegment const *seg,
-    Vec               *pii );
+    Point             *pii );
 
 // Return true iff filled circ intersects filled rect.  If an intersection
 // is found and pii (Point In Intersection) is not NULL, return a point in
@@ -191,7 +195,7 @@ bool
 circle_intersects_rectangle (
     Circle    const *circ,
     Rectangle const *rect,
-    Vec             *pii );
+    Point           *pii );
 
 // Return true iff filled circles ca and cb intersect.  If pii (Point
 // In Intersection) is not NULL, set *pii to a point in the intersection
@@ -200,7 +204,7 @@ bool
 circle_intersects_circle (
     Circle const *ca,
     Circle const *cb,
-    Vec          *pii );
+    Point        *pii );
 
 // Return the number of points in the intersection of circ and seg (0, 1,
 // or 2), assuming no floating point problems.  This function views circ as
@@ -215,7 +219,7 @@ int
 circle_line_segment_intersection (
     Circle      const *circ,
     LineSegment const *seg,
-    Vec                intersection[2] );
+    Point              intersection[2] );
 
 // Return the number of point in the intersection of of ca and cb.  The result
 // will be 0, 2, or possibly INT_MAX (but see below).  This function views
@@ -235,19 +239,19 @@ int
 circle_circle_intersection (
     Circle const *ca,
     Circle const *cb,
-    Vec           intersection[2] );
+    Point         intersection[2] );
 
 // Return the end points of arc in *ep.  Arcs spanning > 2 pi radians are
 // still considered to have distinct end points.
 void
-arc_end_points (Arc const *arc, Vec ep[2]);
+arc_end_points (Arc const *arc, Point ep[2]);
 
 // Like circle_line_segment_intersection(), but for an arc of a cirle.
 int
 arc_line_segment_intersection (
     Arc         const *arc,
     LineSegment const *seg,
-    Vec                intersection[2] );
+    Point              intersection[2] );
 
 // Mostly like circle_circle_intersection(), but for arcs of circles.
 // Unlike circle_circle_intersection(), this function may return 1 (when
@@ -268,6 +272,6 @@ int
 arc_arc_intersection (
     Arc const *aa,
     Arc const *ab,
-    Vec        intersection[2] );
+    Point      intersection[2] );
 
 #endif   // GEOMETRY_H
