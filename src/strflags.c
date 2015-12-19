@@ -487,14 +487,18 @@ common_flags_to_string (FlagType flags,
 
   savef = fh;
 
+
   len = 3;			/* for "()\0" */
-  for (i = 0; i < n_flagbits; i++)
-    if ((flagbits[i].object_types & object_type)
-	&& (TEST_FLAG (flagbits[i].mask, &fh)))
-      {
+  for ( i = 0; i < n_flagbits; i++ ) {
+    if ( TEST_FLAG (flagbits[i].mask, &fh) ) {
+      if ( flagbits[i].object_types & object_type ) {
 	len += flagbits[i].nlen + 1;
 	CLEAR_FLAG (flagbits[i].mask, &fh);
       }
+    }
+  }
+
+    
 
   if (TEST_ANY_THERMS (&fh))
     {
@@ -555,4 +559,59 @@ pcbflags_to_string (FlagType flags)
 				 ALL_TYPES,
 				 pcb_flagbits,
 				 ENTRIES (pcb_flagbits));
+}
+
+// Using the flags descriptions in the flagbits table, clear any bits in
+// flags not supported for Type and call log_error as appropriate.
+static
+void clear_invalid_flags_and_log_errors (
+    FlagBitsType *flagbits,
+    size_t flagbits_size,
+    int Type,
+    FlagType *flags,
+    int (*log_error) (char const *msg) )
+{
+  FlagHolder fh = { *flags };  // Because macro.h does flags this way
+
+  for ( int ii = 0 ; ii < flagbits_size ; ii++ ) {
+    if ( TEST_FLAG (flagbits[ii].mask, &fh) ) {
+      if ( (flagbits[ii].object_types | Type) != flagbits[ii].object_types ) {
+        CLEAR_FLAG (flagbits[ii].mask, &fh);
+        char error_message[1042];
+        int chars_printed
+          = snprintf (
+              error_message,
+              1042,
+              "\"%s\" flag not supported for objects of this type, ignoring "
+              "it",
+              flagbits[ii].name );
+        log_error (error_message);
+        if ( chars_printed == 1042 ) {
+          log_error ("previous error message got truncated");
+        }
+      }
+    }
+  } 
+
+  *flags = fh.Flags;
+}
+
+void
+clear_any_invalid_flags_and_log_errors (
+    int Type,
+    FlagType *flags,
+    int (*log_error) (char const *msg) )
+{
+  clear_invalid_flags_and_log_errors (
+      object_flagbits,
+      ENTRIES (object_flagbits),
+      Type,
+      flags,
+      log_error );
+  clear_invalid_flags_and_log_errors (
+      pcb_flagbits,
+      ENTRIES (pcb_flagbits),
+      Type,
+      flags,
+      log_error );
 }

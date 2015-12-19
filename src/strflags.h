@@ -27,9 +27,10 @@
 #ifndef PCB_STRFLAGS_H
 #define PCB_STRFLAGS_H
 
-/* The purpose of this interface is to make the file format able to
-   handle more than 32 flags, and to hide the internal details of
-   flags from the file format.  */
+/* The purpose of this interface is to make the file format able to handle more
+ * than 32 flags, hide the internal details of flags from the file format, and
+ * make it possible to give warnings if we get flags that aren't supported on
+ * the associated object type or pcb environment.  */
 
 /* When passed a string, parse it and return an appropriate set of
    flags.  Errors cause error() to be called with a suitable message;
@@ -46,5 +47,15 @@ char *flags_to_string (FlagType flags, int object_type);
 FlagType string_to_pcbflags (const char *flagstring,
 			  int (*error) (const char *msg));
 char *pcbflags_to_string (FlagType flags);
+
+/* If any flags not supported for Type are found in flags, clear them and call
+ * log_error as appropriate.  See the object_flagbits and pcb_flagbits
+ * definitions in strflags.c for the tables specifying which flags are
+ * supported where.  */
+void
+clear_any_invalid_flags_and_log_errors (
+    int Type,
+    FlagType *flags,
+    int (*log_error) (char const *msg) );
 
 #endif /* PCB_STRFLAGS_H */
