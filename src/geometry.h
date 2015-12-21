@@ -85,12 +85,17 @@ typedef struct {
 // tell the compiler so it can't complain.  Point is used for readability.
 #define Point Vec
 
+// Angles are in radians and are stored in floating point.  Angle is used
+// for readability.
+#define Angle GEOM_FLOAT_TYPE
+
 typedef struct {
   Point pa, pb;
 } LineSegment;
 
 typedef struct {
-  Point corner[4];   // corner[0] is diagonal to corner[2], etc.
+  // corner[0] is diagonal to corner[2], corner[1] is diagonal to corner[3] 
+  Point corner[4];  
 } Rectangle;
 
 typedef struct {
@@ -98,10 +103,20 @@ typedef struct {
   GEOM_COORD_TYPE radius;
 } Circle;
 
+// FIXME: It would be more consistant with the general approach used in this
+// module to use Angle and AngleSpan (or whatever it ends up getting called)
+// instead of GEOM_FLOAT_TYPE and pairs of independent arguments.
+
+// FIXME: is this really the best type name?
+typedef struct {
+  Angle start_angle;   // Measuring angles from +x towards +y
+  Angle angle_delta;   // Measuring angles from +x towards +y
+} AngleSpan;
+
 typedef struct {
   Circle circle;
-  GEOM_FLOAT_TYPE start_angle;   // Measuing from +x towards +y, in [0, 2 pi)
-  GEOM_FLOAT_TYPE angle_delta;   // Measuing from +x towards +y, in [0, 2 pi)
+  Angle start_angle;   // Measuing from +x towards +y, in [0, 2 pi)
+  Angle angle_delta;   // Measuing from +x towards +y, in [0, 2 pi)
 } Arc;
 
 GEOM_FLOAT_TYPE
@@ -109,7 +124,8 @@ vec_mag (Vec vec);
 
 // Return vec scaled by scale_factor.  Note that if GEOM_COORD_TYPE is an
 // integer type, scaling vectors to small magnitudes can result in a lot
-// of error.  Trying to make unit vectors fails badly for integer coordinates.
+// of error.  For example, trying to make unit vectors fails badly for
+// integer coordinates.
 Vec
 vec_scale (Vec vec, GEOM_FLOAT_TYPE scale_factor);
 
@@ -129,16 +145,16 @@ Vec
 vec_proj (Vec va, Vec vb);
 
 // Return angle normalized into the [0, 2 pi) range.
-GEOM_FLOAT_TYPE
-normalize_angle_in_radians (GEOM_FLOAT_TYPE angle);
+Angle
+normalize_angle_in_radians (Angle angle);
 
 // Return true iff theta is between start_angle and start_angle + angle_delta
 // in radians (winding positive angles from +x towards +y).
 bool
 angle_in_span (
-    GEOM_FLOAT_TYPE theta,
-    GEOM_FLOAT_TYPE start_angle,
-    GEOM_FLOAT_TYPE angle_delta );
+    Angle theta,
+    Angle start_angle,
+    Angle angle_delta );
 
 // Return true iff the angular spans A and B defined by Start Angle A/B and
 // Angle Delta A/B overlap.  The angles are normalized before being compared.
@@ -146,12 +162,12 @@ angle_in_span (
 // not NULL, the angular span of the overlap is returned in them.
 bool
 angular_spans_overlap (
-    GEOM_FLOAT_TYPE  start_angle_a,
-    GEOM_FLOAT_TYPE  angle_delta_a,
-    GEOM_FLOAT_TYPE  start_angle_b,
-    GEOM_FLOAT_TYPE  angle_delta_b,
-    GEOM_FLOAT_TYPE *overlap_start_angle,
-    GEOM_FLOAT_TYPE *overlap_angle_delta );
+    Angle  start_angle_a,
+    Angle  angle_delta_a,
+    Angle  start_angle_b,
+    Angle  angle_delta_b,
+    Angle *overlap_start_angle,
+    Angle *overlap_angle_delta );
 
 // Return true iff pt is in rect (with rect regarded as filled).
 bool
