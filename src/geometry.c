@@ -79,6 +79,7 @@ vec_from (Vec va, Vec vb)
   return result;
 }
 
+// FIXME: why am I here at this point?  I should move or vanish
 #include <inttypes.h>
 
 GEOM_FLOAT_TYPE
@@ -96,8 +97,8 @@ vec_proj (Vec va, Vec vb)
   return vec_scale (vb, vec_dot (va, vb) / vec_dot (vb, vb));
 }
 
-GEOM_FLOAT_TYPE
-normalize_angle_in_radians (GEOM_FLOAT_TYPE angle)
+Angle
+normalize_angle_in_radians (Angle angle)
 {
   while ( angle < 0.0 ) {
     angle += 2.0 * M_PI;
@@ -111,9 +112,9 @@ normalize_angle_in_radians (GEOM_FLOAT_TYPE angle)
 
 bool
 angle_in_span (
-    GEOM_FLOAT_TYPE theta,
-    GEOM_FLOAT_TYPE start_angle,
-    GEOM_FLOAT_TYPE angle_delta )
+    Angle theta,
+    Angle start_angle,
+    Angle angle_delta )
 {
   if ( angle_delta > 0.0 ) {
     return angle_delta >= normalize_angle_in_radians (theta - start_angle);
@@ -125,12 +126,12 @@ angle_in_span (
 
 bool
 angular_spans_overlap (
-    GEOM_FLOAT_TYPE  start_angle_a,
-    GEOM_FLOAT_TYPE  angle_delta_a,
-    GEOM_FLOAT_TYPE  start_angle_b,
-    GEOM_FLOAT_TYPE  angle_delta_b,
-    GEOM_FLOAT_TYPE *overlap_start_angle,
-    GEOM_FLOAT_TYPE *overlap_angle_delta )
+    Angle  start_angle_a,
+    Angle  angle_delta_a,
+    Angle  start_angle_b,
+    Angle  angle_delta_b,
+    Angle *overlap_start_angle,
+    Angle *overlap_angle_delta )
 {
   // Start/End Angle A/B
   FT
@@ -196,8 +197,9 @@ point_intersects_rectangle (Point pt, Rectangle const *rect)
   }
   cx /= 4.0;
   cy /= 4.0;
-  
-  FT theta = -ATAN2 (das.y, das.x);   // Angle of X axis with respect to side A
+
+  // Angle of X axis with respect to side A
+  Angle theta = -ATAN2 (das.y, das.x);
  
   FT sin_th, cos_th;
 #ifdef _GNU_SOURCE
@@ -255,6 +257,14 @@ nearest_point_on_line_segment (Point pt, LineSegment const *seg)
     result.y = seg->pa.y;
     return result;
   }
+
+  // FIXME: well this point shows some of the ugliness of supporting
+  // integer coordinates.  ptl might come out pretty tiny, so the round
+  // back to integer coordinates could introduce big error.  So we could not
+  // use Vecs.  Or we could use FVec or something internally.  But how gross.
+  // In trying to manage integer coordinates for clients we introduce a bunch
+  // of complexity for so little gain.  As usual trying to do multiple things
+  // at once is probably just bad.
 
   spa_spb = vec_from (seg->pa, seg->pb);
   spa_pt  = vec_from (seg->pa, pt);
@@ -329,14 +339,14 @@ nearest_point_on_arc (Point pt, Arc const *arc)
   pt.x -= cent.x;
   pt.y -= cent.y;
 
-  FT sa = arc->start_angle;
-  FT ad = arc->angle_delta;
-  FT ea = sa + ad;   // End Angle.   Note: not necessarily in [0, 2 * pi]
+  Angle sa = arc->start_angle;
+  Angle ad = arc->angle_delta;
+  Angle ea = sa + ad;   // End Angle.   Note: not necessarily in [0, 2 * pi]
 
   // Nearest Point on Circle
   Point npoc = vec_scale (pt, rad / vec_mag (pt));
 
-  FT theta_npoc = ATAN2 (npoc.y, npoc.x);
+  Angle theta_npoc = ATAN2 (npoc.y, npoc.x);
 
   Point result;
 
@@ -612,7 +622,7 @@ circle_circle_intersection (
   // (xp, yp) is the center of cb relative to an origin at ca->center
   FT xp = cb->center.x - ca->center.x, yp = cb->center.y - ca->center.y;
 
-  FT theta = ATAN2 (yp, xp);
+  Angle theta = ATAN2 (yp, xp);
   FT sin_th, cos_th;
 #ifdef _GNU_SOURCE
   SINCOS (theta, &sin_th, &cos_th);
@@ -703,7 +713,7 @@ arc_arc_intersection (
     Arc const *ab,
     Point      intersection[2] )
 {
-  FT   // Convenience aliases
+  Angle   // Convenience aliases
     aasa = aa->start_angle,
     aaad = aa->angle_delta,
     absa = ab->start_angle,
