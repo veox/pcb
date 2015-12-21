@@ -1706,9 +1706,6 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
     ia = { { { arc->X, arc->Y }, radius - ato2 }, sa, ad };
   assert (oa.circle.radius > 0);
 
-  // FIXME: We still need to make sure the loader rejects square-end arcs
-  // since we don't currently handle them.
-
   Arc acl = { { { arc->X, arc->Y}, radius }, sa, ad };   // Arc Center Line
   Point aep[2];                                          // Arc End Points
   arc_end_points (&acl, aep);
