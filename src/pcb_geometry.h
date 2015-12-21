@@ -1,6 +1,7 @@
-// This interface adapts the application-neutral geometry routines in
-// geometry.hy to the pcb-specific types, and extends them slightly with
-// additional geometry routines specifice to pcb.
+// This interface adapts the application-neutral geometry routines and types
+// in geometry.h to the pcb-specific types, and extends them slightly with
+// additional geometry routines specifice to pcb.  Clients in pcb should
+// always include this file, rather than including geometry.h directly.
 
 #ifndef PCB_GEOMETRY_H
 #define PCB_GEOMETRY_H
@@ -23,15 +24,32 @@ pcb_abs (Coord arg);
 // We're using the default floating point type (double) for geometry.h,
 // so we don't need to change it or the related floating point functions.
 
-// I'd like ensure that the floating point type used always be wider than
-// the coordinate type, to guarantee that we can go from the latter to the
-// former without loss, but pcb doesn't do this and it would be a significant
-// change to the build requirements.  This would do it:
+// It might be nice to ensure that the floating point type used always be
+// wider than the coordinate type, to guarantee that we can go from the
+// latter to the former without loss, but pcb doesn't do this and it would
+// be a significant change to the build requirements.  This would do it:
 //_Static_assert (
 //    (sizeof (GEOM_DEFAULT_FLOAT_TYPE) > sizeof (Coord)),
 //    "floating point type for geometry.h not wider than Coord type" );
 
+// Currently geometry.h #define's Angle to be GEOM_DEFAULT_FLOAT_TYPE
+// (which is double), and global.h typedefs Angle to double.  We want to
+// be sure the effective meaning is the same to avoid confusion.
+#ifdef __GNUC__
+_Static_assert (
+    __builtin_types_compatible_p (Angle, double),
+    "Angle not type-compatible with double before inclusion of geometry.h");
+#endif
+
 #include "geometry.h"
+
+// See above comment about Angle, GEOM_DEFAULT_FLOAT_TYPE, and global.h.
+#ifdef __GNUC__
+_Static_assert (
+    __builtin_types_compatible_p (GEOM_DEFAULT_FLOAT_TYPE, double),
+    "GEOM_DEFAULT_FLOAT_TYPE not #defined to double after inclusion of"
+    "geometry.h" );
+#endif
 
 // Convert an start_angle/angle_delta pair using pcb conventions to one
 // using normal mathematical conventions (as understood by geometry.h).
