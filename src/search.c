@@ -1156,7 +1156,7 @@ IsPointOnArc (
   Point pt = { X, Y };
 
   // Convert the arc angles to the conventions used in geometry.h
-  double sa, ad;   // Start Angle, Angle Delta
+  Angle sa, ad;   // Start Angle, Angle Delta
   pcb_to_geometry_angle_range (arc->StartAngle, arc->Delta, &sa, &ad);
 
   Arc sarc = { { { arc->X, arc->Y }, arc->Width }, sa, ad };

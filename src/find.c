@@ -1344,9 +1344,9 @@ ArcArcIntersect (ArcType *Arc1, ArcType *Arc2, PointType *pii)
   Coord rad1 = Arc1->Width, rad2 = Arc2->Width;
   
   // Convert the arc angles to the conventions used in geometry.h
-  double a1sa, a1ad;   // Arc1 Start Angle/Angle Delta
+  Angle a1sa, a1ad;   // Arc1 Start Angle/Angle Delta
   pcb_to_geometry_angle_range (Arc1->StartAngle, Arc1->Delta, &a1sa, &a1ad);
-  double a2sa, a2ad;   // Arc1 Start Angle/Angle Delta
+  Angle a2sa, a2ad;   // Arc1 Start Angle/Angle Delta
   pcb_to_geometry_angle_range (Arc2->StartAngle, Arc2->Delta, &a2sa, &a2ad);
 
   // These arcs go down the middle of the fat "arcs" Arc1 and Arc2
@@ -1359,12 +1359,12 @@ ArcArcIntersect (ArcType *Arc1, ArcType *Arc2, PointType *pii)
   // return the details of the intersection in this case, so we can't use it.
   if ( arc_arc_intersection (&a1, &a2, NULL) == INT_MAX ) {
 
-    double osa, oad;   // Overlap Start Angle, Overlap Angle Delta
+    Angle osa, oad;   // Overlap Start Angle, Overlap Angle Delta
     // Angular Spans Overlap
     bool aso = angular_spans_overlap (a1sa, a1ad, a2sa, a2ad, &osa, &oad);
     if ( aso ) {
       if ( pii != NULL ) {
-        double aocoo = osa + (oad / 2.0);   // Angle Of Center Of Overlap
+        Angle aocoo = osa + (oad / 2.0);   // Angle Of Center Of Overlap
         // Point In Intersection As Point (not yet PointType :)
         Point piiap = {
           a1.circle.center.x + a1.circle.radius * cos (aocoo),   
@@ -1694,7 +1694,7 @@ LineArcIntersect (LineType *Line, ArcType *arc, PointType *pii)
     ((LineSegment) { rpol.corner[3], rpol.corner[0] }) };
   
   // Convert the arc angles to the conventions used in geometry.h
-  double sa, ad;   // Start Angle, Angle Delta
+  Angle sa, ad;   // Start Angle, Angle Delta
   pcb_to_geometry_angle_range (arc->StartAngle, arc->Delta, &sa, &ad);
 
   // Inner/Outer Arcs (of ArcType Arc, due to its thickness).  Note that
