@@ -556,20 +556,16 @@ typedef enum
     /* Notification to the GUI that the PCB file has been renamed. */
     void (*notify_filename_changed) (void);
 
-    /* Put an animated marker at X,Y  FIXME: only populated for gtk hid,
-     * should at least make sure warning and not NULL elsewhere */  
+    /* Put an animated marker at X,Y  */
     void (*lead_user_to_location) (Coord X, Coord Y);
     
-    /* Remove the current animated marker FIXME: only populated for gtk hid,
-     * should at least make sure warning and not NULL elsewhere */  
+    /* Remove the current animated marker.  */
     void (*cancel_lead_user) (void);
 
     /* For debugging.  Mark a point with a small circle with fixed size in
      * screen pixels.  A large but limited number of simultaneous marks are
      * supported so if you draw them continually eventually the oldest ones
-     * will dissapear.  FIXME: only populated for gtk hid, should be pretty
-     * easy to add got gdk and should at least make sure warning and not NULL
-     * elsewhere.  */
+     * will dissapear.  */
     void (*add_debug_marker) (Coord X, Coord Y);
   };
 
