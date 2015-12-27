@@ -9,8 +9,8 @@ msgstr ""
 "Project-Id-Version: pcb VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-10-24 21:19+0200\n"
-"PO-Revision-Date: 2015-08-06 12:02+0100\n"
-"Last-Translator: Richard Rasker <rasker@linetec.nl>\n"
+"PO-Revision-Date: 2015-12-27 23:07+0100\n"
+"Last-Translator: Bert Timmerman <bert.timmerman@xs4all.nl>\n"
 "Language-Team: Bert Timmerman <bert.timmerman@xs4all.nl>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
@@ -18,30 +18,19 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: ../data/pcb.appdata.xml.in.h:1
-msgid ""
-"PCB is an interactive printed circuit board editor for Unix, Linux, Windows, "
-"and Mac systems."
+msgid "PCB is an interactive printed circuit board editor for Unix, Linux, Windows, and Mac systems."
 msgstr ""
 
 #: ../data/pcb.appdata.xml.in.h:2
-msgid ""
-"PCB includes a rats nest feature and schematic/netlist import, design rule "
-"checking, and can provide industry standard RS-274X (Gerber), NC drill, and "
-"centroid data (X-Y data) output for use in the board fabrication and "
-"assembly process, as well as photorealistic and design review images."
-msgstr ""
+msgid "PCB includes a rats nest feature and schematic/netlist import, design rule checking, and can provide industry standard RS-274X (Gerber), NC drill, and centroid data (X-Y data) output for use in the board fabrication and assembly process, as well as photorealistic and design review images."
+msgstr "PCB heeft een rat nest mogelijkheid en schema/netlijst import, design rul checking, en kan een industrie standaard RS-274X (Gerber) leveren, NC boren, en centroid data (X-Y data) uitvoer voor het fabriceren van van printplaten en het assemblage proces, en ook foto-realistische en ontwerp controle afbeeldingen."
 
 #: ../data/pcb.appdata.xml.in.h:3
-msgid ""
-"PCB offers high end features such as an autorouter and trace optimizer which "
-"can tremendously reduce layout time."
-msgstr ""
+msgid "PCB offers high end features such as an autorouter and trace optimizer which can tremendously reduce layout time."
+msgstr "PCB biedt een hoogwaardige mogelijkheden zoals een autorouter en een baan optimalisatie welke heel veel layout tijd kan reduceren."
 
 #: ../data/pcb.appdata.xml.in.h:4
-msgid ""
-"For custom requirements, PCB offers a plug-in API for inserting new "
-"functionality and using that functionality from within the GUI as well as in "
-"scripts."
+msgid "For custom requirements, PCB offers a plug-in API for inserting new functionality and using that functionality from within the GUI as well as in scripts."
 msgstr ""
 
 #: ../data/pcb.desktop.in.h:1
@@ -56,23 +45,28 @@ msgstr "PCB Ontwerp"
 msgid "Create and edit printed circuit board designs"
 msgstr "Creer en bewerk gedrukte bedrading ontwerpen"
 
-#: ../data/pcb.xml.in.h:1 ../data/x-pcb-layout.desktop.in.h:1
+#: ../data/pcb.xml.in.h:1
+#: ../data/x-pcb-layout.desktop.in.h:1
 msgid "PCB layout"
 msgstr "PCB-layout"
 
-#: ../data/pcb.xml.in.h:2 ../data/x-pcb-footprint.desktop.in.h:1
+#: ../data/pcb.xml.in.h:2
+#: ../data/x-pcb-footprint.desktop.in.h:1
 msgid "PCB footprint"
 msgstr "PCB-footprint"
 
-#: ../data/pcb.xml.in.h:3 ../data/x-pcb-netlist.desktop.in.h:1
+#: ../data/pcb.xml.in.h:3
+#: ../data/x-pcb-netlist.desktop.in.h:1
 msgid "PCB netlist"
 msgstr "PCB-netlijst"
 
-#: ../data/pcb.xml.in.h:4 ../data/x-gerber.desktop.in.h:1
+#: ../data/pcb.xml.in.h:4
+#: ../data/x-gerber.desktop.in.h:1
 msgid "Gerber file"
 msgstr "Gerber-bestand"
 
-#: ../data/pcb.xml.in.h:5 ../data/x-excellon.desktop.in.h:1
+#: ../data/pcb.xml.in.h:5
+#: ../data/x-excellon.desktop.in.h:1
 msgid "Excellon drill file"
 msgstr "Excellon boorbestand"
 
@@ -101,13 +95,21 @@ msgstr ""
 "Je moet zichtbaarheid aanzetten voordat\n"
 "je vias kan plaatsen\n"
 
-#: ../src/action.c:1392 ../src/change.c:2364
+#: ../src/action.c:1392
+#: ../src/change.c:2364
 msgid "Enter text:"
 msgstr "Voer tekst in:"
 
-#: ../src/action.c:1470 ../src/action.c:1613 ../src/action.c:1672
-#: ../src/action.c:1726 ../src/action.c:4098 ../src/action.c:6835
-#: ../src/move.c:477 ../src/move.c:568 ../src/move.c:666 ../src/move.c:740
+#: ../src/action.c:1470
+#: ../src/action.c:1613
+#: ../src/action.c:1672
+#: ../src/action.c:1726
+#: ../src/action.c:4098
+#: ../src/action.c:6835
+#: ../src/move.c:477
+#: ../src/move.c:568
+#: ../src/move.c:666
+#: ../src/move.c:740
 #: ../src/rotate.c:422
 msgid "Sorry, the object is locked\n"
 msgstr "Sorry, het object is vergrendeld\n"
@@ -119,24 +121,23 @@ msgstr ""
 
 #: ../src/action.c:1781
 msgid "Save or restore the undo serial number."
-msgstr ""
+msgstr "Bewaar of herstel het ongedaan serie nummer."
 
 #. --------------------------------------------------------------------------
 #: ../src/action.c:1844
 msgid "DRC()"
-msgstr ""
+msgstr "DRC()"
 
 #: ../src/action.c:1846
 msgid "Invoke the DRC check."
-msgstr ""
+msgstr "Roep de DRC controle aan."
 
 #: ../src/action.c:1862
 msgid ""
 "%m+Rules are minspace %$mS, minoverlap %$mS minwidth %$mS, minsilk %$mS\n"
 "min drill %$mS, min annular ring %$mS\n"
 msgstr ""
-"%m+Regels zijn min ruimte %$mS, min overlappend %$mS min breedte %$mS, min "
-"opdruk %$mS\n"
+"%m+Regels zijn min ruimte %$mS, min overlappend %$mS min breedte %$mS, min opdruk %$mS\n"
 "min boordiam %$mS, min ring %$mS\n"
 
 #: ../src/action.c:1874
@@ -161,7 +162,7 @@ msgstr "Bibliotheek"
 
 #: ../src/action.c:1888
 msgid "Display the entire contents of the libraries."
-msgstr ""
+msgstr "Toon de gehele inhoud van de bibliotheken."
 
 #. --------------------------------------------------------------------------
 #: ../src/action.c:1939
@@ -176,11 +177,11 @@ msgstr "\tVerplaats elementen naar de andere zijde van het bord.\n"
 #. --------------------------------------------------------------------------
 #: ../src/action.c:1993
 msgid "Message(message)"
-msgstr ""
+msgstr "Bericht(bericht)"
 
 #: ../src/action.c:1995
 msgid "Writes a message to the log window."
-msgstr ""
+msgstr "Schrijf een bericht naar het log venster."
 
 #: ../src/action.c:2030
 msgid ""
@@ -194,9 +195,7 @@ msgid ""
 msgstr ""
 
 #: ../src/action.c:2151
-msgid ""
-"SetValue(Grid|Line|LineSize|Text|TextScale|ViaDrillingHole|Via|ViaSize, "
-"delta)"
+msgid "SetValue(Grid|Line|LineSize|Text|TextScale|ViaDrillingHole|Via|ViaSize, delta)"
 msgstr ""
 
 #: ../src/action.c:2155
@@ -206,7 +205,7 @@ msgstr ""
 #. ---------------------------------------------------------------------------
 #: ../src/action.c:2261
 msgid "Quit()"
-msgstr ""
+msgstr "Stop()"
 
 #: ../src/action.c:2263
 msgid "Quits the application after confirming."
@@ -220,7 +219,8 @@ msgstr ""
 msgid "Searches connections of the object at the cursor position."
 msgstr ""
 
-#: ../src/action.c:2327 ../src/report.c:700
+#: ../src/action.c:2327
+#: ../src/report.c:700
 msgid "Click on a connection"
 msgstr "Klik op een verbinding"
 
@@ -249,7 +249,8 @@ msgstr ""
 msgid "Several display-related actions."
 msgstr ""
 
-#: ../src/action.c:2857 ../src/action.c:8040
+#: ../src/action.c:2857
+#: ../src/action.c:8040
 msgid "Click on an element"
 msgstr "Klik op een element"
 
@@ -310,7 +311,8 @@ msgstr ""
 "Dit bestand kan gebruikt worden om de verandering\n"
 "in het schema door te voeren.\n"
 
-#: ../src/action.c:3334 ../src/action.c:6156
+#: ../src/action.c:3334
+#: ../src/action.c:6156
 msgid "File exists!  Ok to overwrite?"
 msgstr "Bestand bestaat! Ok om te overschrijven?"
 
@@ -350,7 +352,7 @@ msgstr ""
 
 #: ../src/action.c:3838
 msgid "Delete stuff."
-msgstr ""
+msgstr "Verwijder stuff."
 
 #: ../src/action.c:3886
 msgid "DeleteRats(AllRats|Selected|SelectedRats)"
@@ -422,11 +424,21 @@ msgstr ""
 msgid "Changes the drilling hole size of objects."
 msgstr "\tVerandert de gat-vlag van objecten.\n"
 
-#: ../src/action.c:4186 ../src/action.c:4256 ../src/action.c:4631
-#: ../src/action.c:4719 ../src/action.c:4773 ../src/action.c:4849
-#: ../src/action.c:4910 ../src/action.c:4968 ../src/action.c:5027
-#: ../src/action.c:5085 ../src/action.c:5146 ../src/action.c:5209
-#: ../src/action.c:5271 ../src/action.c:5320 ../src/action.c:6605
+#: ../src/action.c:4186
+#: ../src/action.c:4256
+#: ../src/action.c:4631
+#: ../src/action.c:4719
+#: ../src/action.c:4773
+#: ../src/action.c:4849
+#: ../src/action.c:4910
+#: ../src/action.c:4968
+#: ../src/action.c:5027
+#: ../src/action.c:5085
+#: ../src/action.c:5146
+#: ../src/action.c:5209
+#: ../src/action.c:5271
+#: ../src/action.c:5320
+#: ../src/action.c:6605
 #: ../src/action.c:8242
 msgid "Select an Object"
 msgstr "Selecteer een Object"
@@ -483,7 +495,8 @@ msgstr ""
 msgid "Sets the name of objects."
 msgstr "\tVerander de vrijloop van objecten.\n"
 
-#: ../src/action.c:4669 ../src/action.c:5968
+#: ../src/action.c:4669
+#: ../src/action.c:5968
 msgid "Enter the layout name:"
 msgstr "Voer de naam van de layout in:"
 
@@ -613,7 +626,8 @@ msgstr ""
 msgid "Toggles or sets the selection."
 msgstr ""
 
-#: ../src/action.c:5431 ../src/action.c:5627
+#: ../src/action.c:5431
+#: ../src/action.c:5627
 msgid "Enter pattern:"
 msgstr "Voer het patroon in:"
 
@@ -675,7 +689,7 @@ msgstr "OK om wijzigingen door te voeren ?"
 #. ---------------------------------------------------------------------------
 #: ../src/action.c:5948
 msgid "New([name])"
-msgstr ""
+msgstr "Nieuw([naam])"
 
 #: ../src/action.c:5950
 #, fuzzy
@@ -892,9 +906,7 @@ msgstr "Kan niet afsplitsen!"
 #: ../src/action.c:7505
 #, c-format
 msgid "%s():  Unable to determine temp directory name from the temp file\n"
-msgstr ""
-"%s():  Onmogelijk om de naam van de tijdelijke werkmap vast te stellen aan "
-"de hand van het tijdelijke bestand\n"
+msgstr "%s():  Onmogelijk om de naam van de tijdelijke werkmap vast te stellen aan de hand van het tijdelijke bestand\n"
 
 #: ../src/action.c:7528
 #, c-format
@@ -926,7 +938,8 @@ msgstr "Klik op een locatie"
 msgid "Bad syntax for Import(setnewpoint)"
 msgstr "Foute syntaxis voor Import(setnewpoint)"
 
-#: ../src/action.c:7818 ../src/action.c:7881
+#: ../src/action.c:7818
+#: ../src/action.c:7881
 msgid "Could not create temp file"
 msgstr "Kan geen tijdelijk bestand creeren"
 
@@ -960,7 +973,8 @@ msgstr ""
 msgid "No layer named %s\n"
 msgstr "Geen laag met naam %s\n"
 
-#: ../src/action.c:8012 ../src/action.c:8013
+#: ../src/action.c:8012
+#: ../src/action.c:8013
 #, c-format
 msgid "Layer %s Attributes"
 msgstr ""
@@ -973,7 +987,8 @@ msgstr "Te veel elementen geselecteerd\n"
 msgid "No element found there\n"
 msgstr "Geen element gevonden op die plaats\n"
 
-#: ../src/action.c:8055 ../src/action.c:8056
+#: ../src/action.c:8055
+#: ../src/action.c:8056
 #, fuzzy, c-format
 msgid "Element %s Attributes"
 msgstr "Element-bestandsmappen"
@@ -990,7 +1005,9 @@ msgstr "Klik op Object of Draaipunt"
 msgid "Select item to use attributes from"
 msgstr "Selecteer een item om attributen van te gebruiken"
 
-#: ../src/autoplace.c:796 ../src/rats.c:739 ../src/rats.c:831
+#: ../src/autoplace.c:796
+#: ../src/rats.c:739
+#: ../src/rats.c:831
 msgid "Can't add rat lines because no netlist is loaded.\n"
 msgstr "Kan geen ratlijnen toevogen omdat er geen netlijst geladen is.\n"
 
@@ -1080,15 +1097,11 @@ msgstr "je kunt geen buffer spiegelen die tekst bevat!\n"
 
 #: ../src/change.c:772
 msgid ""
-"To change the clearance of objects in a polygon, change the objects, not the "
-"polygon.\n"
-"Hint: To set a minimum clearance for a group of objects, select them all "
-"then :MinClearGap(Selected,=10,mil)"
+"To change the clearance of objects in a polygon, change the objects, not the polygon.\n"
+"Hint: To set a minimum clearance for a group of objects, select them all then :MinClearGap(Selected,=10,mil)"
 msgstr ""
-"Om de vrijloop van een object in een polygoon te wijzigen, wijzig het "
-"object, niet de polygoon.\n"
-"Hint: Om een minimum vrijloop in te stellen voor een groep van objecten, "
-"selecteer deze allemaal, gevolgd door :MinClearGap(Selected,=10,mil)"
+"Om de vrijloop van een object in een polygoon te wijzigen, wijzig het object, niet de polygoon.\n"
+"Hint: Om een minimum vrijloop in te stellen voor een groep van objecten, selecteer deze allemaal, gevolgd door :MinClearGap(Selected,=10,mil)"
 
 #: ../src/change.c:1075
 #, c-format
@@ -1118,9 +1131,7 @@ msgid "Elementname:"
 msgstr "Elementnaam:"
 
 #: ../src/create.c:266
-msgid ""
-"%m+Dropping via at %$mD because it's hole would overlap with the via at %"
-"$mD\n"
+msgid "%m+Dropping via at %$mD because it's hole would overlap with the via at %$mD\n"
 msgstr "%m+Laat via op %$mD vervallen omdat het gat de via op %$mD bedekt\n"
 
 #: ../src/create.c:287
@@ -1129,38 +1140,23 @@ msgstr "%m+Opgezochte via boorgat naar %$mS vanaf %$mS uit de vendor tabel\n"
 
 #: ../src/create.c:305
 msgid "%m+Increased via thickness to %$mS to allow enough copper at %$mD.\n"
-msgstr ""
-"%m+Vergrootte de viadikte naar %$mS om genoeg koper te hebben op %$mD.\n"
+msgstr "%m+Vergrootte de viadikte naar %$mS om genoeg koper te hebben op %$mD.\n"
 
 #: ../src/create.c:829
-msgid ""
-"%m+Did not map pin #%s (%s) drill hole because %$mS is below the minimum "
-"allowed size\n"
-msgstr ""
-"%m+Heb boorgat van pen #%s (%s) niet vastgelegd omdat %$mS beneden de "
-"minimaal toegelaten afmeting is\n"
+msgid "%m+Did not map pin #%s (%s) drill hole because %$mS is below the minimum allowed size\n"
+msgstr "%m+Heb boorgat van pen #%s (%s) niet vastgelegd omdat %$mS beneden de minimaal toegelaten afmeting is\n"
 
 #: ../src/create.c:835
-msgid ""
-"%m+Did not map pin #%s (%s) drill hole because %$mS is above the maximum "
-"allowed size\n"
-msgstr ""
-"%m+Heb boorgat van pen #%s (%s) niet vastgelegd omdat %$mS boven de maximaal "
-"toegelaten afmeting is\n"
+msgid "%m+Did not map pin #%s (%s) drill hole because %$mS is above the maximum allowed size\n"
+msgstr "%m+Heb boorgat van pen #%s (%s) niet vastgelegd omdat %$mS boven de maximaal toegelaten afmeting is\n"
 
 #: ../src/create.c:842
-msgid ""
-"%m+Did not map pin #%s (%s) drill hole because %$mS does not leave enough "
-"copper\n"
-msgstr ""
-"%m+Heb boorgat van pen #%s (%s) niet vastgelegd omdat %$mS niet genoeg koper "
-"overlaat\n"
+msgid "%m+Did not map pin #%s (%s) drill hole because %$mS does not leave enough copper\n"
+msgstr "%m+Heb boorgat van pen #%s (%s) niet vastgelegd omdat %$mS niet genoeg koper overlaat\n"
 
 #: ../src/create.c:854
 msgid "%m+Mapped pin drill hole to %$mS from %$mS per vendor table\n"
-msgstr ""
-"%m+Boorgat van pen naar %$mS vastgelegd vanaf %$mS volgens de tabel van de "
-"leverancier\n"
+msgstr "%m+Boorgat van pen naar %$mS vastgelegd vanaf %$mS volgens de tabel van de leverancier\n"
 
 #: ../src/create.c:962
 #, c-format
@@ -1183,7 +1179,8 @@ msgstr ""
 "WAARSCHUWING: Een plugin gebruikt de vervallen API RestoreCrosshair().\n"
 "         Deze API kan verwijderd worden in een toekomstige versie van PCB.\n"
 
-#: ../src/error.c:110 ../src/error.c:114
+#: ../src/error.c:110
+#: ../src/error.c:114
 #, c-format
 msgid ""
 "Can't open file\n"
@@ -1194,7 +1191,8 @@ msgstr ""
 "   '%s'\n"
 "fopen() resulteerde in: '%s'\n"
 
-#: ../src/error.c:130 ../src/error.c:134
+#: ../src/error.c:130
+#: ../src/error.c:134
 #, c-format
 msgid ""
 "Can't execute command\n"
@@ -1205,7 +1203,8 @@ msgstr ""
 "   '%s'\n"
 "popen() resulteerde in: '%s'\n"
 
-#: ../src/error.c:150 ../src/error.c:154
+#: ../src/error.c:150
+#: ../src/error.c:154
 #, c-format
 msgid ""
 "Can't scan directory\n"
@@ -1216,7 +1215,8 @@ msgstr ""
 "   '%s'\n"
 "opendir() resulteerde in: '%s'\n"
 
-#: ../src/error.c:170 ../src/error.c:174
+#: ../src/error.c:170
+#: ../src/error.c:174
 #, c-format
 msgid ""
 "Can't change working directory to\n"
@@ -1245,8 +1245,7 @@ msgstr "Kies een bestand om alle verbindingsgegevens op te slaan."
 #: ../src/file.c:433
 #, c-format
 msgid "File '%s' has no font information, using default font\n"
-msgstr ""
-"Bestand '%s' heeft geen lettertype-informatie, gebruik standaardlettertype\n"
+msgstr "Bestand '%s' heeft geen lettertype-informatie, gebruik standaardlettertype\n"
 
 #: ../src/file.c:993
 #, c-format
@@ -1255,14 +1254,12 @@ msgstr "Probeer jouw layout op te slaan in '%s'\n"
 
 # FIXME: is this an Error:  or a Warning:   ?
 #: ../src/file.c:1151
-msgid ""
-"LoadNewlibFootprintsFromDir: Could not determine initial working directory\n"
+msgid "LoadNewlibFootprintsFromDir: Could not determine initial working directory\n"
 msgstr "LoadNewlibFootprintsFromDir: Kon geen initiële werkmap vaststellen\n"
 
 # FIXME: is this an Error:  or a Warning:   ?
 #: ../src/file.c:1169
-msgid ""
-"LoadNewlibFootprintsFromDir: Could not determine new working directory\n"
+msgid "LoadNewlibFootprintsFromDir: Could not determine new working directory\n"
 msgstr "LoadNewlibFootprintsFromDir: Kon geen nieuwe werkmap vaststellen\n"
 
 # FIXME: is this an Error:  or a Warning:   ?
@@ -1320,7 +1317,9 @@ msgstr "Druk op Volgende om DRC-controle voort te zetten"
 msgid "Next"
 msgstr "Volgende"
 
-#: ../src/find.c:231 ../src/gpcb-menu.res:519 ../src/pcb-menu.res:183
+#: ../src/find.c:231
+#: ../src/gpcb-menu.res:519
+#: ../src/pcb-menu.res:183
 msgid "Cancel"
 msgstr "Afbreken"
 
@@ -1365,13 +1364,13 @@ msgstr ""
 msgid "Copper areas too close"
 msgstr "Kopergebieden te dicht bijeen"
 
-#: ../src/find.c:3476 ../src/find.c:3596
+#: ../src/find.c:3476
+#: ../src/find.c:3596
 msgid ""
 "Circuits that are too close may bridge during imaging, etching,\n"
 "plating, or soldering processes resulting in a direct short."
 msgstr ""
-"Circuits die te dicht naast elkaar liggen kunnen bruggen vormen tijdens "
-"belichten, etsen,\n"
+"Circuits die te dicht naast elkaar liggen kunnen bruggen vormen tijdens belichten, etsen,\n"
 "metalliseren of solderen, resulterend in kortsluiting."
 
 #: ../src/find.c:3541
@@ -1398,7 +1397,8 @@ msgstr "Via met onvoldoende vrijloop binnen polygoon\n"
 msgid "Line width is too thin"
 msgstr "Lijn is te dun"
 
-#: ../src/find.c:3722 ../src/find.c:3766
+#: ../src/find.c:3722
+#: ../src/find.c:3766
 msgid ""
 "Process specifications dictate a minimum feature-width\n"
 "that can reliably be reproduced"
@@ -1416,7 +1416,8 @@ msgstr "Boog is te dun"
 msgid "Pin annular ring too small"
 msgstr "Penring is te smal"
 
-#: ../src/find.c:3811 ../src/find.c:3931
+#: ../src/find.c:3811
+#: ../src/find.c:3931
 msgid ""
 "Annular rings that are too small may erode during etching,\n"
 "resulting in a broken connection"
@@ -1428,7 +1429,8 @@ msgstr ""
 msgid "Pin drill size is too small"
 msgstr "Pen boordiameter is te smal"
 
-#: ../src/find.c:3843 ../src/find.c:3963
+#: ../src/find.c:3843
+#: ../src/find.c:3963
 msgid "Process rules dictate the minimum drill size which can be used"
 msgstr "Procesregels dicteren een minimum boordiameter die gebruikt kan worden"
 
@@ -1460,7 +1462,8 @@ msgstr "Via-boordiameter is te klein"
 msgid "Silk line is too thin"
 msgstr "Opdruklijn is te dun"
 
-#: ../src/find.c:4006 ../src/find.c:4068
+#: ../src/find.c:4006
+#: ../src/find.c:4068
 msgid ""
 "Process specifications dictate a minimum silkscreen\n"
 "feature-width that can reliably be reproduced"
@@ -1489,19 +1492,22 @@ msgstr "Interne fout in BuildObjectList: onbekend objecttype %i\n"
 
 #: ../src/gpcb-menu.res:56
 msgid "File"
-msgstr ""
+msgstr "Bestand"
 
-#: ../src/gpcb-menu.res:57 ../src/hid/gtk/gtkhid-main.c:1015
+#: ../src/gpcb-menu.res:57
+#: ../src/hid/gtk/gtkhid-main.c:1015
 msgid "New"
-msgstr ""
+msgstr "Nieuw"
 
-#: ../src/gpcb-menu.res:57 ../src/pcb-menu.res:51
+#: ../src/gpcb-menu.res:57
+#: ../src/pcb-menu.res:51
 msgid "Ctrl-N"
-msgstr ""
+msgstr "Ctrl-N"
 
-#: ../src/gpcb-menu.res:57 ../src/pcb-menu.res:51
+#: ../src/gpcb-menu.res:57
+#: ../src/pcb-menu.res:51
 msgid "Ctrl<Key>n"
-msgstr ""
+msgstr "Ctrl<Key>n"
 
 #: ../src/gpcb-menu.res:58
 msgid "Open..."
@@ -1512,7 +1518,8 @@ msgstr ""
 msgid "Load a layout from a file"
 msgstr "Laad layout-bestand"
 
-#: ../src/gpcb-menu.res:60 ../src/hid/gtk/gui-config.c:2041
+#: ../src/gpcb-menu.res:60
+#: ../src/hid/gtk/gui-config.c:2041
 msgid "Save"
 msgstr "Opslaan"
 
@@ -1521,13 +1528,15 @@ msgstr "Opslaan"
 msgid "Saves current layout"
 msgstr "Sla layout op als "
 
-#: ../src/gpcb-menu.res:60 ../src/pcb-menu.res:33
+#: ../src/gpcb-menu.res:60
+#: ../src/pcb-menu.res:33
 msgid "Ctrl-S"
-msgstr ""
+msgstr "Ctrl-S"
 
-#: ../src/gpcb-menu.res:60 ../src/pcb-menu.res:33
+#: ../src/gpcb-menu.res:60
+#: ../src/pcb-menu.res:33
 msgid "Ctrl<Key>s"
-msgstr ""
+msgstr "Ctrl<Key>s"
 
 #: ../src/gpcb-menu.res:61
 msgid "Save As..."
@@ -1537,15 +1546,18 @@ msgstr ""
 msgid "Saves current layout into a new file"
 msgstr ""
 
-#: ../src/gpcb-menu.res:61 ../src/pcb-menu.res:34
+#: ../src/gpcb-menu.res:61
+#: ../src/pcb-menu.res:34
 msgid "Shift Ctrl-S"
-msgstr ""
+msgstr "Shift Ctrl-S"
 
-#: ../src/gpcb-menu.res:61 ../src/pcb-menu.res:34
+#: ../src/gpcb-menu.res:61
+#: ../src/pcb-menu.res:34
 msgid "Shift Ctrl<Key>s"
-msgstr ""
+msgstr "Shift Ctrl<Key>s"
 
-#: ../src/gpcb-menu.res:62 ../src/hid/gtk/gtkhid-main.c:1014
+#: ../src/gpcb-menu.res:62
+#: ../src/hid/gtk/gtkhid-main.c:1014
 #: ../src/pcb-menu.res:35
 msgid "Revert"
 msgstr ""
@@ -1554,13 +1566,15 @@ msgstr ""
 msgid "Revert to the layout stored on disk"
 msgstr ""
 
-#: ../src/gpcb-menu.res:64 ../src/pcb-menu.res:36
+#: ../src/gpcb-menu.res:64
+#: ../src/pcb-menu.res:36
 #, fuzzy
 msgid "Import Schematics"
 msgstr "Laad schema's"
 
 #. in case we have a dialog for loading a footprint file
-#: ../src/gpcb-menu.res:65 ../src/hid/gtk/gtkhid-main.c:1260
+#: ../src/gpcb-menu.res:65
+#: ../src/hid/gtk/gtkhid-main.c:1260
 #: ../src/hid/gtk/gui-dialog.c:292
 msgid "Load element to buffer"
 msgstr "Laad element in buffer"
@@ -1575,7 +1589,8 @@ msgstr "Laad layout-bestand naar buffer"
 msgid "Load netlist"
 msgstr "Laad netlijstbestand"
 
-#: ../src/gpcb-menu.res:68 ../src/pcb-menu.res:41
+#: ../src/gpcb-menu.res:68
+#: ../src/pcb-menu.res:41
 #, fuzzy
 msgid "Load vendor resource file"
 msgstr "Laad leverancier-bronbestand..."
@@ -1585,25 +1600,29 @@ msgstr "Laad leverancier-bronbestand..."
 msgid "Save connection data of"
 msgstr "Sla verbindingsgegevens op als ..."
 
-#: ../src/gpcb-menu.res:71 ../src/pcb-menu.res:47
+#: ../src/gpcb-menu.res:71
+#: ../src/pcb-menu.res:47
 #, fuzzy
 msgid " a single element"
 msgstr "Sla element op als"
 
-#: ../src/gpcb-menu.res:72 ../src/pcb-menu.res:48
+#: ../src/gpcb-menu.res:72
+#: ../src/pcb-menu.res:48
 #, fuzzy
 msgid " all elements"
 msgstr "Sla element op als"
 
-#: ../src/gpcb-menu.res:73 ../src/pcb-menu.res:49
+#: ../src/gpcb-menu.res:73
+#: ../src/pcb-menu.res:49
 msgid " unused pins"
 msgstr ""
 
 #: ../src/gpcb-menu.res:75
 msgid "Export..."
-msgstr ""
+msgstr "Exporteer..."
 
-#: ../src/gpcb-menu.res:77 ../src/pcb-menu.res:44
+#: ../src/gpcb-menu.res:77
+#: ../src/pcb-menu.res:44
 #, fuzzy
 msgid "Calibrate Printer..."
 msgstr "Kalibreer de printer."
@@ -1621,118 +1640,140 @@ msgstr "PCB-instellingen"
 msgid "Quit"
 msgstr ""
 
-#: ../src/gpcb-menu.res:82 ../src/pcb-menu.res:53
+#: ../src/gpcb-menu.res:82
+#: ../src/pcb-menu.res:53
 msgid "Ctrl-Q"
-msgstr ""
+msgstr "Ctrl-Q"
 
-#: ../src/gpcb-menu.res:82 ../src/pcb-menu.res:53
+#: ../src/gpcb-menu.res:82
+#: ../src/pcb-menu.res:53
 msgid "Ctrl<Key>q"
-msgstr ""
+msgstr "Ctrl<Key>q"
 
 #: ../src/gpcb-menu.res:88
 msgid "Edit"
-msgstr ""
+msgstr "Bewerk"
 
-#: ../src/gpcb-menu.res:89 ../src/pcb-menu.res:418
+#: ../src/gpcb-menu.res:89
+#: ../src/pcb-menu.res:418
 msgid "Undo"
 msgstr ""
 
-#: ../src/gpcb-menu.res:89 ../src/pcb-menu.res:134
+#: ../src/gpcb-menu.res:89
+#: ../src/pcb-menu.res:134
 msgid "U"
-msgstr ""
+msgstr "U"
 
-#: ../src/gpcb-menu.res:89 ../src/pcb-menu.res:134
+#: ../src/gpcb-menu.res:89
+#: ../src/pcb-menu.res:134
 msgid "<Key>u"
-msgstr ""
+msgstr "<Key>u"
 
 #: ../src/gpcb-menu.res:90
 msgid "Redo"
 msgstr ""
 
-#: ../src/gpcb-menu.res:90 ../src/pcb-menu.res:135
+#: ../src/gpcb-menu.res:90
+#: ../src/pcb-menu.res:135
 msgid "Shift-R"
-msgstr ""
+msgstr "Shift-R"
 
-#: ../src/gpcb-menu.res:90 ../src/pcb-menu.res:135
+#: ../src/gpcb-menu.res:90
+#: ../src/pcb-menu.res:135
 msgid "Shift<Key>r"
-msgstr ""
+msgstr "Shift<Key>r"
 
-#: ../src/gpcb-menu.res:91 ../src/pcb-menu.res:136
+#: ../src/gpcb-menu.res:91
+#: ../src/pcb-menu.res:136
 msgid "Clear undo-buffer"
 msgstr ""
 
-#: ../src/gpcb-menu.res:91 ../src/pcb-menu.res:136
+#: ../src/gpcb-menu.res:91
+#: ../src/pcb-menu.res:136
 msgid "Shift-Ctrl-U"
-msgstr ""
+msgstr "Shift-Ctrl-U"
 
-#: ../src/gpcb-menu.res:91 ../src/pcb-menu.res:136
+#: ../src/gpcb-menu.res:91
+#: ../src/pcb-menu.res:136
 msgid "Shift Ctrl<Key>u"
-msgstr ""
+msgstr "Shift Ctrl<Key>u"
 
 #: ../src/gpcb-menu.res:296
 #, fuzzy
 msgid "Cut to buffer"
 msgstr "Laad element in buffer"
 
-#: ../src/gpcb-menu.res:95 ../src/pcb-menu.res:140
+#: ../src/gpcb-menu.res:95
+#: ../src/pcb-menu.res:140
 msgid "Ctrl-X"
-msgstr ""
+msgstr "Ctrl-X"
 
-#: ../src/gpcb-menu.res:95 ../src/pcb-menu.res:140
+#: ../src/gpcb-menu.res:95
+#: ../src/pcb-menu.res:140
 msgid "Ctrl<Key>x"
-msgstr ""
+msgstr "Ctrl<Key>x"
 
 #: ../src/gpcb-menu.res:96
 #, fuzzy
 msgid "Copy to buffer"
 msgstr "Laad element in buffer"
 
-#: ../src/gpcb-menu.res:98 ../src/pcb-menu.res:143
+#: ../src/gpcb-menu.res:98
+#: ../src/pcb-menu.res:143
 msgid "Ctrl-C"
-msgstr ""
+msgstr "Ctrl-C"
 
-#: ../src/gpcb-menu.res:98 ../src/pcb-menu.res:143
+#: ../src/gpcb-menu.res:98
+#: ../src/pcb-menu.res:143
 msgid "Ctrl<Key>c"
-msgstr ""
+msgstr "Ctrl<Key>c"
 
 #: ../src/gpcb-menu.res:298
 #, fuzzy
 msgid "Paste buffer"
 msgstr "Sla plakbuffer op als ..."
 
-#: ../src/gpcb-menu.res:99 ../src/pcb-menu.res:144
+#: ../src/gpcb-menu.res:99
+#: ../src/pcb-menu.res:144
 msgid "Ctrl-V"
-msgstr ""
+msgstr "Ctrl-V"
 
-#: ../src/gpcb-menu.res:99 ../src/pcb-menu.res:144
+#: ../src/gpcb-menu.res:99
+#: ../src/pcb-menu.res:144
 msgid "Ctrl<Key>v"
-msgstr ""
+msgstr "Ctrl<Key>v"
 
-#: ../src/gpcb-menu.res:240 ../src/pcb-menu.res:146
+#: ../src/gpcb-menu.res:240
+#: ../src/pcb-menu.res:146
 #, fuzzy
 msgid "Unselect all"
 msgstr "Deselecteer"
 
-#: ../src/gpcb-menu.res:101 ../src/pcb-menu.res:146
+#: ../src/gpcb-menu.res:101
+#: ../src/pcb-menu.res:146
 msgid "Shift-Alt-A"
-msgstr ""
+msgstr "Shift-Alt-A"
 
-#: ../src/gpcb-menu.res:101 ../src/pcb-menu.res:146
+#: ../src/gpcb-menu.res:101
+#: ../src/pcb-menu.res:146
 msgid "Shift Alt<Key>a"
-msgstr ""
+msgstr "Shift Alt<Key>a"
 
-#: ../src/gpcb-menu.res:236 ../src/pcb-menu.res:147
+#: ../src/gpcb-menu.res:236
+#: ../src/pcb-menu.res:147
 #, fuzzy
 msgid "Select all visible"
 msgstr "Selecteer een Object"
 
-#: ../src/gpcb-menu.res:102 ../src/pcb-menu.res:147
+#: ../src/gpcb-menu.res:102
+#: ../src/pcb-menu.res:147
 msgid "Alt-A"
-msgstr ""
+msgstr "Alt-A"
 
-#: ../src/gpcb-menu.res:102 ../src/pcb-menu.res:147
+#: ../src/gpcb-menu.res:102
+#: ../src/pcb-menu.res:147
 msgid "Alt<Key>a"
-msgstr ""
+msgstr "Alt<Key>a"
 
 #: ../src/gpcb-menu.res:104
 msgid "Edit name of"
@@ -1743,13 +1784,15 @@ msgstr ""
 msgid "text on layout"
 msgstr "Kan geen lege laag exporteren"
 
-#: ../src/gpcb-menu.res:105 ../src/pcb-menu.res:150
+#: ../src/gpcb-menu.res:105
+#: ../src/pcb-menu.res:150
 msgid "N"
-msgstr ""
+msgstr "N"
 
-#: ../src/gpcb-menu.res:105 ../src/pcb-menu.res:150
+#: ../src/gpcb-menu.res:105
+#: ../src/pcb-menu.res:150
 msgid "<Key>n"
-msgstr ""
+msgstr "<Key>n"
 
 #: ../src/gpcb-menu.res:106
 #, fuzzy
@@ -1758,7 +1801,7 @@ msgstr "PCB-layout"
 
 #: ../src/gpcb-menu.res:107
 msgid "active layer"
-msgstr ""
+msgstr "aktieve laag"
 
 #: ../src/gpcb-menu.res:109
 msgid "Edit attributes of"
@@ -1771,7 +1814,7 @@ msgstr "PCB-layout"
 
 #: ../src/gpcb-menu.res:111
 msgid "CurrentLayer"
-msgstr ""
+msgstr "HuidigeLaag"
 
 #: ../src/gpcb-menu.res:112
 #, fuzzy
@@ -1779,14 +1822,16 @@ msgid "Element"
 msgstr "Elementnaam:"
 
 #. Create edit button
-#: ../src/gpcb-menu.res:115 ../src/hid/gtk/ghid-route-style-selector.c:417
+#: ../src/gpcb-menu.res:115
+#: ../src/hid/gtk/ghid-route-style-selector.c:417
 #: ../src/pcb-menu.res:159
 msgid "Route Styles"
 msgstr "Routestijlen"
 
-#: ../src/gpcb-menu.res:117 ../src/pcb-menu.res:162
+#: ../src/gpcb-menu.res:117
+#: ../src/pcb-menu.res:162
 msgid "Edit..."
-msgstr ""
+msgstr "Bewerk..."
 
 #: ../src/gpcb-menu.res:124
 msgid "View"
@@ -1798,102 +1843,125 @@ msgstr ""
 
 #: ../src/gpcb-menu.res:126
 msgid "Grid units"
-msgstr ""
+msgstr "Raster eenheden"
 
-#: ../src/gpcb-menu.res:127 ../src/pcb-menu.res:94
+#: ../src/gpcb-menu.res:127
+#: ../src/pcb-menu.res:94
 msgid "mil"
-msgstr ""
+msgstr "mil"
 
-#: ../src/gpcb-menu.res:128 ../src/pcb-menu.res:95
+#: ../src/gpcb-menu.res:128
+#: ../src/pcb-menu.res:95
 msgid "mm"
-msgstr ""
+msgstr "mm"
 
 #: ../src/gpcb-menu.res:130
 #, fuzzy
 msgid "Grid size"
 msgstr "Via ringmaat:"
 
-#: ../src/gpcb-menu.res:131 ../src/pcb-menu.res:98
+#: ../src/gpcb-menu.res:131
+#: ../src/pcb-menu.res:98
 msgid "No Grid"
-msgstr ""
+msgstr "Geen Raster"
 
-#: ../src/gpcb-menu.res:133 ../src/pcb-menu.res:100
+#: ../src/gpcb-menu.res:133
+#: ../src/pcb-menu.res:100
 msgid "0.1 mil"
-msgstr ""
+msgstr "0.1 mil"
 
-#: ../src/gpcb-menu.res:134 ../src/pcb-menu.res:101
+#: ../src/gpcb-menu.res:134
+#: ../src/pcb-menu.res:101
 msgid "1 mil"
-msgstr ""
+msgstr "1 mil"
 
-#: ../src/gpcb-menu.res:135 ../src/pcb-menu.res:102
+#: ../src/gpcb-menu.res:135
+#: ../src/pcb-menu.res:102
 msgid "5 mil"
-msgstr ""
+msgstr "5 mil"
 
-#: ../src/gpcb-menu.res:136 ../src/pcb-menu.res:103
+#: ../src/gpcb-menu.res:136
+#: ../src/pcb-menu.res:103
 msgid "10 mil"
-msgstr ""
+msgstr "10 mil"
 
-#: ../src/gpcb-menu.res:137 ../src/pcb-menu.res:104
+#: ../src/gpcb-menu.res:137
+#: ../src/pcb-menu.res:104
 msgid "25 mil"
-msgstr ""
+msgstr "25 mil"
 
-#: ../src/gpcb-menu.res:138 ../src/pcb-menu.res:105
+#: ../src/gpcb-menu.res:138
+#: ../src/pcb-menu.res:105
 msgid "50 mil"
-msgstr ""
+msgstr "50 mil"
 
-#: ../src/gpcb-menu.res:139 ../src/pcb-menu.res:106
+#: ../src/gpcb-menu.res:139
+#: ../src/pcb-menu.res:106
 msgid "100 mil"
-msgstr ""
+msgstr "100 mil"
 
-#: ../src/gpcb-menu.res:141 ../src/pcb-menu.res:108
+#: ../src/gpcb-menu.res:141
+#: ../src/pcb-menu.res:108
 msgid "0.01 mm"
-msgstr ""
+msgstr "0.01 mm"
 
-#: ../src/gpcb-menu.res:142 ../src/pcb-menu.res:109
+#: ../src/gpcb-menu.res:142
+#: ../src/pcb-menu.res:109
 msgid "0.05 mm"
-msgstr ""
+msgstr "0.05 mm"
 
-#: ../src/gpcb-menu.res:143 ../src/pcb-menu.res:110
+#: ../src/gpcb-menu.res:143
+#: ../src/pcb-menu.res:110
 msgid "0.1 mm"
-msgstr ""
+msgstr "0.1 mm"
 
-#: ../src/gpcb-menu.res:144 ../src/pcb-menu.res:111
+#: ../src/gpcb-menu.res:144
+#: ../src/pcb-menu.res:111
 msgid "0.25 mm"
-msgstr ""
+msgstr "0.25 mm"
 
-#: ../src/gpcb-menu.res:145 ../src/pcb-menu.res:112
+#: ../src/gpcb-menu.res:145
+#: ../src/pcb-menu.res:112
 msgid "0.5 mm"
-msgstr ""
+msgstr "0.5 mm"
 
-#: ../src/gpcb-menu.res:146 ../src/pcb-menu.res:113
+#: ../src/gpcb-menu.res:146
+#: ../src/pcb-menu.res:113
 msgid "1 mm"
-msgstr ""
+msgstr "1 mm"
 
-#: ../src/gpcb-menu.res:148 ../src/pcb-menu.res:115
+#: ../src/gpcb-menu.res:148
+#: ../src/pcb-menu.res:115
 msgid "Grid -"
-msgstr ""
+msgstr "Raster -"
 
-#: ../src/gpcb-menu.res:148 ../src/pcb-menu.res:115
+#: ../src/gpcb-menu.res:148
+#: ../src/pcb-menu.res:115
 msgid "Shift-G"
-msgstr ""
+msgstr "Shift-G"
 
-#: ../src/gpcb-menu.res:148 ../src/pcb-menu.res:115
+#: ../src/gpcb-menu.res:148
+#: ../src/pcb-menu.res:115
 msgid "Shift<Key>g"
-msgstr ""
+msgstr "Shift<Key>g"
 
-#: ../src/gpcb-menu.res:149 ../src/pcb-menu.res:116
+#: ../src/gpcb-menu.res:149
+#: ../src/pcb-menu.res:116
 msgid "Grid +"
-msgstr ""
+msgstr "Raster +"
 
-#: ../src/gpcb-menu.res:149 ../src/pcb-menu.res:116
+#: ../src/gpcb-menu.res:149
+#: ../src/pcb-menu.res:116
 msgid "G"
-msgstr ""
+msgstr "G"
 
-#: ../src/gpcb-menu.res:149 ../src/pcb-menu.res:116
+#: ../src/gpcb-menu.res:149
+#: ../src/pcb-menu.res:116
 msgid "<Key>g"
-msgstr ""
+msgstr "<Key>g"
 
-#: ../src/gpcb-menu.res:151 ../src/pcb-menu.res:97
+#: ../src/gpcb-menu.res:151
+#: ../src/pcb-menu.res:97
 msgid "Realign grid"
 msgstr ""
 
@@ -1902,112 +1970,136 @@ msgstr ""
 msgid "Displayed element name"
 msgstr "Sla element op als"
 
-#: ../src/gpcb-menu.res:154 ../src/pcb-menu.res:64
+#: ../src/gpcb-menu.res:154
+#: ../src/pcb-menu.res:64
 msgid "Description"
-msgstr ""
+msgstr "Beschrijving"
 
-#: ../src/gpcb-menu.res:155 ../src/pcb-menu.res:65
+#: ../src/gpcb-menu.res:155
+#: ../src/pcb-menu.res:65
 msgid "Reference Designator"
 msgstr ""
 
-#: ../src/gpcb-menu.res:156 ../src/pcb-menu.res:66
+#: ../src/gpcb-menu.res:156
+#: ../src/pcb-menu.res:66
 msgid "Value"
-msgstr ""
+msgstr "Waarde"
 
 #: ../src/gpcb-menu.res:158
 msgid "Enable Pinout shows number"
 msgstr ""
 
-#: ../src/gpcb-menu.res:159 ../src/pcb-menu.res:209
+#: ../src/gpcb-menu.res:159
+#: ../src/pcb-menu.res:209
 msgid "Pins/Via show Name/Number"
 msgstr ""
 
-#: ../src/gpcb-menu.res:159 ../src/pcb-menu.res:209
+#: ../src/gpcb-menu.res:159
+#: ../src/pcb-menu.res:209
 msgid "D"
-msgstr ""
+msgstr "D"
 
-#: ../src/gpcb-menu.res:159 ../src/pcb-menu.res:209
+#: ../src/gpcb-menu.res:159
+#: ../src/pcb-menu.res:209
 msgid "<Key>d"
-msgstr ""
+msgstr "<Key>d"
 
-#: ../src/gpcb-menu.res:161 ../src/pcb-menu.res:79
+#: ../src/gpcb-menu.res:161
+#: ../src/pcb-menu.res:79
 #, fuzzy, no-c-format
 msgid "Zoom In 20%"
 msgstr "Zoom in\n"
 
-#: ../src/gpcb-menu.res:161 ../src/pcb-menu.res:79
+#: ../src/gpcb-menu.res:161
+#: ../src/pcb-menu.res:79
 msgid "Z"
-msgstr ""
+msgstr "Z"
 
-#: ../src/gpcb-menu.res:161 ../src/pcb-menu.res:79
+#: ../src/gpcb-menu.res:161
+#: ../src/pcb-menu.res:79
 msgid "<Key>z"
-msgstr ""
+msgstr "<Key>z"
 
-#: ../src/gpcb-menu.res:162 ../src/pcb-menu.res:80
+#: ../src/gpcb-menu.res:162
+#: ../src/pcb-menu.res:80
 #, fuzzy, no-c-format
 msgid "Zoom Out 20%"
 msgstr "zoom uit\n"
 
-#: ../src/gpcb-menu.res:162 ../src/pcb-menu.res:80
+#: ../src/gpcb-menu.res:162
+#: ../src/pcb-menu.res:80
 msgid "Shift-Z"
-msgstr ""
+msgstr "Shift-Z"
 
-#: ../src/gpcb-menu.res:162 ../src/pcb-menu.res:80
+#: ../src/gpcb-menu.res:162
+#: ../src/pcb-menu.res:80
 msgid "Shift<Key>z"
-msgstr ""
+msgstr "Shift<Key>z"
 
 #: ../src/gpcb-menu.res:163
 msgid "More zooms and view changes"
 msgstr ""
 
-#: ../src/gpcb-menu.res:164 ../src/pcb-menu.res:82
+#: ../src/gpcb-menu.res:164
+#: ../src/pcb-menu.res:82
 #, fuzzy
 msgid "Zoom Max"
 msgstr "Zoom in\n"
 
-#: ../src/gpcb-menu.res:164 ../src/pcb-menu.res:82
+#: ../src/gpcb-menu.res:164
+#: ../src/pcb-menu.res:82
 msgid "V"
-msgstr ""
+msgstr "V"
 
-#: ../src/gpcb-menu.res:164 ../src/pcb-menu.res:82
+#: ../src/gpcb-menu.res:164
+#: ../src/pcb-menu.res:82
 msgid "<Key>v"
-msgstr ""
+msgstr "<Key>v"
 
-#: ../src/gpcb-menu.res:165 ../src/pcb-menu.res:75
+#: ../src/gpcb-menu.res:165
+#: ../src/pcb-menu.res:75
 #, fuzzy
 msgid "Zoom In 2X"
 msgstr "Zoom in\n"
 
-#: ../src/gpcb-menu.res:166 ../src/pcb-menu.res:81
+#: ../src/gpcb-menu.res:166
+#: ../src/pcb-menu.res:81
 #, fuzzy
 msgid "Zoom Out 2X"
 msgstr "zoom uit\n"
 
-#: ../src/gpcb-menu.res:167 ../src/pcb-menu.res:85
+#: ../src/gpcb-menu.res:167
+#: ../src/pcb-menu.res:85
 msgid "Zoom to 0.1mil/px"
 msgstr ""
 
-#: ../src/gpcb-menu.res:168 ../src/pcb-menu.res:86
+#: ../src/gpcb-menu.res:168
+#: ../src/pcb-menu.res:86
 msgid "Zoom to 0.01mm/px"
 msgstr ""
 
-#: ../src/gpcb-menu.res:169 ../src/pcb-menu.res:87
+#: ../src/gpcb-menu.res:169
+#: ../src/pcb-menu.res:87
 msgid "Zoom to 1mil/px"
 msgstr ""
 
-#: ../src/gpcb-menu.res:170 ../src/pcb-menu.res:88
+#: ../src/gpcb-menu.res:170
+#: ../src/pcb-menu.res:88
 msgid "Zoom to 0.05mm/px"
 msgstr ""
 
-#: ../src/gpcb-menu.res:171 ../src/pcb-menu.res:89
+#: ../src/gpcb-menu.res:171
+#: ../src/pcb-menu.res:89
 msgid "Zoom to 2.5mil/px"
 msgstr ""
 
-#: ../src/gpcb-menu.res:172 ../src/pcb-menu.res:90
+#: ../src/gpcb-menu.res:172
+#: ../src/pcb-menu.res:90
 msgid "Zoom to 0.1mm/px"
 msgstr ""
 
-#: ../src/gpcb-menu.res:173 ../src/pcb-menu.res:91
+#: ../src/gpcb-menu.res:173
+#: ../src/pcb-menu.res:91
 msgid "Zoom to 10mil/px"
 msgstr ""
 
@@ -2021,96 +2113,117 @@ msgstr ""
 msgid "Zoom Out 20% and center"
 msgstr ""
 
-#: ../src/gpcb-menu.res:176 ../src/pcb-menu.res:56
+#: ../src/gpcb-menu.res:176
+#: ../src/pcb-menu.res:56
 msgid "Flip up/down"
 msgstr ""
 
-#: ../src/gpcb-menu.res:176 ../src/pcb-menu.res:56
+#: ../src/gpcb-menu.res:176
+#: ../src/pcb-menu.res:56
 msgid "Tab"
-msgstr ""
+msgstr "Tab"
 
-#: ../src/gpcb-menu.res:176 ../src/pcb-menu.res:56
+#: ../src/gpcb-menu.res:176
+#: ../src/pcb-menu.res:56
 msgid "<Key>Tab"
-msgstr ""
+msgstr "<Key>Tab"
 
-#: ../src/gpcb-menu.res:177 ../src/pcb-menu.res:57
+#: ../src/gpcb-menu.res:177
+#: ../src/pcb-menu.res:57
 msgid "Flip left/right"
 msgstr ""
 
-#: ../src/gpcb-menu.res:177 ../src/pcb-menu.res:57
+#: ../src/gpcb-menu.res:177
+#: ../src/pcb-menu.res:57
 msgid "Shift-Tab"
-msgstr ""
+msgstr "Shift-Tab"
 
-#: ../src/gpcb-menu.res:177 ../src/pcb-menu.res:57
+#: ../src/gpcb-menu.res:177
+#: ../src/pcb-menu.res:57
 msgid "Shift<Key>Tab"
-msgstr ""
+msgstr "Shift<Key>Tab"
 
 #: ../src/gpcb-menu.res:178
 msgid "Spin 180 degrees"
 msgstr ""
 
-#: ../src/gpcb-menu.res:178 ../src/pcb-menu.res:58
+#: ../src/gpcb-menu.res:178
+#: ../src/pcb-menu.res:58
 msgid "Ctrl-Tab"
-msgstr ""
+msgstr "Ctrl-Tab"
 
-#: ../src/gpcb-menu.res:178 ../src/pcb-menu.res:58
+#: ../src/gpcb-menu.res:178
+#: ../src/pcb-menu.res:58
 msgid "Ctrl<Key>Tab"
-msgstr ""
+msgstr "Ctrl<Key>Tab"
 
-#: ../src/gpcb-menu.res:179 ../src/pcb-menu.res:59
+#: ../src/gpcb-menu.res:179
+#: ../src/pcb-menu.res:59
 msgid "Swap Sides"
 msgstr ""
 
-#: ../src/gpcb-menu.res:179 ../src/pcb-menu.res:59
+#: ../src/gpcb-menu.res:179
+#: ../src/pcb-menu.res:59
 msgid "Ctrl-Shift-Tab"
-msgstr ""
+msgstr "Ctrl-Shift-Tab"
 
-#: ../src/gpcb-menu.res:179 ../src/pcb-menu.res:59
+#: ../src/gpcb-menu.res:179
+#: ../src/pcb-menu.res:59
 msgid "Ctrl Shift<Key>Tab"
-msgstr ""
+msgstr "Ctrl Shift<Key>Tab"
 
-#: ../src/gpcb-menu.res:180 ../src/pcb-menu.res:60
+#: ../src/gpcb-menu.res:180
+#: ../src/pcb-menu.res:60
 #, fuzzy
 msgid "Center cursor"
 msgstr "Verplaats de aanwijzer."
 
-#: ../src/gpcb-menu.res:180 ../src/pcb-menu.res:60
+#: ../src/gpcb-menu.res:180
+#: ../src/pcb-menu.res:60
 msgid "C"
-msgstr ""
+msgstr "C"
 
-#: ../src/gpcb-menu.res:180 ../src/pcb-menu.res:60
+#: ../src/gpcb-menu.res:180
+#: ../src/pcb-menu.res:60
 msgid "<Key>c"
-msgstr ""
+msgstr "<Key>c"
 
-#: ../src/gpcb-menu.res:183 ../src/pcb-menu.res:119
+#: ../src/gpcb-menu.res:183
+#: ../src/pcb-menu.res:119
 #, fuzzy
 msgid "Shown Layers"
 msgstr "Lagen"
 
-#: ../src/gpcb-menu.res:186 ../src/pcb-menu.res:122
+#: ../src/gpcb-menu.res:186
+#: ../src/pcb-menu.res:122
 #, fuzzy
 msgid "Edit Layer Groups"
 msgstr "<h>Laaggroepen\n"
 
-#: ../src/gpcb-menu.res:188 ../src/pcb-menu.res:124
+#: ../src/gpcb-menu.res:188
+#: ../src/pcb-menu.res:124
 msgid "Current Layer"
 msgstr ""
 
-#: ../src/gpcb-menu.res:191 ../src/pcb-menu.res:127
+#: ../src/gpcb-menu.res:191
+#: ../src/pcb-menu.res:127
 #, fuzzy
 msgid "Delete current layer"
 msgstr "Selecteer huidige buffer\n"
 
-#: ../src/gpcb-menu.res:192 ../src/pcb-menu.res:128
+#: ../src/gpcb-menu.res:192
+#: ../src/pcb-menu.res:128
 msgid "Add new layer"
 msgstr ""
 
-#: ../src/gpcb-menu.res:193 ../src/pcb-menu.res:129
+#: ../src/gpcb-menu.res:193
+#: ../src/pcb-menu.res:129
 #, fuzzy
 msgid "Move current layer up"
 msgstr "Verplaats object naar huidige laag\n"
 
-#: ../src/gpcb-menu.res:194 ../src/pcb-menu.res:130
+#: ../src/gpcb-menu.res:194
+#: ../src/pcb-menu.res:130
 #, fuzzy
 msgid "Move current layer down"
 msgstr "Verplaats object naar huidige laag\n"
@@ -2119,104 +2232,128 @@ msgstr "Verplaats object naar huidige laag\n"
 msgid "Settings"
 msgstr ""
 
-#: ../src/gpcb-menu.res:202 ../src/pcb-menu.res:191
+#: ../src/gpcb-menu.res:202
+#: ../src/pcb-menu.res:191
 #, fuzzy
 msgid "'All-direction' lines"
 msgstr "Schakel modus voor lijnen in alle richtingen om\n"
 
-#: ../src/gpcb-menu.res:202 ../src/pcb-menu.res:191
+#: ../src/gpcb-menu.res:202
+#: ../src/pcb-menu.res:191
 msgid "."
-msgstr ""
+msgstr "."
 
-#: ../src/gpcb-menu.res:202 ../src/pcb-menu.res:191
+#: ../src/gpcb-menu.res:202
+#: ../src/pcb-menu.res:191
 msgid "<Key>."
-msgstr ""
+msgstr "<Key>."
 
-#: ../src/gpcb-menu.res:203 ../src/pcb-menu.res:192
+#: ../src/gpcb-menu.res:203
+#: ../src/pcb-menu.res:192
 msgid "Auto swap line start angle"
 msgstr ""
 
-#: ../src/gpcb-menu.res:204 ../src/pcb-menu.res:193
+#: ../src/gpcb-menu.res:204
+#: ../src/pcb-menu.res:193
 msgid "Orthogonal moves"
 msgstr ""
 
-#: ../src/gpcb-menu.res:205 ../src/pcb-menu.res:194
+#: ../src/gpcb-menu.res:205
+#: ../src/pcb-menu.res:194
 msgid "Crosshair snaps to pins and pads"
 msgstr ""
 
-#: ../src/gpcb-menu.res:206 ../src/pcb-menu.res:195
+#: ../src/gpcb-menu.res:206
+#: ../src/pcb-menu.res:195
 msgid "Crosshair shows DRC clearance"
 msgstr ""
 
-#: ../src/gpcb-menu.res:207 ../src/pcb-menu.res:196
+#: ../src/gpcb-menu.res:207
+#: ../src/pcb-menu.res:196
 msgid "Auto enforce DRC clearance"
 msgstr ""
 
-#: ../src/gpcb-menu.res:208 ../src/pcb-menu.res:67
+#: ../src/gpcb-menu.res:208
+#: ../src/pcb-menu.res:67
 msgid "Lock Names"
 msgstr ""
 
-#: ../src/gpcb-menu.res:209 ../src/pcb-menu.res:68
+#: ../src/gpcb-menu.res:209
+#: ../src/pcb-menu.res:68
 msgid "Only Names"
 msgstr ""
 
-#: ../src/gpcb-menu.res:210 ../src/pcb-menu.res:69
+#: ../src/gpcb-menu.res:210
+#: ../src/pcb-menu.res:69
 #, fuzzy
 msgid "Hide Names"
 msgstr "Netnaam"
 
-#: ../src/gpcb-menu.res:212 ../src/pcb-menu.res:198
+#: ../src/gpcb-menu.res:212
+#: ../src/pcb-menu.res:198
 msgid "Rubber band mode"
 msgstr ""
 
-#: ../src/gpcb-menu.res:213 ../src/pcb-menu.res:199
+#: ../src/gpcb-menu.res:213
+#: ../src/pcb-menu.res:199
 msgid "Require unique element names"
 msgstr ""
 
-#: ../src/gpcb-menu.res:214 ../src/pcb-menu.res:200
+#: ../src/gpcb-menu.res:214
+#: ../src/pcb-menu.res:200
 #, fuzzy
 msgid "Auto-zero delta measurements"
 msgstr "Stel de standaard maateenheden in."
 
-#: ../src/gpcb-menu.res:215 ../src/pcb-menu.res:201
+#: ../src/gpcb-menu.res:215
+#: ../src/pcb-menu.res:201
 msgid "New lines, arcs clear polygons"
 msgstr ""
 
-#: ../src/gpcb-menu.res:216 ../src/pcb-menu.res:202
+#: ../src/gpcb-menu.res:216
+#: ../src/pcb-menu.res:202
 msgid "New polygons are full ones"
 msgstr ""
 
-#: ../src/gpcb-menu.res:217 ../src/pcb-menu.res:203
+#: ../src/gpcb-menu.res:217
+#: ../src/pcb-menu.res:203
 #, fuzzy
 msgid "Show autorouter trials"
 msgstr "Autorouting printsporen"
 
-#: ../src/gpcb-menu.res:218 ../src/pcb-menu.res:204
+#: ../src/gpcb-menu.res:218
+#: ../src/pcb-menu.res:204
 msgid "Thin draw"
 msgstr ""
 
-#: ../src/gpcb-menu.res:218 ../src/pcb-menu.res:204
+#: ../src/gpcb-menu.res:218
+#: ../src/pcb-menu.res:204
 msgid "|"
-msgstr ""
+msgstr "|"
 
-#: ../src/gpcb-menu.res:218 ../src/pcb-menu.res:204
+#: ../src/gpcb-menu.res:218
+#: ../src/pcb-menu.res:204
 msgid "<Key>|"
-msgstr ""
+msgstr "<Key>|"
 
-#: ../src/gpcb-menu.res:219 ../src/pcb-menu.res:205
+#: ../src/gpcb-menu.res:219
+#: ../src/pcb-menu.res:205
 #, fuzzy
 msgid "Thin draw poly"
 msgstr "Schakel dun getekende weergave in/uit\n"
 
-#: ../src/gpcb-menu.res:219 ../src/pcb-menu.res:205
+#: ../src/gpcb-menu.res:219
+#: ../src/pcb-menu.res:205
 msgid "Ctrl-Shift-P"
-msgstr ""
+msgstr "Ctrl-Shift-P"
 
-#: ../src/gpcb-menu.res:219 ../src/pcb-menu.res:205
+#: ../src/gpcb-menu.res:219
+#: ../src/pcb-menu.res:205
 msgid "Ctrl Shift<Key>p"
-msgstr ""
+msgstr "Ctrl Shift<Key>p"
 
-#: ../src/gpcb-menu.res:220 ../src/pcb-menu.res:206
+#: ../src/gpcb-menu.res:220
+#: ../src/pcb-menu.res:206
 #, fuzzy
 msgid "Check polygons"
 msgstr "Sluit polygoon\n"
@@ -2229,19 +2366,23 @@ msgstr ""
 msgid "Import New Elements at"
 msgstr ""
 
-#: ../src/gpcb-menu.res:224 ../src/pcb-menu.res:213
+#: ../src/gpcb-menu.res:224
+#: ../src/pcb-menu.res:213
 msgid " Center"
 msgstr ""
 
-#: ../src/gpcb-menu.res:225 ../src/pcb-menu.res:214
+#: ../src/gpcb-menu.res:225
+#: ../src/pcb-menu.res:214
 msgid " Mark"
 msgstr ""
 
-#: ../src/gpcb-menu.res:226 ../src/pcb-menu.res:215
+#: ../src/gpcb-menu.res:226
+#: ../src/pcb-menu.res:215
 msgid " Crosshair"
 msgstr ""
 
-#: ../src/gpcb-menu.res:228 ../src/pcb-menu.res:217
+#: ../src/gpcb-menu.res:228
+#: ../src/pcb-menu.res:217
 #, fuzzy
 msgid "Set Dispersion"
 msgstr "Voer spreiding in:"
@@ -2269,50 +2410,61 @@ msgstr "Deselecteer alle objecten\n"
 msgid "Unselect all connected"
 msgstr "Deselecteer alle objecten\n"
 
-#: ../src/gpcb-menu.res:244 ../src/pcb-menu.res:230
+#: ../src/gpcb-menu.res:244
+#: ../src/pcb-menu.res:230
 #, fuzzy
 msgid "Select by name"
 msgstr "Selecteer een Object"
 
-#: ../src/gpcb-menu.res:245 ../src/pcb-menu.res:231
+#: ../src/gpcb-menu.res:245
+#: ../src/pcb-menu.res:231
 #, fuzzy
 msgid "All objects"
 msgstr "Verwijder object\n"
 
-#: ../src/gpcb-menu.res:287 ../src/pcb-menu.res:268
+#: ../src/gpcb-menu.res:287
+#: ../src/pcb-menu.res:268
 #, fuzzy
 msgid "Elements"
 msgstr "Elementnaam:"
 
-#: ../src/gpcb-menu.res:247 ../src/pcb-menu.res:233
+#: ../src/gpcb-menu.res:247
+#: ../src/pcb-menu.res:233
 msgid "Pads"
 msgstr ""
 
-#: ../src/gpcb-menu.res:288 ../src/pcb-menu.res:269
+#: ../src/gpcb-menu.res:288
+#: ../src/pcb-menu.res:269
 msgid "Pins"
-msgstr ""
+msgstr "Pennen"
 
-#: ../src/gpcb-menu.res:506 ../src/pcb-menu.res:170
+#: ../src/gpcb-menu.res:506
+#: ../src/pcb-menu.res:170
 msgid "Text"
-msgstr ""
+msgstr "Tekst"
 
-#: ../src/gpcb-menu.res:250 ../src/pcb-menu.res:236
+#: ../src/gpcb-menu.res:250
+#: ../src/pcb-menu.res:236
 msgid "Vias"
 msgstr ""
 
-#: ../src/gpcb-menu.res:253 ../src/pcb-menu.res:238
+#: ../src/gpcb-menu.res:253
+#: ../src/pcb-menu.res:238
 msgid "Auto-place selected elements"
 msgstr ""
 
-#: ../src/gpcb-menu.res:253 ../src/pcb-menu.res:238
+#: ../src/gpcb-menu.res:253
+#: ../src/pcb-menu.res:238
 msgid "Ctrl-P"
-msgstr ""
+msgstr "Ctrl-P"
 
-#: ../src/gpcb-menu.res:253 ../src/pcb-menu.res:238
+#: ../src/gpcb-menu.res:253
+#: ../src/pcb-menu.res:238
 msgid "Ctrl<Key>p"
-msgstr ""
+msgstr "Ctrl<Key>p"
 
-#: ../src/gpcb-menu.res:254 ../src/pcb-menu.res:239
+#: ../src/gpcb-menu.res:254
+#: ../src/pcb-menu.res:239
 msgid "Disperse all elements"
 msgstr ""
 
@@ -2321,172 +2473,211 @@ msgstr ""
 msgid "Disperse selected elements"
 msgstr "Verwijder geselecteerde ratlijnen\n"
 
-#: ../src/gpcb-menu.res:257 ../src/pcb-menu.res:240
+#: ../src/gpcb-menu.res:257
+#: ../src/pcb-menu.res:240
 #, fuzzy
 msgid "Move selected elements to other side"
 msgstr "Verplaats geselecteerd object naar huidige laag\n"
 
-#: ../src/gpcb-menu.res:257 ../src/pcb-menu.res:240
+#: ../src/gpcb-menu.res:257
+#: ../src/pcb-menu.res:240
 msgid "Shift-B"
-msgstr ""
+msgstr "Shift-B"
 
-#: ../src/gpcb-menu.res:257 ../src/pcb-menu.res:240
+#: ../src/gpcb-menu.res:257
+#: ../src/pcb-menu.res:240
 msgid "Shift<Key>b"
-msgstr ""
+msgstr "Shift<Key>b"
 
-#: ../src/gpcb-menu.res:258 ../src/pcb-menu.res:241
+#: ../src/gpcb-menu.res:258
+#: ../src/pcb-menu.res:241
 #, fuzzy
 msgid "Move selected to current layer"
 msgstr "Verplaats geselecteerd object naar huidige laag\n"
 
-#: ../src/gpcb-menu.res:258 ../src/pcb-menu.res:241
+#: ../src/gpcb-menu.res:258
+#: ../src/pcb-menu.res:241
 msgid "Shift-M"
-msgstr ""
+msgstr "Shift-M"
 
-#: ../src/gpcb-menu.res:258 ../src/pcb-menu.res:241
+#: ../src/gpcb-menu.res:258
+#: ../src/pcb-menu.res:241
 msgid "Shift<Key>m"
-msgstr ""
+msgstr "Shift<Key>m"
 
 #: ../src/gpcb-menu.res:475
 #, fuzzy
 msgid "Remove selected objects"
 msgstr "Verwijder object\n"
 
-#: ../src/gpcb-menu.res:259 ../src/pcb-menu.res:362
+#: ../src/gpcb-menu.res:259
+#: ../src/pcb-menu.res:362
 msgid "Shift-Delete"
-msgstr ""
+msgstr "Shift-Delete"
 
-#: ../src/gpcb-menu.res:259 ../src/pcb-menu.res:362
+#: ../src/gpcb-menu.res:259
+#: ../src/pcb-menu.res:362
 msgid "Shift<Key>Delete"
-msgstr ""
+msgstr "Shift<Key>Delete"
 
-#: ../src/gpcb-menu.res:489 ../src/pcb-menu.res:243
+#: ../src/gpcb-menu.res:489
+#: ../src/pcb-menu.res:243
 msgid "Convert selection to element"
 msgstr ""
 
-#: ../src/gpcb-menu.res:262 ../src/pcb-menu.res:245
+#: ../src/gpcb-menu.res:262
+#: ../src/pcb-menu.res:245
 #, fuzzy
 msgid "Optimize selected rats"
 msgstr "Optimaliseer en teken geselecteerde ratlijnen\n"
 
-#: ../src/gpcb-menu.res:334 ../src/pcb-menu.res:311
+#: ../src/gpcb-menu.res:334
+#: ../src/pcb-menu.res:311
 #, fuzzy
 msgid "Auto-route selected rats"
 msgstr "Verwijder geselecteerde ratlijnen\n"
 
-#: ../src/gpcb-menu.res:263 ../src/pcb-menu.res:246
+#: ../src/gpcb-menu.res:263
+#: ../src/pcb-menu.res:246
 msgid "Alt-R"
-msgstr ""
+msgstr "Alt-R"
 
-#: ../src/gpcb-menu.res:263 ../src/pcb-menu.res:246
+#: ../src/gpcb-menu.res:263
+#: ../src/pcb-menu.res:246
 msgid "Alt<Key>r"
-msgstr ""
+msgstr "Alt<Key>r"
 
-#: ../src/gpcb-menu.res:492 ../src/pcb-menu.res:247
+#: ../src/gpcb-menu.res:492
+#: ../src/pcb-menu.res:247
 msgid "Rip up selected auto-routed tracks"
 msgstr ""
 
-#: ../src/gpcb-menu.res:266 ../src/pcb-menu.res:249
+#: ../src/gpcb-menu.res:266
+#: ../src/pcb-menu.res:249
 #, fuzzy
 msgid "Change size of selected objects"
 msgstr "\tVerander de vrijloop van objecten.\n"
 
-#: ../src/gpcb-menu.res:267 ../src/pcb-menu.res:250
+#: ../src/gpcb-menu.res:267
+#: ../src/pcb-menu.res:250
 msgid "Lines -10 mil"
-msgstr ""
+msgstr "Lijnen -10 mil"
 
-#: ../src/gpcb-menu.res:268 ../src/pcb-menu.res:251
+#: ../src/gpcb-menu.res:268
+#: ../src/pcb-menu.res:251
 msgid "Lines +10 mil"
-msgstr ""
+msgstr "Lijnen +10 mil"
 
-#: ../src/gpcb-menu.res:269 ../src/pcb-menu.res:252
+#: ../src/gpcb-menu.res:269
+#: ../src/pcb-menu.res:252
 msgid "Pads -10 mil"
 msgstr ""
 
-#: ../src/gpcb-menu.res:270 ../src/pcb-menu.res:253
+#: ../src/gpcb-menu.res:270
+#: ../src/pcb-menu.res:253
 msgid "Pads +10 mil"
 msgstr ""
 
-#: ../src/gpcb-menu.res:282 ../src/pcb-menu.res:264
+#: ../src/gpcb-menu.res:282
+#: ../src/pcb-menu.res:264
 msgid "Pins -10 mil"
-msgstr ""
+msgstr "Pennen -10 mil"
 
-#: ../src/gpcb-menu.res:283 ../src/pcb-menu.res:265
+#: ../src/gpcb-menu.res:283
+#: ../src/pcb-menu.res:265
 msgid "Pins +10 mil"
-msgstr ""
+msgstr "Pennen +10 mil"
 
-#: ../src/gpcb-menu.res:273 ../src/pcb-menu.res:256
+#: ../src/gpcb-menu.res:273
+#: ../src/pcb-menu.res:256
 msgid "Texts -10 mil"
-msgstr ""
+msgstr "Teksten -10 mil"
 
-#: ../src/gpcb-menu.res:274 ../src/pcb-menu.res:257
+#: ../src/gpcb-menu.res:274
+#: ../src/pcb-menu.res:257
 msgid "Texts +10 mil"
-msgstr ""
+msgstr "Teksten +10 mil"
 
-#: ../src/gpcb-menu.res:280 ../src/pcb-menu.res:262
+#: ../src/gpcb-menu.res:280
+#: ../src/pcb-menu.res:262
 msgid "Vias -10 mil"
 msgstr ""
 
-#: ../src/gpcb-menu.res:281 ../src/pcb-menu.res:263
+#: ../src/gpcb-menu.res:281
+#: ../src/pcb-menu.res:263
 msgid "Vias +10 mil"
 msgstr ""
 
-#: ../src/gpcb-menu.res:279 ../src/pcb-menu.res:261
+#: ../src/gpcb-menu.res:279
+#: ../src/pcb-menu.res:261
 #, fuzzy
 msgid "Change drilling hole of selected objects"
 msgstr "\tVerandert de gat-vlag van objecten.\n"
 
-#: ../src/gpcb-menu.res:286 ../src/pcb-menu.res:267
+#: ../src/gpcb-menu.res:286
+#: ../src/pcb-menu.res:267
 #, fuzzy
 msgid "Change square-flag of selected objects"
 msgstr "Schakel de vierkant-vlag van een object om\n"
 
-#: ../src/gpcb-menu.res:510 ../src/pcb-menu.res:174
+#: ../src/gpcb-menu.res:510
+#: ../src/pcb-menu.res:174
 msgid "Buffer"
-msgstr ""
+msgstr "Buffer"
 
-#: ../src/gpcb-menu.res:300 ../src/pcb-menu.res:279
+#: ../src/gpcb-menu.res:300
+#: ../src/pcb-menu.res:279
 msgid "Rotate buffer 90 deg CCW"
 msgstr ""
 
-#: ../src/gpcb-menu.res:301 ../src/pcb-menu.res:280
+#: ../src/gpcb-menu.res:301
+#: ../src/pcb-menu.res:280
 msgid "Shift-F7"
-msgstr ""
+msgstr "Shift-F7"
 
-#: ../src/gpcb-menu.res:301 ../src/pcb-menu.res:280
+#: ../src/gpcb-menu.res:301
+#: ../src/pcb-menu.res:280
 msgid "Shift<Key>F7"
-msgstr ""
+msgstr "Shift<Key>F7"
 
-#: ../src/gpcb-menu.res:302 ../src/pcb-menu.res:281
+#: ../src/gpcb-menu.res:302
+#: ../src/pcb-menu.res:281
 msgid "Rotate buffer 90 deg CW"
 msgstr ""
 
-#: ../src/gpcb-menu.res:303 ../src/pcb-menu.res:282
+#: ../src/gpcb-menu.res:303
+#: ../src/pcb-menu.res:282
 msgid "Arbitrarily Rotate Buffer"
 msgstr ""
 
-#: ../src/gpcb-menu.res:304 ../src/pcb-menu.res:283
+#: ../src/gpcb-menu.res:304
+#: ../src/pcb-menu.res:283
 msgid "Mirror buffer (up/down)"
-msgstr ""
+msgstr "Spiegel buffer (op/neer)"
 
-#: ../src/gpcb-menu.res:305 ../src/pcb-menu.res:284
+#: ../src/gpcb-menu.res:305
+#: ../src/pcb-menu.res:284
 msgid "Mirror buffer (left/right)"
-msgstr ""
+msgstr "Spiegel buffer (links/rechts)"
 
-#: ../src/gpcb-menu.res:308 ../src/pcb-menu.res:287
+#: ../src/gpcb-menu.res:308
+#: ../src/pcb-menu.res:287
 msgid "Clear buffer"
-msgstr ""
+msgstr "Wis buffer"
 
-#: ../src/gpcb-menu.res:309 ../src/pcb-menu.res:288
+#: ../src/gpcb-menu.res:309
+#: ../src/pcb-menu.res:288
 #, fuzzy
 msgid "Convert buffer to element"
 msgstr "Buffer heeft geen elementen!\n"
 
-#: ../src/gpcb-menu.res:310 ../src/pcb-menu.res:289
+#: ../src/gpcb-menu.res:310
+#: ../src/pcb-menu.res:289
 msgid "Break buffer elements to pieces"
-msgstr ""
+msgstr "Breek buffer elementen in stukjes"
 
-#: ../src/gpcb-menu.res:311 ../src/pcb-menu.res:290
+#: ../src/gpcb-menu.res:311
+#: ../src/pcb-menu.res:290
 #, fuzzy
 msgid "Save buffer elements to file"
 msgstr "Sla element op als"
@@ -2496,11 +2687,13 @@ msgstr "Sla element op als"
 msgid "Select Buffer #1"
 msgstr "Selecteer huidige buffer\n"
 
-#: ../src/gpcb-menu.res:313 ../src/pcb-menu.res:293
+#: ../src/gpcb-menu.res:313
+#: ../src/pcb-menu.res:293
 msgid "Shift-1"
 msgstr ""
 
-#: ../src/gpcb-menu.res:313 ../src/pcb-menu.res:293
+#: ../src/gpcb-menu.res:313
+#: ../src/pcb-menu.res:293
 msgid "Shift<Key>1"
 msgstr ""
 
@@ -2509,11 +2702,13 @@ msgstr ""
 msgid "Select Buffer #2"
 msgstr "Selecteer huidige buffer\n"
 
-#: ../src/gpcb-menu.res:314 ../src/pcb-menu.res:294
+#: ../src/gpcb-menu.res:314
+#: ../src/pcb-menu.res:294
 msgid "Shift-2"
 msgstr ""
 
-#: ../src/gpcb-menu.res:314 ../src/pcb-menu.res:294
+#: ../src/gpcb-menu.res:314
+#: ../src/pcb-menu.res:294
 msgid "Shift<Key>2"
 msgstr ""
 
@@ -2522,11 +2717,13 @@ msgstr ""
 msgid "Select Buffer #3"
 msgstr "Selecteer huidige buffer\n"
 
-#: ../src/gpcb-menu.res:315 ../src/pcb-menu.res:295
+#: ../src/gpcb-menu.res:315
+#: ../src/pcb-menu.res:295
 msgid "Shift-3"
 msgstr ""
 
-#: ../src/gpcb-menu.res:315 ../src/pcb-menu.res:295
+#: ../src/gpcb-menu.res:315
+#: ../src/pcb-menu.res:295
 msgid "Shift<Key>3"
 msgstr ""
 
@@ -2535,11 +2732,13 @@ msgstr ""
 msgid "Select Buffer #4"
 msgstr "Selecteer huidige buffer\n"
 
-#: ../src/gpcb-menu.res:316 ../src/pcb-menu.res:296
+#: ../src/gpcb-menu.res:316
+#: ../src/pcb-menu.res:296
 msgid "Shift-4"
 msgstr ""
 
-#: ../src/gpcb-menu.res:316 ../src/pcb-menu.res:296
+#: ../src/gpcb-menu.res:316
+#: ../src/pcb-menu.res:296
 msgid "Shift<Key>4"
 msgstr ""
 
@@ -2548,11 +2747,13 @@ msgstr ""
 msgid "Select Buffer #5"
 msgstr "Selecteer huidige buffer\n"
 
-#: ../src/gpcb-menu.res:317 ../src/pcb-menu.res:297
+#: ../src/gpcb-menu.res:317
+#: ../src/pcb-menu.res:297
 msgid "Shift-5"
 msgstr ""
 
-#: ../src/gpcb-menu.res:317 ../src/pcb-menu.res:297
+#: ../src/gpcb-menu.res:317
+#: ../src/pcb-menu.res:297
 msgid "Shift<Key>5"
 msgstr ""
 
@@ -2565,32 +2766,39 @@ msgstr ""
 msgid "Lookup connection"
 msgstr "Klik op een verbinding"
 
-#: ../src/gpcb-menu.res:324 ../src/pcb-menu.res:301
+#: ../src/gpcb-menu.res:324
+#: ../src/pcb-menu.res:301
 msgid "Ctrl-F"
 msgstr ""
 
-#: ../src/gpcb-menu.res:324 ../src/pcb-menu.res:301
+#: ../src/gpcb-menu.res:324
+#: ../src/pcb-menu.res:301
 msgid "Ctrl<Key>f"
 msgstr ""
 
-#: ../src/gpcb-menu.res:325 ../src/pcb-menu.res:302
+#: ../src/gpcb-menu.res:325
+#: ../src/pcb-menu.res:302
 msgid "Reset scanned pads/pins/vias"
 msgstr ""
 
-#: ../src/gpcb-menu.res:326 ../src/pcb-menu.res:303
+#: ../src/gpcb-menu.res:326
+#: ../src/pcb-menu.res:303
 msgid "Reset scanned lines/polygons"
 msgstr ""
 
-#: ../src/gpcb-menu.res:327 ../src/pcb-menu.res:304
+#: ../src/gpcb-menu.res:327
+#: ../src/pcb-menu.res:304
 #, fuzzy
 msgid "Reset all connections"
 msgstr "Accentuering verbindingen uitschakelen\n"
 
-#: ../src/gpcb-menu.res:327 ../src/pcb-menu.res:304
+#: ../src/gpcb-menu.res:327
+#: ../src/pcb-menu.res:304
 msgid "Shift-F"
 msgstr ""
 
-#: ../src/gpcb-menu.res:327 ../src/pcb-menu.res:304
+#: ../src/gpcb-menu.res:327
+#: ../src/pcb-menu.res:304
 msgid "Shift<Key>f"
 msgstr ""
 
@@ -2598,11 +2806,13 @@ msgstr ""
 msgid "Optimize rats nest"
 msgstr ""
 
-#: ../src/gpcb-menu.res:330 ../src/pcb-menu.res:307
+#: ../src/gpcb-menu.res:330
+#: ../src/pcb-menu.res:307
 msgid "O"
 msgstr ""
 
-#: ../src/gpcb-menu.res:330 ../src/pcb-menu.res:307
+#: ../src/gpcb-menu.res:330
+#: ../src/pcb-menu.res:307
 msgid "<Key>o"
 msgstr ""
 
@@ -2610,33 +2820,40 @@ msgstr ""
 msgid "Erase rats nest"
 msgstr ""
 
-#: ../src/gpcb-menu.res:331 ../src/pcb-menu.res:308
+#: ../src/gpcb-menu.res:331
+#: ../src/pcb-menu.res:308
 msgid "E"
 msgstr ""
 
-#: ../src/gpcb-menu.res:331 ../src/pcb-menu.res:308
+#: ../src/gpcb-menu.res:331
+#: ../src/pcb-menu.res:308
 msgid "<Key>e"
 msgstr ""
 
-#: ../src/gpcb-menu.res:332 ../src/pcb-menu.res:309
+#: ../src/gpcb-menu.res:332
+#: ../src/pcb-menu.res:309
 #, fuzzy
 msgid "Erase selected rats"
 msgstr "Verwijder geselecteerde ratlijnen\n"
 
-#: ../src/gpcb-menu.res:332 ../src/pcb-menu.res:309
+#: ../src/gpcb-menu.res:332
+#: ../src/pcb-menu.res:309
 msgid "Shift-E"
 msgstr ""
 
-#: ../src/gpcb-menu.res:332 ../src/pcb-menu.res:309
+#: ../src/gpcb-menu.res:332
+#: ../src/pcb-menu.res:309
 msgid "Shift<Key>e"
 msgstr ""
 
-#: ../src/gpcb-menu.res:335 ../src/pcb-menu.res:312
+#: ../src/gpcb-menu.res:335
+#: ../src/pcb-menu.res:312
 #, fuzzy
 msgid "Auto-route all rats"
 msgstr "Autorouting printsporen"
 
-#: ../src/gpcb-menu.res:336 ../src/pcb-menu.res:313
+#: ../src/gpcb-menu.res:336
+#: ../src/pcb-menu.res:313
 msgid "Rip up all auto-routed tracks"
 msgstr ""
 
@@ -2645,32 +2862,39 @@ msgstr ""
 msgid "Optimize routed tracks"
 msgstr "Optimaliseer en teken geselecteerde ratlijnen\n"
 
-#: ../src/gpcb-menu.res:339 ../src/pcb-menu.res:315
+#: ../src/gpcb-menu.res:339
+#: ../src/pcb-menu.res:315
 msgid "Auto-Optimize"
 msgstr ""
 
-#: ../src/gpcb-menu.res:339 ../src/pcb-menu.res:315
+#: ../src/gpcb-menu.res:339
+#: ../src/pcb-menu.res:315
 msgid "Shift-="
 msgstr ""
 
-#: ../src/gpcb-menu.res:339 ../src/pcb-menu.res:315
+#: ../src/gpcb-menu.res:339
+#: ../src/pcb-menu.res:315
 msgid "Shift<Key>="
 msgstr ""
 
-#: ../src/gpcb-menu.res:340 ../src/pcb-menu.res:316
+#: ../src/gpcb-menu.res:340
+#: ../src/pcb-menu.res:316
 msgid "Debumpify"
 msgstr ""
 
-#: ../src/gpcb-menu.res:341 ../src/pcb-menu.res:317
+#: ../src/gpcb-menu.res:341
+#: ../src/pcb-menu.res:317
 msgid "Unjaggy"
 msgstr ""
 
-#: ../src/gpcb-menu.res:342 ../src/pcb-menu.res:318
+#: ../src/gpcb-menu.res:342
+#: ../src/pcb-menu.res:318
 #, fuzzy
 msgid "Vianudge"
 msgstr "Vianaam:"
 
-#: ../src/gpcb-menu.res:343 ../src/pcb-menu.res:319
+#: ../src/gpcb-menu.res:343
+#: ../src/pcb-menu.res:319
 msgid "Viatrim"
 msgstr ""
 
@@ -2682,57 +2906,70 @@ msgstr ""
 msgid "Simple optimization"
 msgstr ""
 
-#: ../src/gpcb-menu.res:345 ../src/pcb-menu.res:321
+#: ../src/gpcb-menu.res:345
+#: ../src/pcb-menu.res:321
 msgid "="
 msgstr ""
 
-#: ../src/gpcb-menu.res:345 ../src/pcb-menu.res:321
+#: ../src/gpcb-menu.res:345
+#: ../src/pcb-menu.res:321
 msgid "<Key>="
 msgstr ""
 
-#: ../src/gpcb-menu.res:346 ../src/pcb-menu.res:322
+#: ../src/gpcb-menu.res:346
+#: ../src/pcb-menu.res:322
 msgid "Miter"
 msgstr ""
 
-#: ../src/gpcb-menu.res:347 ../src/pcb-menu.res:323
+#: ../src/gpcb-menu.res:347
+#: ../src/pcb-menu.res:323
 msgid "Puller"
 msgstr ""
 
-#: ../src/gpcb-menu.res:347 ../src/pcb-menu.res:323
+#: ../src/gpcb-menu.res:347
+#: ../src/pcb-menu.res:323
 msgid "Y"
 msgstr ""
 
-#: ../src/gpcb-menu.res:347 ../src/pcb-menu.res:323
+#: ../src/gpcb-menu.res:347
+#: ../src/pcb-menu.res:323
 msgid "<Key>y"
 msgstr ""
 
-#: ../src/gpcb-menu.res:348 ../src/pcb-menu.res:324
+#: ../src/gpcb-menu.res:348
+#: ../src/pcb-menu.res:324
 msgid "Global Puller"
 msgstr ""
 
-#: ../src/gpcb-menu.res:349 ../src/pcb-menu.res:325
+#: ../src/gpcb-menu.res:349
+#: ../src/pcb-menu.res:325
 #, fuzzy
 msgid "Selected"
 msgstr "Selecteer"
 
-#: ../src/gpcb-menu.res:350 ../src/pcb-menu.res:326
+#: ../src/gpcb-menu.res:350
+#: ../src/pcb-menu.res:326
 msgid "Found"
 msgstr ""
 
-#: ../src/gpcb-menu.res:351 ../src/pcb-menu.res:327
+#: ../src/gpcb-menu.res:351
+#: ../src/pcb-menu.res:327
 msgid "All"
 msgstr ""
 
-#: ../src/gpcb-menu.res:354 ../src/pcb-menu.res:329
+#: ../src/gpcb-menu.res:354
+#: ../src/pcb-menu.res:329
 msgid "Only autorouted nets"
 msgstr ""
 
-#: ../src/gpcb-menu.res:357 ../src/pcb-menu.res:331
+#: ../src/gpcb-menu.res:357
+#: ../src/pcb-menu.res:331
 #, fuzzy
 msgid "Design Rule Checker"
 msgstr "Controle ontwerpregels"
 
-#: ../src/gpcb-menu.res:359 ../src/pcb-menu.res:333
+#: ../src/gpcb-menu.res:359
+#: ../src/pcb-menu.res:333
 msgid "Apply vendor drill mapping"
 msgstr ""
 
@@ -2740,53 +2977,65 @@ msgstr ""
 msgid "Info"
 msgstr "Info"
 
-#: ../src/gpcb-menu.res:495 ../src/pcb-menu.res:337
+#: ../src/gpcb-menu.res:495
+#: ../src/pcb-menu.res:337
 #, fuzzy
 msgid "Generate object report"
 msgstr "Verwijder object\n"
 
-#: ../src/gpcb-menu.res:366 ../src/pcb-menu.res:337
+#: ../src/gpcb-menu.res:366
+#: ../src/pcb-menu.res:337
 msgid "Ctrl-R"
 msgstr ""
 
-#: ../src/gpcb-menu.res:366 ../src/pcb-menu.res:337
+#: ../src/gpcb-menu.res:366
+#: ../src/pcb-menu.res:337
 msgid "Ctrl<Key>r"
 msgstr ""
 
-#: ../src/gpcb-menu.res:367 ../src/pcb-menu.res:338
+#: ../src/gpcb-menu.res:367
+#: ../src/pcb-menu.res:338
 msgid "Generate drill summary"
 msgstr ""
 
-#: ../src/gpcb-menu.res:368 ../src/pcb-menu.res:339
+#: ../src/gpcb-menu.res:368
+#: ../src/pcb-menu.res:339
 msgid "Report found pins/pads"
 msgstr ""
 
-#: ../src/gpcb-menu.res:369 ../src/pcb-menu.res:340
+#: ../src/gpcb-menu.res:369
+#: ../src/pcb-menu.res:340
 msgid "Report net length"
 msgstr ""
 
-#: ../src/gpcb-menu.res:369 ../src/pcb-menu.res:340
+#: ../src/gpcb-menu.res:369
+#: ../src/pcb-menu.res:340
 msgid "R"
 msgstr ""
 
-#: ../src/gpcb-menu.res:369 ../src/pcb-menu.res:340
+#: ../src/gpcb-menu.res:369
+#: ../src/pcb-menu.res:340
 msgid "<Key>r"
 msgstr ""
 
-#: ../src/gpcb-menu.res:370 ../src/pcb-menu.res:341
+#: ../src/gpcb-menu.res:370
+#: ../src/pcb-menu.res:341
 msgid "Key Bindings"
 msgstr ""
 
-#: ../src/gpcb-menu.res:511 ../src/pcb-menu.res:342
+#: ../src/gpcb-menu.res:511
+#: ../src/pcb-menu.res:342
 msgid "Remove"
 msgstr ""
 
-#: ../src/gpcb-menu.res:371 ../src/pcb-menu.res:242
+#: ../src/gpcb-menu.res:371
+#: ../src/pcb-menu.res:242
 #, fuzzy
 msgid "Delete"
 msgstr "Verwijder object\n"
 
-#: ../src/gpcb-menu.res:371 ../src/pcb-menu.res:242
+#: ../src/gpcb-menu.res:371
+#: ../src/pcb-menu.res:242
 msgid "<Key>Delete"
 msgstr ""
 
@@ -2794,458 +3043,568 @@ msgstr ""
 msgid "Remove Selected"
 msgstr ""
 
-#: ../src/gpcb-menu.res:377 ../src/pcb-menu.res:342
+#: ../src/gpcb-menu.res:377
+#: ../src/pcb-menu.res:342
 #, fuzzy
 msgid "Backspace"
 msgstr "Reservekopieën"
 
-#: ../src/gpcb-menu.res:377 ../src/pcb-menu.res:342
+#: ../src/gpcb-menu.res:377
+#: ../src/pcb-menu.res:342
 msgid "<Key>BackSpace"
 msgstr ""
 
-#: ../src/gpcb-menu.res:380 ../src/pcb-menu.res:362
+#: ../src/gpcb-menu.res:380
+#: ../src/pcb-menu.res:362
 msgid "Remove Connected"
 msgstr ""
 
-#: ../src/gpcb-menu.res:380 ../src/pcb-menu.res:345
+#: ../src/gpcb-menu.res:380
+#: ../src/pcb-menu.res:345
 msgid "Shift-Backspace"
 msgstr ""
 
-#: ../src/gpcb-menu.res:380 ../src/pcb-menu.res:345
+#: ../src/gpcb-menu.res:380
+#: ../src/pcb-menu.res:345
 msgid "Shift<Key>BackSpace"
 msgstr ""
 
-#: ../src/gpcb-menu.res:397 ../src/pcb-menu.res:379
+#: ../src/gpcb-menu.res:397
+#: ../src/pcb-menu.res:379
 msgid "Set Same"
 msgstr ""
 
-#: ../src/gpcb-menu.res:397 ../src/pcb-menu.res:379
+#: ../src/gpcb-menu.res:397
+#: ../src/pcb-menu.res:379
 msgid "A"
 msgstr ""
 
-#: ../src/gpcb-menu.res:397 ../src/pcb-menu.res:379
+#: ../src/gpcb-menu.res:397
+#: ../src/pcb-menu.res:379
 msgid "<Key>a"
 msgstr ""
 
-#: ../src/gpcb-menu.res:398 ../src/pcb-menu.res:380
+#: ../src/gpcb-menu.res:398
+#: ../src/pcb-menu.res:380
 msgid "Flip Object"
 msgstr ""
 
-#: ../src/gpcb-menu.res:398 ../src/pcb-menu.res:380
+#: ../src/gpcb-menu.res:398
+#: ../src/pcb-menu.res:380
 msgid "B"
 msgstr ""
 
-#: ../src/gpcb-menu.res:398 ../src/pcb-menu.res:380
+#: ../src/gpcb-menu.res:398
+#: ../src/pcb-menu.res:380
 msgid "<Key>b"
 msgstr ""
 
-#: ../src/gpcb-menu.res:399 ../src/pcb-menu.res:381
+#: ../src/gpcb-menu.res:399
+#: ../src/pcb-menu.res:381
 #, fuzzy
 msgid "Find Connections"
 msgstr "Klik op een verbinding"
 
-#: ../src/gpcb-menu.res:399 ../src/pcb-menu.res:381
+#: ../src/gpcb-menu.res:399
+#: ../src/pcb-menu.res:381
 msgid "F"
 msgstr ""
 
-#: ../src/gpcb-menu.res:399 ../src/pcb-menu.res:381
+#: ../src/gpcb-menu.res:399
+#: ../src/pcb-menu.res:381
 msgid "<Key>f"
 msgstr ""
 
-#: ../src/gpcb-menu.res:400 ../src/pcb-menu.res:382
+#: ../src/gpcb-menu.res:400
+#: ../src/pcb-menu.res:382
 msgid "ToggleHideName Object"
 msgstr ""
 
-#: ../src/gpcb-menu.res:400 ../src/pcb-menu.res:382
+#: ../src/gpcb-menu.res:400
+#: ../src/pcb-menu.res:382
 msgid "H"
 msgstr ""
 
-#: ../src/gpcb-menu.res:400 ../src/pcb-menu.res:382
+#: ../src/gpcb-menu.res:400
+#: ../src/pcb-menu.res:382
 msgid "<Key>h"
 msgstr ""
 
-#: ../src/gpcb-menu.res:401 ../src/pcb-menu.res:383
+#: ../src/gpcb-menu.res:401
+#: ../src/pcb-menu.res:383
 msgid "ToggleHideName SelectedElement"
 msgstr ""
 
-#: ../src/gpcb-menu.res:401 ../src/pcb-menu.res:383
+#: ../src/gpcb-menu.res:401
+#: ../src/pcb-menu.res:383
 msgid "Shift-H"
 msgstr ""
 
-#: ../src/gpcb-menu.res:401 ../src/pcb-menu.res:383
+#: ../src/gpcb-menu.res:401
+#: ../src/pcb-menu.res:383
 msgid "Shift<Key>h"
 msgstr ""
 
-#: ../src/gpcb-menu.res:402 ../src/pcb-menu.res:384
+#: ../src/gpcb-menu.res:402
+#: ../src/pcb-menu.res:384
 #, fuzzy
 msgid "ChangeHole Object"
 msgstr "Selecteer een Object"
 
-#: ../src/gpcb-menu.res:402 ../src/pcb-menu.res:384
+#: ../src/gpcb-menu.res:402
+#: ../src/pcb-menu.res:384
 msgid "Ctrl-H"
 msgstr ""
 
-#: ../src/gpcb-menu.res:402 ../src/pcb-menu.res:384
+#: ../src/gpcb-menu.res:402
+#: ../src/pcb-menu.res:384
 msgid "Ctrl<Key>h"
 msgstr ""
 
-#: ../src/gpcb-menu.res:403 ../src/pcb-menu.res:385
+#: ../src/gpcb-menu.res:403
+#: ../src/pcb-menu.res:385
 msgid "ChangeJoin Object"
 msgstr ""
 
-#: ../src/gpcb-menu.res:403 ../src/pcb-menu.res:385
+#: ../src/gpcb-menu.res:403
+#: ../src/pcb-menu.res:385
 msgid "J"
 msgstr ""
 
-#: ../src/gpcb-menu.res:403 ../src/pcb-menu.res:385
+#: ../src/gpcb-menu.res:403
+#: ../src/pcb-menu.res:385
 msgid "<Key>j"
 msgstr ""
 
-#: ../src/gpcb-menu.res:404 ../src/pcb-menu.res:386
+#: ../src/gpcb-menu.res:404
+#: ../src/pcb-menu.res:386
 msgid "ChangeJoin SelectedObject"
 msgstr ""
 
-#: ../src/gpcb-menu.res:404 ../src/pcb-menu.res:386
+#: ../src/gpcb-menu.res:404
+#: ../src/pcb-menu.res:386
 msgid "Shift-J"
 msgstr ""
 
-#: ../src/gpcb-menu.res:404 ../src/pcb-menu.res:386
+#: ../src/gpcb-menu.res:404
+#: ../src/pcb-menu.res:386
 msgid "Shift<Key>j"
 msgstr ""
 
-#: ../src/gpcb-menu.res:405 ../src/pcb-menu.res:387
+#: ../src/gpcb-menu.res:405
+#: ../src/pcb-menu.res:387
 #, fuzzy
 msgid "Clear Object +"
 msgstr "Selecteer een Object"
 
-#: ../src/gpcb-menu.res:405 ../src/pcb-menu.res:387
+#: ../src/gpcb-menu.res:405
+#: ../src/pcb-menu.res:387
 msgid "K"
 msgstr ""
 
-#: ../src/gpcb-menu.res:405 ../src/pcb-menu.res:387
+#: ../src/gpcb-menu.res:405
+#: ../src/pcb-menu.res:387
 msgid "<Key>k"
 msgstr ""
 
-#: ../src/gpcb-menu.res:406 ../src/pcb-menu.res:388
+#: ../src/gpcb-menu.res:406
+#: ../src/pcb-menu.res:388
 #, fuzzy
 msgid "Clear Object -"
 msgstr "Selecteer een Object"
 
-#: ../src/gpcb-menu.res:406 ../src/pcb-menu.res:388
+#: ../src/gpcb-menu.res:406
+#: ../src/pcb-menu.res:388
 msgid "Shift-K"
 msgstr ""
 
-#: ../src/gpcb-menu.res:406 ../src/pcb-menu.res:388
+#: ../src/gpcb-menu.res:406
+#: ../src/pcb-menu.res:388
 msgid "Shift<Key>k"
 msgstr ""
 
-#: ../src/gpcb-menu.res:407 ../src/pcb-menu.res:389
+#: ../src/gpcb-menu.res:407
+#: ../src/pcb-menu.res:389
 msgid "Clear Selected +"
 msgstr ""
 
-#: ../src/gpcb-menu.res:407 ../src/pcb-menu.res:389
+#: ../src/gpcb-menu.res:407
+#: ../src/pcb-menu.res:389
 msgid "Ctrl-K"
 msgstr ""
 
-#: ../src/gpcb-menu.res:407 ../src/pcb-menu.res:389
+#: ../src/gpcb-menu.res:407
+#: ../src/pcb-menu.res:389
 msgid "Ctrl<Key>k"
 msgstr ""
 
-#: ../src/gpcb-menu.res:408 ../src/pcb-menu.res:390
+#: ../src/gpcb-menu.res:408
+#: ../src/pcb-menu.res:390
 msgid "Clear Selected -"
 msgstr ""
 
-#: ../src/gpcb-menu.res:408 ../src/pcb-menu.res:390
+#: ../src/gpcb-menu.res:408
+#: ../src/pcb-menu.res:390
 msgid "Shift-Ctrl-K"
 msgstr ""
 
-#: ../src/gpcb-menu.res:408 ../src/pcb-menu.res:390
+#: ../src/gpcb-menu.res:408
+#: ../src/pcb-menu.res:390
 msgid "Shift Ctrl<Key>k"
 msgstr ""
 
-#: ../src/gpcb-menu.res:409 ../src/pcb-menu.res:391
+#: ../src/gpcb-menu.res:409
+#: ../src/pcb-menu.res:391
 #, fuzzy
 msgid "Line Tool size +"
 msgstr "Via gatmaat:"
 
-#: ../src/gpcb-menu.res:409 ../src/pcb-menu.res:391
+#: ../src/gpcb-menu.res:409
+#: ../src/pcb-menu.res:391
 msgid "L"
 msgstr ""
 
-#: ../src/gpcb-menu.res:409 ../src/pcb-menu.res:391
+#: ../src/gpcb-menu.res:409
+#: ../src/pcb-menu.res:391
 msgid "<Key>l"
 msgstr ""
 
-#: ../src/gpcb-menu.res:410 ../src/pcb-menu.res:392
+#: ../src/gpcb-menu.res:410
+#: ../src/pcb-menu.res:392
 #, fuzzy
 msgid "Line Tool size -"
 msgstr "Via gatmaat:"
 
-#: ../src/gpcb-menu.res:410 ../src/pcb-menu.res:392
+#: ../src/gpcb-menu.res:410
+#: ../src/pcb-menu.res:392
 msgid "Shift-L"
 msgstr ""
 
-#: ../src/gpcb-menu.res:410 ../src/pcb-menu.res:392
+#: ../src/gpcb-menu.res:410
+#: ../src/pcb-menu.res:392
 msgid "Shift<Key>l"
 msgstr ""
 
-#: ../src/gpcb-menu.res:411 ../src/pcb-menu.res:393
+#: ../src/gpcb-menu.res:411
+#: ../src/pcb-menu.res:393
 #, fuzzy
 msgid "Move Object to current layer"
 msgstr "Verplaats object naar huidige laag\n"
 
-#: ../src/gpcb-menu.res:411 ../src/pcb-menu.res:393
+#: ../src/gpcb-menu.res:411
+#: ../src/pcb-menu.res:393
 msgid "M"
 msgstr ""
 
-#: ../src/gpcb-menu.res:411 ../src/pcb-menu.res:393
+#: ../src/gpcb-menu.res:411
+#: ../src/pcb-menu.res:393
 msgid "<Key>m"
 msgstr ""
 
-#: ../src/gpcb-menu.res:412 ../src/pcb-menu.res:394
+#: ../src/gpcb-menu.res:412
+#: ../src/pcb-menu.res:394
 msgid "MarkCrosshair"
 msgstr ""
 
-#: ../src/gpcb-menu.res:412 ../src/pcb-menu.res:394
+#: ../src/gpcb-menu.res:412
+#: ../src/pcb-menu.res:394
 msgid "Ctrl-M"
 msgstr ""
 
-#: ../src/gpcb-menu.res:412 ../src/pcb-menu.res:394
+#: ../src/gpcb-menu.res:412
+#: ../src/pcb-menu.res:394
 msgid "Ctrl<Key>m"
 msgstr ""
 
-#: ../src/gpcb-menu.res:413 ../src/pcb-menu.res:395
+#: ../src/gpcb-menu.res:413
+#: ../src/pcb-menu.res:395
 #, fuzzy
 msgid "Select shortest rat"
 msgstr "Verwijder geselecteerde ratlijnen\n"
 
-#: ../src/gpcb-menu.res:413 ../src/pcb-menu.res:395
+#: ../src/gpcb-menu.res:413
+#: ../src/pcb-menu.res:395
 msgid "Shift-N"
 msgstr ""
 
-#: ../src/gpcb-menu.res:413 ../src/pcb-menu.res:395
+#: ../src/gpcb-menu.res:413
+#: ../src/pcb-menu.res:395
 msgid "Shift<Key>n"
 msgstr ""
 
-#: ../src/gpcb-menu.res:414 ../src/pcb-menu.res:396
+#: ../src/gpcb-menu.res:414
+#: ../src/pcb-menu.res:396
 msgid "AddRats to selected pins"
 msgstr ""
 
-#: ../src/gpcb-menu.res:414 ../src/pcb-menu.res:396
+#: ../src/gpcb-menu.res:414
+#: ../src/pcb-menu.res:396
 msgid "Shift-O"
 msgstr ""
 
-#: ../src/gpcb-menu.res:414 ../src/pcb-menu.res:396
+#: ../src/gpcb-menu.res:414
+#: ../src/pcb-menu.res:396
 msgid "Shift<Key>o"
 msgstr ""
 
 # RR: Should this not be 'Toggle' instead of 'Change'?
-#: ../src/gpcb-menu.res:420 ../src/pcb-menu.res:402
+#: ../src/gpcb-menu.res:420
+#: ../src/pcb-menu.res:402
 #, fuzzy
 msgid "ChangeOctagon Object"
 msgstr "Verander achthoek-vlag van een object\n"
 
-#: ../src/gpcb-menu.res:420 ../src/pcb-menu.res:402
+#: ../src/gpcb-menu.res:420
+#: ../src/pcb-menu.res:402
 msgid "Ctrl-O"
 msgstr ""
 
-#: ../src/gpcb-menu.res:420 ../src/pcb-menu.res:402
+#: ../src/gpcb-menu.res:420
+#: ../src/pcb-menu.res:402
 msgid "Ctrl<Key>o"
 msgstr ""
 
-#: ../src/gpcb-menu.res:421 ../src/pcb-menu.res:403
+#: ../src/gpcb-menu.res:421
+#: ../src/pcb-menu.res:403
 msgid "Polygon PreviousPoint"
 msgstr ""
 
-#: ../src/gpcb-menu.res:421 ../src/pcb-menu.res:403
+#: ../src/gpcb-menu.res:421
+#: ../src/pcb-menu.res:403
 msgid "P"
 msgstr ""
 
-#: ../src/gpcb-menu.res:421 ../src/pcb-menu.res:403
+#: ../src/gpcb-menu.res:421
+#: ../src/pcb-menu.res:403
 msgid "<Key>p"
 msgstr ""
 
-#: ../src/gpcb-menu.res:422 ../src/pcb-menu.res:404
+#: ../src/gpcb-menu.res:422
+#: ../src/pcb-menu.res:404
 msgid "Polygon Close"
 msgstr ""
 
-#: ../src/gpcb-menu.res:422 ../src/pcb-menu.res:404
+#: ../src/gpcb-menu.res:422
+#: ../src/pcb-menu.res:404
 msgid "Shift-P"
 msgstr ""
 
-#: ../src/gpcb-menu.res:422 ../src/pcb-menu.res:404
+#: ../src/gpcb-menu.res:422
+#: ../src/pcb-menu.res:404
 msgid "Shift<Key>p"
 msgstr ""
 
-#: ../src/gpcb-menu.res:423 ../src/pcb-menu.res:405
+#: ../src/gpcb-menu.res:423
+#: ../src/pcb-menu.res:405
 msgid "ChangeSquare Object"
 msgstr ""
 
-#: ../src/gpcb-menu.res:423 ../src/pcb-menu.res:405
+#: ../src/gpcb-menu.res:423
+#: ../src/pcb-menu.res:405
 msgid "Q"
 msgstr ""
 
-#: ../src/gpcb-menu.res:423 ../src/pcb-menu.res:405
+#: ../src/gpcb-menu.res:423
+#: ../src/pcb-menu.res:405
 msgid "<Key>q"
 msgstr ""
 
-#: ../src/gpcb-menu.res:424 ../src/pcb-menu.res:406
+#: ../src/gpcb-menu.res:424
+#: ../src/pcb-menu.res:406
 #, fuzzy
 msgid "ChangeSize +"
 msgstr "Verandering"
 
-#: ../src/gpcb-menu.res:424 ../src/pcb-menu.res:406
+#: ../src/gpcb-menu.res:424
+#: ../src/pcb-menu.res:406
 msgid "S"
 msgstr ""
 
-#: ../src/gpcb-menu.res:424 ../src/pcb-menu.res:406
+#: ../src/gpcb-menu.res:424
+#: ../src/pcb-menu.res:406
 msgid "<Key>s"
 msgstr ""
 
-#: ../src/gpcb-menu.res:425 ../src/pcb-menu.res:407
+#: ../src/gpcb-menu.res:425
+#: ../src/pcb-menu.res:407
 #, fuzzy
 msgid "ChangeSize -"
 msgstr "Verandering"
 
-#: ../src/gpcb-menu.res:425 ../src/pcb-menu.res:407
+#: ../src/gpcb-menu.res:425
+#: ../src/pcb-menu.res:407
 msgid "Shift-S"
 msgstr ""
 
-#: ../src/gpcb-menu.res:425 ../src/pcb-menu.res:407
+#: ../src/gpcb-menu.res:425
+#: ../src/pcb-menu.res:407
 msgid "Shift<Key>s"
 msgstr ""
 
-#: ../src/gpcb-menu.res:426 ../src/pcb-menu.res:408
+#: ../src/gpcb-menu.res:426
+#: ../src/pcb-menu.res:408
 msgid "ChangeDrill +5 mil"
 msgstr ""
 
-#: ../src/gpcb-menu.res:426 ../src/pcb-menu.res:408
+#: ../src/gpcb-menu.res:426
+#: ../src/pcb-menu.res:408
 msgid "Alt-S"
 msgstr ""
 
-#: ../src/gpcb-menu.res:426 ../src/pcb-menu.res:408
+#: ../src/gpcb-menu.res:426
+#: ../src/pcb-menu.res:408
 msgid "Alt<Key>s"
 msgstr ""
 
-#: ../src/gpcb-menu.res:427 ../src/pcb-menu.res:409
+#: ../src/gpcb-menu.res:427
+#: ../src/pcb-menu.res:409
 msgid "ChangeDrill -5 mil"
 msgstr ""
 
-#: ../src/gpcb-menu.res:427 ../src/pcb-menu.res:409
+#: ../src/gpcb-menu.res:427
+#: ../src/pcb-menu.res:409
 msgid "Alt-Shift-S"
 msgstr ""
 
-#: ../src/gpcb-menu.res:427 ../src/pcb-menu.res:409
+#: ../src/gpcb-menu.res:427
+#: ../src/pcb-menu.res:409
 msgid "Alt Shift<Key>s"
 msgstr ""
 
-#: ../src/gpcb-menu.res:428 ../src/pcb-menu.res:410
+#: ../src/gpcb-menu.res:428
+#: ../src/pcb-menu.res:410
 msgid "Text Tool scale +10 mil"
 msgstr ""
 
-#: ../src/gpcb-menu.res:428 ../src/pcb-menu.res:410
+#: ../src/gpcb-menu.res:428
+#: ../src/pcb-menu.res:410
 msgid "T"
 msgstr ""
 
-#: ../src/gpcb-menu.res:428 ../src/pcb-menu.res:410
+#: ../src/gpcb-menu.res:428
+#: ../src/pcb-menu.res:410
 msgid "<Key>t"
 msgstr ""
 
-#: ../src/gpcb-menu.res:429 ../src/pcb-menu.res:411
+#: ../src/gpcb-menu.res:429
+#: ../src/pcb-menu.res:411
 msgid "Text Tool scale -10 mil"
 msgstr ""
 
-#: ../src/gpcb-menu.res:429 ../src/pcb-menu.res:411
+#: ../src/gpcb-menu.res:429
+#: ../src/pcb-menu.res:411
 msgid "Shift-T"
 msgstr ""
 
-#: ../src/gpcb-menu.res:429 ../src/pcb-menu.res:411
+#: ../src/gpcb-menu.res:429
+#: ../src/pcb-menu.res:411
 msgid "Shift<Key>t"
 msgstr ""
 
-#: ../src/gpcb-menu.res:430 ../src/pcb-menu.res:412
+#: ../src/gpcb-menu.res:430
+#: ../src/pcb-menu.res:412
 #, fuzzy
 msgid "Via Tool size +5 mil"
 msgstr "Via gatmaat:"
 
-#: ../src/gpcb-menu.res:430 ../src/pcb-menu.res:412
+#: ../src/gpcb-menu.res:430
+#: ../src/pcb-menu.res:412
 msgid "Shift-V"
 msgstr ""
 
-#: ../src/gpcb-menu.res:430 ../src/pcb-menu.res:412
+#: ../src/gpcb-menu.res:430
+#: ../src/pcb-menu.res:412
 msgid "Shift<Key>v"
 msgstr ""
 
-#: ../src/gpcb-menu.res:431 ../src/pcb-menu.res:413
+#: ../src/gpcb-menu.res:431
+#: ../src/pcb-menu.res:413
 #, fuzzy
 msgid "Via Tool size -5 mil"
 msgstr "Via gatmaat:"
 
-#: ../src/gpcb-menu.res:431 ../src/pcb-menu.res:413
+#: ../src/gpcb-menu.res:431
+#: ../src/pcb-menu.res:413
 msgid "Shift-Ctrl-V"
 msgstr ""
 
-#: ../src/gpcb-menu.res:431 ../src/pcb-menu.res:413
+#: ../src/gpcb-menu.res:431
+#: ../src/pcb-menu.res:413
 msgid "Shift Ctrl<Key>v"
 msgstr ""
 
-#: ../src/gpcb-menu.res:432 ../src/pcb-menu.res:414
+#: ../src/gpcb-menu.res:432
+#: ../src/pcb-menu.res:414
 msgid "Via Tool drill +5 mil"
 msgstr ""
 
-#: ../src/gpcb-menu.res:432 ../src/pcb-menu.res:414
+#: ../src/gpcb-menu.res:432
+#: ../src/pcb-menu.res:414
 msgid "Alt-V"
 msgstr ""
 
-#: ../src/gpcb-menu.res:432 ../src/pcb-menu.res:414
+#: ../src/gpcb-menu.res:432
+#: ../src/pcb-menu.res:414
 msgid "Alt<Key>v"
 msgstr ""
 
-#: ../src/gpcb-menu.res:433 ../src/pcb-menu.res:415
+#: ../src/gpcb-menu.res:433
+#: ../src/pcb-menu.res:415
 msgid "Via Tool drill -5 mil"
 msgstr ""
 
-#: ../src/gpcb-menu.res:433 ../src/pcb-menu.res:415
+#: ../src/gpcb-menu.res:433
+#: ../src/pcb-menu.res:415
 msgid "Alt-Shift-V"
 msgstr ""
 
-#: ../src/gpcb-menu.res:433 ../src/pcb-menu.res:415
+#: ../src/gpcb-menu.res:433
+#: ../src/pcb-menu.res:415
 msgid "Alt Shift<Key>v"
 msgstr ""
 
-#: ../src/gpcb-menu.res:434 ../src/pcb-menu.res:416
+#: ../src/gpcb-menu.res:434
+#: ../src/pcb-menu.res:416
 msgid "AddRats Selected"
 msgstr ""
 
-#: ../src/gpcb-menu.res:434 ../src/pcb-menu.res:416
+#: ../src/gpcb-menu.res:434
+#: ../src/pcb-menu.res:416
 msgid "Shift-W"
 msgstr ""
 
-#: ../src/gpcb-menu.res:434 ../src/pcb-menu.res:416
+#: ../src/gpcb-menu.res:434
+#: ../src/pcb-menu.res:416
 msgid "Shift<Key>w"
 msgstr ""
 
-#: ../src/gpcb-menu.res:435 ../src/pcb-menu.res:417
+#: ../src/gpcb-menu.res:435
+#: ../src/pcb-menu.res:417
 msgid "Add All Rats"
 msgstr ""
 
-#: ../src/gpcb-menu.res:435 ../src/pcb-menu.res:417
+#: ../src/gpcb-menu.res:435
+#: ../src/pcb-menu.res:417
 msgid "W"
 msgstr ""
 
-#: ../src/gpcb-menu.res:435 ../src/pcb-menu.res:417
+#: ../src/gpcb-menu.res:435
+#: ../src/pcb-menu.res:417
 msgid "<Key>w"
 msgstr ""
 
-#: ../src/gpcb-menu.res:436 ../src/pcb-menu.res:419
+#: ../src/gpcb-menu.res:436
+#: ../src/pcb-menu.res:419
 msgid "Cycle Clip"
 msgstr ""
 
-#: ../src/gpcb-menu.res:436 ../src/pcb-menu.res:419
+#: ../src/gpcb-menu.res:436
+#: ../src/pcb-menu.res:419
 msgid "/"
 msgstr ""
 
-#: ../src/gpcb-menu.res:436 ../src/pcb-menu.res:419
+#: ../src/gpcb-menu.res:436
+#: ../src/pcb-menu.res:419
 msgid "<Key>/"
 msgstr ""
 
@@ -3253,135 +3612,166 @@ msgstr ""
 msgid "Arrow Mode"
 msgstr ""
 
-#: ../src/gpcb-menu.res:437 ../src/pcb-menu.res:420
+#: ../src/gpcb-menu.res:437
+#: ../src/pcb-menu.res:420
 msgid "Space"
 msgstr ""
 
-#: ../src/gpcb-menu.res:437 ../src/pcb-menu.res:420
+#: ../src/gpcb-menu.res:437
+#: ../src/pcb-menu.res:420
 msgid "<Key>space"
 msgstr ""
 
-#: ../src/gpcb-menu.res:438 ../src/pcb-menu.res:421
+#: ../src/gpcb-menu.res:438
+#: ../src/pcb-menu.res:421
 msgid "Temp Arrow ON"
 msgstr ""
 
-#: ../src/gpcb-menu.res:438 ../src/pcb-menu.res:421
+#: ../src/gpcb-menu.res:438
+#: ../src/pcb-menu.res:421
 msgid "["
 msgstr ""
 
-#: ../src/gpcb-menu.res:438 ../src/pcb-menu.res:421
+#: ../src/gpcb-menu.res:438
+#: ../src/pcb-menu.res:421
 msgid "<Key>["
 msgstr ""
 
-#: ../src/gpcb-menu.res:439 ../src/pcb-menu.res:422
+#: ../src/gpcb-menu.res:439
+#: ../src/pcb-menu.res:422
 msgid "Temp Arrow OFF"
 msgstr ""
 
-#: ../src/gpcb-menu.res:439 ../src/pcb-menu.res:422
+#: ../src/gpcb-menu.res:439
+#: ../src/pcb-menu.res:422
 msgid "]"
 msgstr ""
 
-#: ../src/gpcb-menu.res:439 ../src/pcb-menu.res:422
+#: ../src/gpcb-menu.res:439
+#: ../src/pcb-menu.res:422
 msgid "<Key>]"
 msgstr ""
 
-#: ../src/gpcb-menu.res:441 ../src/pcb-menu.res:424
+#: ../src/gpcb-menu.res:441
+#: ../src/pcb-menu.res:424
 #, fuzzy
 msgid "Step Up"
 msgstr "Uithalen"
 
-#: ../src/gpcb-menu.res:445 ../src/pcb-menu.res:428
+#: ../src/gpcb-menu.res:445
+#: ../src/pcb-menu.res:428
 msgid "Up"
 msgstr ""
 
-#: ../src/gpcb-menu.res:441 ../src/pcb-menu.res:424
+#: ../src/gpcb-menu.res:441
+#: ../src/pcb-menu.res:424
 msgid "<Key>Up"
 msgstr ""
 
-#: ../src/gpcb-menu.res:442 ../src/pcb-menu.res:425
+#: ../src/gpcb-menu.res:442
+#: ../src/pcb-menu.res:425
 msgid "Step Down"
 msgstr ""
 
-#: ../src/gpcb-menu.res:446 ../src/pcb-menu.res:429
+#: ../src/gpcb-menu.res:446
+#: ../src/pcb-menu.res:429
 msgid "Down"
 msgstr ""
 
-#: ../src/gpcb-menu.res:442 ../src/pcb-menu.res:425
+#: ../src/gpcb-menu.res:442
+#: ../src/pcb-menu.res:425
 msgid "<Key>Down"
 msgstr ""
 
-#: ../src/gpcb-menu.res:443 ../src/pcb-menu.res:426
+#: ../src/gpcb-menu.res:443
+#: ../src/pcb-menu.res:426
 msgid "Step Left"
 msgstr ""
 
-#: ../src/gpcb-menu.res:447 ../src/pcb-menu.res:430
+#: ../src/gpcb-menu.res:447
+#: ../src/pcb-menu.res:430
 msgid "Left"
 msgstr ""
 
-#: ../src/gpcb-menu.res:443 ../src/pcb-menu.res:426
+#: ../src/gpcb-menu.res:443
+#: ../src/pcb-menu.res:426
 msgid "<Key>Left"
 msgstr ""
 
 # FIXME: this should be changed to "Length" if and when 3D geometrical GUIs, 3D-exporters, 3D-printers emerge or are used.
-#: ../src/gpcb-menu.res:444 ../src/pcb-menu.res:427
+#: ../src/gpcb-menu.res:444
+#: ../src/pcb-menu.res:427
 #, fuzzy
 msgid "Step Right"
 msgstr "Hoogte"
 
 # FIXME: this should be changed to "Length" if and when 3D geometrical GUIs, 3D-exporters, 3D-printers emerge or are used.
-#: ../src/gpcb-menu.res:448 ../src/pcb-menu.res:431
+#: ../src/gpcb-menu.res:448
+#: ../src/pcb-menu.res:431
 #, fuzzy
 msgid "Right"
 msgstr "Hoogte"
 
 # FIXME: this should be changed to "Length" if and when 3D geometrical GUIs, 3D-exporters, 3D-printers emerge or are used.
-#: ../src/gpcb-menu.res:444 ../src/pcb-menu.res:427
+#: ../src/gpcb-menu.res:444
+#: ../src/pcb-menu.res:427
 #, fuzzy
 msgid "<Key>Right"
 msgstr "Hoogte"
 
-#: ../src/gpcb-menu.res:445 ../src/pcb-menu.res:428
+#: ../src/gpcb-menu.res:445
+#: ../src/pcb-menu.res:428
 msgid "Step +Up"
 msgstr ""
 
-#: ../src/gpcb-menu.res:445 ../src/pcb-menu.res:428
+#: ../src/gpcb-menu.res:445
+#: ../src/pcb-menu.res:428
 msgid "Shift<Key>Up"
 msgstr ""
 
-#: ../src/gpcb-menu.res:446 ../src/pcb-menu.res:429
+#: ../src/gpcb-menu.res:446
+#: ../src/pcb-menu.res:429
 msgid "Step +Down"
 msgstr ""
 
-#: ../src/gpcb-menu.res:446 ../src/pcb-menu.res:429
+#: ../src/gpcb-menu.res:446
+#: ../src/pcb-menu.res:429
 msgid "Shift<Key>Down"
 msgstr ""
 
-#: ../src/gpcb-menu.res:447 ../src/pcb-menu.res:430
+#: ../src/gpcb-menu.res:447
+#: ../src/pcb-menu.res:430
 msgid "Step +Left"
 msgstr ""
 
-#: ../src/gpcb-menu.res:447 ../src/pcb-menu.res:430
+#: ../src/gpcb-menu.res:447
+#: ../src/pcb-menu.res:430
 msgid "Shift<Key>Left"
 msgstr ""
 
-#: ../src/gpcb-menu.res:448 ../src/pcb-menu.res:431
+#: ../src/gpcb-menu.res:448
+#: ../src/pcb-menu.res:431
 msgid "Step +Right"
 msgstr ""
 
-#: ../src/gpcb-menu.res:448 ../src/pcb-menu.res:431
+#: ../src/gpcb-menu.res:448
+#: ../src/pcb-menu.res:431
 msgid "Shift<Key>Right"
 msgstr ""
 
-#: ../src/gpcb-menu.res:449 ../src/pcb-menu.res:432
+#: ../src/gpcb-menu.res:449
+#: ../src/pcb-menu.res:432
 msgid "Click"
 msgstr ""
 
-#: ../src/gpcb-menu.res:449 ../src/pcb-menu.res:432
+#: ../src/gpcb-menu.res:449
+#: ../src/pcb-menu.res:432
 #, fuzzy
 msgid "Enter"
 msgstr "Voer tekst in:"
 
-#: ../src/gpcb-menu.res:449 ../src/pcb-menu.res:432
+#: ../src/gpcb-menu.res:449
+#: ../src/pcb-menu.res:432
 msgid "<Key>Enter"
 msgstr ""
 
@@ -3389,7 +3779,8 @@ msgstr ""
 msgid "Window"
 msgstr ""
 
-#: ../src/gpcb-menu.res:458 ../src/hid/gtk/gui-config.c:2221
+#: ../src/gpcb-menu.res:458
+#: ../src/hid/gtk/gui-config.c:2221
 #: ../src/pcb-menu.res:437
 msgid "Library"
 msgstr "Bibliotheek"
@@ -3402,7 +3793,8 @@ msgstr ""
 msgid "<Key>i"
 msgstr ""
 
-#: ../src/gpcb-menu.res:459 ../src/pcb-menu.res:438
+#: ../src/gpcb-menu.res:459
+#: ../src/pcb-menu.res:438
 msgid "Message Log"
 msgstr ""
 
@@ -3410,7 +3802,8 @@ msgstr ""
 msgid "DRC Check"
 msgstr ""
 
-#: ../src/gpcb-menu.res:461 ../src/pcb-menu.res:439
+#: ../src/gpcb-menu.res:461
+#: ../src/pcb-menu.res:439
 #, fuzzy
 msgid "Netlist"
 msgstr "PCB-netlijst"
@@ -3420,27 +3813,33 @@ msgstr "PCB-netlijst"
 msgid "Command Entry"
 msgstr "PCB-opdrachtinvoer"
 
-#: ../src/gpcb-menu.res:462 ../src/pcb-menu.res:185
+#: ../src/gpcb-menu.res:462
+#: ../src/pcb-menu.res:185
 msgid ":"
-msgstr ""
+msgstr ":"
 
-#: ../src/gpcb-menu.res:462 ../src/pcb-menu.res:185
+#: ../src/gpcb-menu.res:462
+#: ../src/pcb-menu.res:185
 msgid "<Key>:"
 msgstr ""
 
-#: ../src/gpcb-menu.res:463 ../src/pcb-menu.res:440
+#: ../src/gpcb-menu.res:463
+#: ../src/pcb-menu.res:440
 msgid "Pinout"
 msgstr ""
 
-#: ../src/gpcb-menu.res:463 ../src/pcb-menu.res:440
+#: ../src/gpcb-menu.res:463
+#: ../src/pcb-menu.res:440
 msgid "Shift-D"
 msgstr ""
 
-#: ../src/gpcb-menu.res:463 ../src/pcb-menu.res:440
+#: ../src/gpcb-menu.res:463
+#: ../src/pcb-menu.res:440
 msgid "Shift<Key>d"
 msgstr ""
 
-#: ../src/gpcb-menu.res:465 ../src/pcb-menu.res:32
+#: ../src/gpcb-menu.res:465
+#: ../src/pcb-menu.res:32
 msgid "About..."
 msgstr ""
 
@@ -3449,17 +3848,20 @@ msgstr ""
 msgid "Operations on selections"
 msgstr "Acties voor geselecteerde 'netnaam':"
 
-#: ../src/gpcb-menu.res:474 ../src/pcb-menu.res:226
+#: ../src/gpcb-menu.res:474
+#: ../src/pcb-menu.res:226
 #, fuzzy
 msgid "Unselect all objects"
 msgstr "Deselecteer alle objecten\n"
 
-#: ../src/gpcb-menu.res:476 ../src/pcb-menu.res:273
+#: ../src/gpcb-menu.res:476
+#: ../src/pcb-menu.res:273
 #, fuzzy
 msgid "Copy selection to buffer"
 msgstr "Laad element in buffer"
 
-#: ../src/gpcb-menu.res:482 ../src/pcb-menu.res:275
+#: ../src/gpcb-menu.res:482
+#: ../src/pcb-menu.res:275
 #, fuzzy
 msgid "Cut selection to buffer"
 msgstr "Laad element in buffer"
@@ -3477,182 +3879,226 @@ msgstr ""
 msgid "Operations on this location"
 msgstr "Klik op een locatie"
 
-#: ../src/gpcb-menu.res:498 ../src/pcb-menu.res:134
+#: ../src/gpcb-menu.res:498
+#: ../src/pcb-menu.res:134
 #, fuzzy
 msgid "Undo last operation"
 msgstr "Maak laatste handeling ongedaan\n"
 
-#: ../src/gpcb-menu.res:499 ../src/pcb-menu.res:135
+#: ../src/gpcb-menu.res:499
+#: ../src/pcb-menu.res:135
 #, fuzzy
 msgid "Redo last undone operation"
 msgstr "Herstel laatste ongedaan gemaakte handeling\n"
 
-#: ../src/gpcb-menu.res:502 ../src/pcb-menu.res:166
+#: ../src/gpcb-menu.res:502
+#: ../src/pcb-menu.res:166
 msgid "None"
 msgstr ""
 
-#: ../src/gpcb-menu.res:503 ../src/pcb-menu.res:167
+#: ../src/gpcb-menu.res:503
+#: ../src/pcb-menu.res:167
 msgid "Via"
 msgstr ""
 
-#: ../src/gpcb-menu.res:503 ../src/pcb-menu.res:167
+#: ../src/gpcb-menu.res:503
+#: ../src/pcb-menu.res:167
 msgid "F1"
 msgstr ""
 
-#: ../src/gpcb-menu.res:503 ../src/pcb-menu.res:167
+#: ../src/gpcb-menu.res:503
+#: ../src/pcb-menu.res:167
 msgid "<Key>F1"
 msgstr ""
 
-#: ../src/gpcb-menu.res:504 ../src/pcb-menu.res:168
+#: ../src/gpcb-menu.res:504
+#: ../src/pcb-menu.res:168
 #, fuzzy
 msgid "Line"
 msgstr "Lijnnaam:"
 
-#: ../src/gpcb-menu.res:504 ../src/pcb-menu.res:168
+#: ../src/gpcb-menu.res:504
+#: ../src/pcb-menu.res:168
 msgid "F2"
 msgstr ""
 
-#: ../src/gpcb-menu.res:504 ../src/pcb-menu.res:168
+#: ../src/gpcb-menu.res:504
+#: ../src/pcb-menu.res:168
 msgid "<Key>F2"
 msgstr ""
 
-#: ../src/gpcb-menu.res:505 ../src/pcb-menu.res:169
+#: ../src/gpcb-menu.res:505
+#: ../src/pcb-menu.res:169
 msgid "Arc"
 msgstr ""
 
-#: ../src/gpcb-menu.res:505 ../src/pcb-menu.res:169
+#: ../src/gpcb-menu.res:505
+#: ../src/pcb-menu.res:169
 msgid "F3"
 msgstr ""
 
-#: ../src/gpcb-menu.res:505 ../src/pcb-menu.res:169
+#: ../src/gpcb-menu.res:505
+#: ../src/pcb-menu.res:169
 msgid "<Key>F3"
 msgstr ""
 
-#: ../src/gpcb-menu.res:506 ../src/pcb-menu.res:170
+#: ../src/gpcb-menu.res:506
+#: ../src/pcb-menu.res:170
 msgid "F4"
 msgstr ""
 
-#: ../src/gpcb-menu.res:506 ../src/pcb-menu.res:170
+#: ../src/gpcb-menu.res:506
+#: ../src/pcb-menu.res:170
 msgid "<Key>F4"
 msgstr ""
 
-#: ../src/gpcb-menu.res:507 ../src/pcb-menu.res:171
+#: ../src/gpcb-menu.res:507
+#: ../src/pcb-menu.res:171
 msgid "Rectangle"
 msgstr ""
 
-#: ../src/gpcb-menu.res:507 ../src/pcb-menu.res:171
+#: ../src/gpcb-menu.res:507
+#: ../src/pcb-menu.res:171
 msgid "F5"
 msgstr ""
 
-#: ../src/gpcb-menu.res:507 ../src/pcb-menu.res:171
+#: ../src/gpcb-menu.res:507
+#: ../src/pcb-menu.res:171
 msgid "<Key>F5"
 msgstr ""
 
-#: ../src/gpcb-menu.res:508 ../src/pcb-menu.res:172
+#: ../src/gpcb-menu.res:508
+#: ../src/pcb-menu.res:172
 msgid "Polygon"
 msgstr ""
 
-#: ../src/gpcb-menu.res:508 ../src/pcb-menu.res:172
+#: ../src/gpcb-menu.res:508
+#: ../src/pcb-menu.res:172
 msgid "F6"
 msgstr ""
 
-#: ../src/gpcb-menu.res:508 ../src/pcb-menu.res:172
+#: ../src/gpcb-menu.res:508
+#: ../src/pcb-menu.res:172
 msgid "<Key>F6"
 msgstr ""
 
-#: ../src/gpcb-menu.res:509 ../src/pcb-menu.res:173
+#: ../src/gpcb-menu.res:509
+#: ../src/pcb-menu.res:173
 msgid "Polygon Hole"
 msgstr ""
 
-#: ../src/gpcb-menu.res:510 ../src/pcb-menu.res:174
+#: ../src/gpcb-menu.res:510
+#: ../src/pcb-menu.res:174
 msgid "F7"
 msgstr ""
 
-#: ../src/gpcb-menu.res:510 ../src/pcb-menu.res:174
+#: ../src/gpcb-menu.res:510
+#: ../src/pcb-menu.res:174
 msgid "<Key>F7"
 msgstr ""
 
-#: ../src/gpcb-menu.res:511 ../src/pcb-menu.res:175
+#: ../src/gpcb-menu.res:511
+#: ../src/pcb-menu.res:175
 msgid "F8"
 msgstr ""
 
-#: ../src/gpcb-menu.res:511 ../src/pcb-menu.res:175
+#: ../src/gpcb-menu.res:511
+#: ../src/pcb-menu.res:175
 msgid "<Key>F8"
 msgstr ""
 
-#: ../src/gpcb-menu.res:512 ../src/pcb-menu.res:176
+#: ../src/gpcb-menu.res:512
+#: ../src/pcb-menu.res:176
 msgid "Rotate"
 msgstr ""
 
-#: ../src/gpcb-menu.res:512 ../src/pcb-menu.res:176
+#: ../src/gpcb-menu.res:512
+#: ../src/pcb-menu.res:176
 msgid "F9"
 msgstr ""
 
-#: ../src/gpcb-menu.res:512 ../src/pcb-menu.res:176
+#: ../src/gpcb-menu.res:512
+#: ../src/pcb-menu.res:176
 msgid "<Key>F9"
 msgstr ""
 
-#: ../src/gpcb-menu.res:513 ../src/pcb-menu.res:177
+#: ../src/gpcb-menu.res:513
+#: ../src/pcb-menu.res:177
 msgid "Thermal"
 msgstr ""
 
-#: ../src/gpcb-menu.res:513 ../src/pcb-menu.res:177
+#: ../src/gpcb-menu.res:513
+#: ../src/pcb-menu.res:177
 msgid "F10"
 msgstr ""
 
-#: ../src/gpcb-menu.res:513 ../src/pcb-menu.res:177
+#: ../src/gpcb-menu.res:513
+#: ../src/pcb-menu.res:177
 msgid "<Key>F10"
 msgstr ""
 
-#: ../src/gpcb-menu.res:514 ../src/pcb-menu.res:420
+#: ../src/gpcb-menu.res:514
+#: ../src/pcb-menu.res:420
 msgid "Arrow"
 msgstr ""
 
-#: ../src/gpcb-menu.res:514 ../src/pcb-menu.res:178
+#: ../src/gpcb-menu.res:514
+#: ../src/pcb-menu.res:178
 msgid "F11"
 msgstr ""
 
-#: ../src/gpcb-menu.res:514 ../src/pcb-menu.res:178
+#: ../src/gpcb-menu.res:514
+#: ../src/pcb-menu.res:178
 msgid "<Key>F11"
 msgstr ""
 
-#: ../src/gpcb-menu.res:515 ../src/pcb-menu.res:179
+#: ../src/gpcb-menu.res:515
+#: ../src/pcb-menu.res:179
 msgid "Insert Point"
 msgstr ""
 
-#: ../src/gpcb-menu.res:515 ../src/pcb-menu.res:179
+#: ../src/gpcb-menu.res:515
+#: ../src/pcb-menu.res:179
 msgid "Insert"
 msgstr ""
 
-#: ../src/gpcb-menu.res:515 ../src/pcb-menu.res:179
+#: ../src/gpcb-menu.res:515
+#: ../src/pcb-menu.res:179
 msgid "<Key>Insert"
 msgstr ""
 
-#: ../src/gpcb-menu.res:516 ../src/pcb-menu.res:180
+#: ../src/gpcb-menu.res:516
+#: ../src/pcb-menu.res:180
 msgid "Move"
 msgstr ""
 
-#: ../src/gpcb-menu.res:517 ../src/pcb-menu.res:181
+#: ../src/gpcb-menu.res:517
+#: ../src/pcb-menu.res:181
 msgid "Copy"
 msgstr ""
 
-#: ../src/gpcb-menu.res:518 ../src/pcb-menu.res:182
+#: ../src/gpcb-menu.res:518
+#: ../src/pcb-menu.res:182
 msgid "Lock"
 msgstr ""
 
-#: ../src/gpcb-menu.res:518 ../src/pcb-menu.res:182
+#: ../src/gpcb-menu.res:518
+#: ../src/pcb-menu.res:182
 msgid "F12"
 msgstr ""
 
-#: ../src/gpcb-menu.res:518 ../src/pcb-menu.res:182
+#: ../src/gpcb-menu.res:518
+#: ../src/pcb-menu.res:182
 msgid "<Key>F12"
 msgstr ""
 
-#: ../src/gpcb-menu.res:519 ../src/pcb-menu.res:183
+#: ../src/gpcb-menu.res:519
+#: ../src/pcb-menu.res:183
 msgid "Esc"
 msgstr ""
 
-#: ../src/gpcb-menu.res:519 ../src/pcb-menu.res:183
+#: ../src/gpcb-menu.res:519
+#: ../src/pcb-menu.res:183
 msgid "<Key>Escape"
 msgstr ""
 
@@ -3698,8 +4144,7 @@ msgstr "Verander eenheden"
 
 #: ../src/hid/gtk/ghid-main-menu.c:119
 #, c-format
-msgid ""
-"Don't know how to parse \"%s\" as an accelerator in the menu resource file.\n"
+msgid "Don't know how to parse \"%s\" as an accelerator in the menu resource file.\n"
 msgstr "Kan \"%s\" niet parsen als een versneller in het menu-bronbestand.\n"
 
 #: ../src/hid/gtk/ghid-main-menu.c:125
@@ -3811,11 +4256,13 @@ msgstr "Verschillende zoomfactoren gewijzigd."
 msgid "ghid_calibrate() -- not implemented\n"
 msgstr "ghid_calibrate() -- niet geïmplementeerd\n"
 
-#: ../src/hid/gtk/gtkhid-main.c:586 ../src/hid/gtk/gui-dialog.c:167
+#: ../src/hid/gtk/gtkhid-main.c:586
+#: ../src/hid/gtk/gui-dialog.c:167
 msgid "_Cancel"
 msgstr "Afbreken"
 
-#: ../src/hid/gtk/gtkhid-main.c:587 ../src/hid/gtk/gui-dialog.c:171
+#: ../src/hid/gtk/gtkhid-main.c:587
+#: ../src/hid/gtk/gui-dialog.c:171
 msgid "_OK"
 msgstr "_OK"
 
@@ -3842,25 +4289,26 @@ msgid "LayerGroupsChanged -- not implemented\n"
 msgstr "LayerGroupsChanged -- niet geïmplementeerd\n"
 
 #. in case we have a dialog for loading a netlist file
-#: ../src/hid/gtk/gtkhid-main.c:1254 ../src/hid/gtk/gui-dialog.c:319
+#: ../src/hid/gtk/gtkhid-main.c:1254
+#: ../src/hid/gtk/gui-dialog.c:319
 #: ../src/pcb-menu.res:40
 msgid "Load netlist file"
 msgstr "Laad netlijstbestand"
 
-#: ../src/hid/gtk/gtkhid-main.c:1266 ../src/hid/gtk/gui-dialog.c:306
+#: ../src/hid/gtk/gtkhid-main.c:1266
+#: ../src/hid/gtk/gui-dialog.c:306
 msgid "Load layout file to buffer"
 msgstr "Laad layout-bestand naar buffer"
 
 #. in case we have a dialog for loading a layout file
-#: ../src/hid/gtk/gtkhid-main.c:1272 ../src/hid/gtk/gui-dialog.c:305
+#: ../src/hid/gtk/gtkhid-main.c:1272
+#: ../src/hid/gtk/gui-dialog.c:305
 msgid "Load layout file"
 msgstr "Laad layout-bestand"
 
 #: ../src/hid/gtk/gtkhid-main.c:1298
 msgid "Save layout and/or element data to a user-selected file."
-msgstr ""
-"Sla layout- en/of elementgegevens op naar een door de gebruiker geselecteerd "
-"bestand."
+msgstr "Sla layout- en/of elementgegevens op naar een door de gebruiker geselecteerd bestand."
 
 #: ../src/hid/gtk/gtkhid-main.c:1329
 msgid "Save element as"
@@ -3957,12 +4405,10 @@ msgstr ""
 
 #: ../src/hid/gtk/gtkhid-main.c:1933
 msgid ""
-"The gtk gui currently ignores the optional first argument to the Pan "
-"action.\n"
+"The gtk gui currently ignores the optional first argument to the Pan action.\n"
 "Feel free to provide patches.\n"
 msgstr ""
-"De huidige gtk-gui negeert de optionele eerste parameter van de "
-"verschuiving.\n"
+"De huidige gtk-gui negeert de optionele eerste parameter van de verschuiving.\n"
 "Het staat U vrij om verbeteringen aan te dragen.\n"
 
 #: ../src/hid/gtk/gtkhid-main.c:1947
@@ -3982,11 +4428,11 @@ msgstr "Het gespecificeerde popup-menu \"%s\" is niet gedefiniëerd.\n"
 
 #: ../src/hid/gtk/gtkhid-main.c:1989
 msgid "Asks user which schematics to import into PCB.\n"
-msgstr ""
-"Vraagt de gebruiker welke schema's in PCB geïmporteerd moeten worden.\n"
+msgstr "Vraagt de gebruiker welke schema's in PCB geïmporteerd moeten worden.\n"
 
 #. in case we have a dialog for loading schematic files
-#: ../src/hid/gtk/gtkhid-main.c:2012 ../src/hid/gtk/gui-dialog.c:402
+#: ../src/hid/gtk/gtkhid-main.c:2012
+#: ../src/hid/gtk/gui-dialog.c:402
 msgid "Load schematics"
 msgstr "Laad schema's"
 
@@ -4003,11 +4449,8 @@ msgid "Click on zoom focus"
 msgstr "Klik op zoom focus"
 
 #: ../src/hid/gtk/gui-command-window.c:75
-msgid ""
-"Common commands easily accessible via the gui may not be included here.\n"
-msgstr ""
-"Gemakkelijk bereikbare algemene opdrachten middels de gui zijn hier mogelijk "
-"niet beschikbaar.\n"
+msgid "Common commands easily accessible via the gui may not be included here.\n"
+msgstr "Gemakkelijk bereikbare algemene opdrachten middels de gui zijn hier mogelijk niet beschikbaar.\n"
 
 #: ../src/hid/gtk/gui-command-window.c:77
 msgid ""
@@ -4015,10 +4458,8 @@ msgid ""
 "if preceded by a '+' or '-'.  Where 'units' are indicated, use \n"
 "'mil' or 'mm' otherwise PCB internal units will be used.\n"
 msgstr ""
-"In de gebruikersopdrachten hieronder kunnen 'size' waarden absoluut of "
-"relatief zijn\n"
-"als deze voorzien zijn van een '+' of '-'.  Waar 'units' zijn aangegeven, "
-"gebruik \n"
+"In de gebruikersopdrachten hieronder kunnen 'size' waarden absoluut of relatief zijn\n"
+"als deze voorzien zijn van een '+' of '-'.  Waar 'units' zijn aangegeven, gebruik \n"
 "'mil' of 'mm' anders worden interne PCB-eenheden gebruikt.\n"
 
 #: ../src/hid/gtk/gui-command-window.c:91
@@ -4058,12 +4499,8 @@ msgstr ""
 
 #: ../src/hid/gtk/gui-command-window.c:132
 #, fuzzy
-msgid ""
-"\tLoad a vendor file.  If 'filename' is omitted, pop up a file select "
-"dialog.\n"
-msgstr ""
-"\tLaad een leveranciersbestand.  Als 'bestandnaam' is weggelaten, toon een "
-"selectievenster.\n"
+msgid "\tLoad a vendor file.  If 'filename' is omitted, pop up a file select dialog.\n"
+msgstr "\tLaad een leveranciersbestand.  Als 'bestandnaam' is weggelaten, toon een selectievenster.\n"
 
 #: ../src/hid/gtk/gui-command-window.c:313
 msgid "PCB Command Entry"
@@ -4185,20 +4622,24 @@ msgstr "Gebruik DRC-waarden als de standaard voor nieuwe layouts"
 msgid "Metric Increment Settings"
 msgstr ""
 
-#: ../src/hid/gtk/gui-config.c:1212 ../src/hid/gtk/gui-config.c:1233
+#: ../src/hid/gtk/gui-config.c:1212
+#: ../src/hid/gtk/gui-config.c:1233
 msgid "Grid:"
 msgstr ""
 
-#: ../src/hid/gtk/gui-config.c:1213 ../src/hid/gtk/gui-config.c:1234
+#: ../src/hid/gtk/gui-config.c:1213
+#: ../src/hid/gtk/gui-config.c:1234
 msgid "For 'g' and '<shift>g' grid change actions"
 msgstr "Voor 'g' en '<shift>g' rasterwijzigingen"
 
-#: ../src/hid/gtk/gui-config.c:1214 ../src/hid/gtk/gui-config.c:1235
+#: ../src/hid/gtk/gui-config.c:1214
+#: ../src/hid/gtk/gui-config.c:1235
 #, fuzzy
 msgid "Size:"
 msgstr "Afmetingen"
 
-#: ../src/hid/gtk/gui-config.c:1215 ../src/hid/gtk/gui-config.c:1236
+#: ../src/hid/gtk/gui-config.c:1215
+#: ../src/hid/gtk/gui-config.c:1236
 msgid ""
 "For 's' and '<shift>s' size change actions on lines,\n"
 "pads, pins and text.\n"
@@ -4208,22 +4649,25 @@ msgstr ""
 "pads, pennen en tekst.\n"
 "Gebruik '<ctrl>s' en '<shift><ctrl>s' voor boorgaten."
 
-#: ../src/hid/gtk/gui-config.c:1218 ../src/hid/gtk/gui-config.c:1239
+#: ../src/hid/gtk/gui-config.c:1218
+#: ../src/hid/gtk/gui-config.c:1239
 #, fuzzy
 msgid "Line:"
 msgstr "Lijnnaam:"
 
-#: ../src/hid/gtk/gui-config.c:1219 ../src/hid/gtk/gui-config.c:1240
+#: ../src/hid/gtk/gui-config.c:1219
+#: ../src/hid/gtk/gui-config.c:1240
 msgid "For 'l' and '<shift>l' routing line width change actions"
-msgstr ""
-"Voor 'l' en '<shift>l' wijzigingsacties voor de breedte van routing-lijnen"
+msgstr "Voor 'l' en '<shift>l' wijzigingsacties voor de breedte van routing-lijnen"
 
-#: ../src/hid/gtk/gui-config.c:1220 ../src/hid/gtk/gui-config.c:1241
+#: ../src/hid/gtk/gui-config.c:1220
+#: ../src/hid/gtk/gui-config.c:1241
 #, fuzzy
 msgid "Clear:"
 msgstr "Vrijloop:"
 
-#: ../src/hid/gtk/gui-config.c:1221 ../src/hid/gtk/gui-config.c:1242
+#: ../src/hid/gtk/gui-config.c:1221
+#: ../src/hid/gtk/gui-config.c:1242
 msgid ""
 "For 'k' and '<shift>k' line clearance inside polygon size\n"
 "change actions"
@@ -4462,9 +4906,7 @@ msgstr "Geselecteerde kleuren"
 
 #: ../src/hid/gtk/gui-config.c:2023
 msgid "<b>Warning:</b> unsaved color changes will be lost at program exit."
-msgstr ""
-"<b>Waarschuwing:</b> niet opgeslagen kleurveranderingen zullen verloren gaan "
-"bij programma-einde."
+msgstr "<b>Waarschuwing:</b> niet opgeslagen kleurveranderingen zullen verloren gaan bij programma-einde."
 
 #: ../src/hid/gtk/gui-config.c:2038
 msgid "Load"
@@ -4527,8 +4969,7 @@ msgstr "Veranderingen opslaan naar layout \"%s\" voor het afsluiten?"
 
 #: ../src/hid/gtk/gui-dialog.c:219
 msgid "If you don't save, all your changes will be permanently lost."
-msgstr ""
-"Als je niet opslaat, zullen alle veranderingen permanent verloren gaan."
+msgstr "Als je niet opslaat, zullen alle veranderingen permanent verloren gaan."
 
 #: ../src/hid/gtk/gui-dialog.c:229
 msgid "Close _without saving"
@@ -4560,9 +5001,7 @@ msgstr "Kan geen geschikte export-HID vinden"
 #: ../src/hid/gtk/gui-drc-window.c:135
 #, c-format
 msgid "Object ID %i identified during DRC was not found. Stale DRC window?\n"
-msgstr ""
-"Object ID %i geïdentificeerd tijdens DRC was niet gevonden. Verlopen DRC-"
-"venster?\n"
+msgstr "Object ID %i geïdentificeerd tijdens DRC was niet gevonden. Verlopen DRC-venster?\n"
 
 #: ../src/hid/gtk/gui-drc-window.c:538
 msgid ""
@@ -4626,8 +5065,7 @@ msgstr "Verplaats element naar tegenovergestelde zijde van het bord\n"
 
 #: ../src/hid/gtk/gui-keyref-window.c:61
 msgid "Flip selected objects to opposite side of the board\n"
-msgstr ""
-"Verplaats geselecteerde objecten naar tegenovergestelde zijde van het bord\n"
+msgstr "Verplaats geselecteerde objecten naar tegenovergestelde zijde van het bord\n"
 
 #: ../src/hid/gtk/gui-keyref-window.c:65
 msgid "Copy selected to buffer and unselect\n"
@@ -4685,14 +5123,11 @@ msgstr "Schakel de gat-vlag om van het object onder de aanwijzer\n"
 
 #: ../src/hid/gtk/gui-keyref-window.c:106
 msgid "Toggle line/arc should clear polygons flag of object under cursor\n"
-msgstr ""
-"Omschakelen lijn/boog zou de polygoon-vlag moeten wissen van het object "
-"onder de aanwijzer\n"
+msgstr "Omschakelen lijn/boog zou de polygoon-vlag moeten wissen van het object onder de aanwijzer\n"
 
 #: ../src/hid/gtk/gui-keyref-window.c:109
 msgid "Toggle line/arc should clear polygons flag of selected\n"
-msgstr ""
-"Omschakelen lijn/boog zou de polygoon-vlag moeten wissen van de selectie\n"
+msgstr "Omschakelen lijn/boog zou de polygoon-vlag moeten wissen van de selectie\n"
 
 # FIXME: original string has room for improvement.
 # "Increase clearance of object by configured value\n"
@@ -4710,15 +5145,13 @@ msgstr "Verklein vrijloop met de ingestelde waarde\n"
 # "Increase clearance of selected objects by configured value\n"
 #: ../src/hid/gtk/gui-keyref-window.c:119
 msgid "Increase clearance of selected objects by configured clearance\n"
-msgstr ""
-"Vergroot vrijloop van geselecteerde objecten met de ingestelde waarde\n"
+msgstr "Vergroot vrijloop van geselecteerde objecten met de ingestelde waarde\n"
 
 # FIXME: original string has room for improvement.
 # "Decrease clearance of selected objects by configured value\n"
 #: ../src/hid/gtk/gui-keyref-window.c:122
 msgid "Decrease clearance of selected objects by configured clearance\n"
-msgstr ""
-"Verklein vrijloop van geselecteerde objecten met de ingestelde waarde\n"
+msgstr "Verklein vrijloop van geselecteerde objecten met de ingestelde waarde\n"
 
 #: ../src/hid/gtk/gui-keyref-window.c:126
 msgid "Increment current route style line size by configured line increment\n"
@@ -4794,18 +5227,13 @@ msgid "Decrement drill size of a pin or via\n"
 msgstr "Verklein de boordiameter van een pen of via\n"
 
 #: ../src/hid/gtk/gui-keyref-window.c:183
-msgid ""
-"Adjust text scale so new text increases by the configured size increment\n"
-msgstr ""
-"Stel tekstschaal bij om nieuwe tekst te vergroten met de ingestelde waarde\n"
+msgid "Adjust text scale so new text increases by the configured size increment\n"
+msgstr "Stel tekstschaal bij om nieuwe tekst te vergroten met de ingestelde waarde\n"
 
 # increment is to be replaced with decrement
 #: ../src/hid/gtk/gui-keyref-window.c:185
-msgid ""
-"Adjust text scale so new text decreases by the configured size increment\n"
-msgstr ""
-"Stel tekstschaal bij om nieuwe tekst te verkleinen met de ingestelde grootte "
-"verhoging\n"
+msgid "Adjust text scale so new text decreases by the configured size increment\n"
+msgstr "Stel tekstschaal bij om nieuwe tekst te verkleinen met de ingestelde grootte verhoging\n"
 
 #: ../src/hid/gtk/gui-keyref-window.c:189
 msgid "Undo last operation\n"
@@ -4961,8 +5389,7 @@ msgid ""
 "\tWhile drawing or moving, a click without a drag toggles auto pan mode.\n"
 msgstr ""
 "\tDruk en sleep om te schuiven.\n"
-"\tTijdens tekenen of verplaatsen, een klik zonder slepen schakelt "
-"autoschuifmodus.\n"
+"\tTijdens tekenen of verplaatsen, een klik zonder slepen schakelt autoschuifmodus.\n"
 
 #: ../src/hid/gtk/gui-keyref-window.c:286
 msgid " - Popup a menu.\n"
@@ -5001,14 +5428,10 @@ msgid ""
 "\tto manually pan.  Mouse moving or drawing may also be combined with\n"
 "\tkey actions.\n"
 msgstr ""
-"tMuisacties kunnen worden gecombineerd.  Bijvoorbeeld: tijdens het "
-"verplaatsen\n"
-"\tvan een object (met links of midden ingedrukt en slepen), kan met de "
-"rechterknop \n"
-"\ttegelijk geklikt worden om te schakelen tussen automatisch verschuivenplus "
-"slepen\n"
-"\ten handmatig schuiven.  Verplaatsen of tekenen met de muis kan ook "
-"gecombineerd worden met\n"
+"tMuisacties kunnen worden gecombineerd.  Bijvoorbeeld: tijdens het verplaatsen\n"
+"\tvan een object (met links of midden ingedrukt en slepen), kan met de rechterknop \n"
+"\ttegelijk geklikt worden om te schakelen tussen automatisch verschuivenplus slepen\n"
+"\ten handmatig schuiven.  Verplaatsen of tekenen met de muis kan ook gecombineerd worden met\n"
 "\ttoetsacties.\n"
 
 #: ../src/hid/gtk/gui-keyref-window.c:353
@@ -5047,12 +5470,8 @@ msgid "PCB Log"
 msgstr "PCB-log"
 
 #: ../src/hid/gtk/gui-misc.c:406
-msgid ""
-"%m+<b>view</b>=%s  <b>grid</b>=%$mS  %s%s  <b>line</b>=%mS  <b>via</b>=%mS "
-"(%mS)  %s<b>clearance</b>=%mS  <b>text</b>=%i%%  <b>buffer</b>=#%i"
-msgstr ""
-"%m+<b>zichtvenster</b>=%s  <b>raster</b>=%$mS %s%s  <b>lijn</b>=%mS  <b>via</"
-"b>=%mS (%mS)  %s<b>vrijloop</b>=%mS  <b>tekst</b>=%i%%  <b>buffer</b>=#%i"
+msgid "%m+<b>view</b>=%s  <b>grid</b>=%$mS  %s%s  <b>line</b>=%mS  <b>via</b>=%mS (%mS)  %s<b>clearance</b>=%mS  <b>text</b>=%i%%  <b>buffer</b>=#%i"
+msgstr "%m+<b>zichtvenster</b>=%s  <b>raster</b>=%$mS %s%s  <b>lijn</b>=%mS  <b>via</b>=%mS (%mS)  %s<b>vrijloop</b>=%mS  <b>tekst</b>=%i%%  <b>buffer</b>=#%i"
 
 #: ../src/hid/gtk/gui-misc.c:415
 msgctxt "status"
@@ -5282,9 +5701,7 @@ msgid "thermal"
 msgstr ""
 
 #: ../src/hid/gtk/gui-top-window.c:976
-msgid ""
-"create thermals with <select mouse button>, toggle thermal style with "
-"<Shift> <select mouse button>"
+msgid "create thermals with <select mouse button>, toggle thermal style with <Shift> <select mouse button>"
 msgstr ""
 
 #: ../src/hid/gtk/gui-top-window.c:977
@@ -5455,7 +5872,8 @@ msgstr ""
 #. @noindent In addition, all @ref{Postscript Export} options are valid.
 #. %end-doc
 #.
-#: ../src/hid/lpr/lpr.c:41 ../src/hid/ps/ps.c:1346
+#: ../src/hid/lpr/lpr.c:41
+#: ../src/hid/ps/ps.c:1346
 #, fuzzy
 msgid "lprcommand"
 msgstr "Voer opdracht in:"
@@ -5859,9 +6277,7 @@ msgstr ""
 
 #: ../src/misc.c:1527
 #, c-format
-msgid ""
-"Also: component, solder, rats, invisible, pins, vias, elements or silk, "
-"mask, solderside.\n"
+msgid "Also: component, solder, rats, invisible, pins, vias, elements or silk, mask, solderside.\n"
 msgstr ""
 
 #: ../src/misc.c:1600
@@ -5916,19 +6332,25 @@ msgstr ""
 msgid "Printers:\n"
 msgstr ""
 
-#: ../src/netlist.c:447 ../src/report.c:841 ../src/select.c:845
+#: ../src/netlist.c:447
+#: ../src/report.c:841
+#: ../src/select.c:845
 #: ../src/vendor.c:896
 #, c-format
 msgid "regexp error: %s\n"
 msgstr "regexp fout: %s\n"
 
-#: ../src/netlist.c:455 ../src/report.c:849 ../src/select.c:857
+#: ../src/netlist.c:455
+#: ../src/report.c:849
+#: ../src/select.c:857
 #: ../src/vendor.c:916
 #, c-format
 msgid "re_comp error: %s\n"
 msgstr "re_comp fout: %s\n"
 
-#: ../src/parse_y.y:169 ../src/parse_y.y:253 ../src/parse_y.y:276
+#: ../src/parse_y.y:169
+#: ../src/parse_y.y:253
+#: ../src/parse_y.y:276
 msgid "illegal fileformat\n"
 msgstr ""
 
@@ -5940,7 +6362,8 @@ msgstr ""
 msgid "illegal layer-group string\n"
 msgstr ""
 
-#: ../src/parse_y.y:679 ../src/parse_y.y:687
+#: ../src/parse_y.y:679
+#: ../src/parse_y.y:687
 msgid "illegal route-style string\n"
 msgstr ""
 
@@ -6251,15 +6674,15 @@ msgstr "Kan %s pen %s aangeroepen in netlijst niet vinden.\n"
 #: ../src/rats.c:276
 #, c-format
 msgid "Error! Element %s pin %s appears multiple times in the netlist file.\n"
-msgstr ""
-"Fout! Element %s pen %s komt meerdere keren voor in het netlijstbestand.\n"
+msgstr "Fout! Element %s pen %s komt meerdere keren voor in het netlijstbestand.\n"
 
 #: ../src/rats.c:373
 #, c-format
 msgid "Warning! Net \"%s\" is shorted to %s pin %s\n"
 msgstr "Waarschuwing! Net \"%s\" is kortgesloten met %s pen %s\n"
 
-#: ../src/rats.c:394 ../src/rats.c:430
+#: ../src/rats.c:394
+#: ../src/rats.c:430
 #, c-format
 msgid "Warning! Net \"%s\" is shorted to net \"%s\"\n"
 msgstr "Waarschuwing! Net \"%s\" is kortgesloten met net \"%s\"\n"
@@ -6287,7 +6710,8 @@ msgstr ""
 "ofwel ratlijnen in de layout, uitgeschakelde netten\n"
 "in de netlijst, of ontbrekende componenten\n"
 
-#: ../src/rats.c:915 ../src/rats.c:934
+#: ../src/rats.c:915
+#: ../src/rats.c:934
 msgid "No pad/pin under rat line\n"
 msgstr "Geen pad/pen onder ratlijn\n"
 
@@ -6333,9 +6757,15 @@ msgid ""
 "Name = \"%s\".%s"
 msgstr ""
 
-#: ../src/report.c:172 ../src/report.c:190 ../src/report.c:221
-#: ../src/report.c:241 ../src/report.c:269 ../src/report.c:327
-#: ../src/report.c:355 ../src/report.c:405 ../src/report.c:439
+#: ../src/report.c:172
+#: ../src/report.c:190
+#: ../src/report.c:221
+#: ../src/report.c:241
+#: ../src/report.c:269
+#: ../src/report.c:327
+#: ../src/report.c:355
+#: ../src/report.c:405
+#: ../src/report.c:439
 #: ../src/report.c:480
 msgid "It is LOCKED.\n"
 msgstr ""
@@ -6431,12 +6861,14 @@ msgid ""
 "%s"
 msgstr ""
 
-#: ../src/report.c:404 ../src/report.c:438
+#: ../src/report.c:404
+#: ../src/report.c:438
 #, fuzzy
 msgid "solder (bottom)"
 msgstr "soldeermasker"
 
-#: ../src/report.c:404 ../src/report.c:438
+#: ../src/report.c:404
+#: ../src/report.c:438
 msgid "component"
 msgstr "component"
 
@@ -6509,7 +6941,8 @@ msgid "Nothing found to report on\n"
 msgstr "Niets gevonden om te rapporteren\n"
 
 #. create dialog box
-#: ../src/report.c:511 ../src/report.c:553
+#: ../src/report.c:511
+#: ../src/report.c:553
 msgid "Report"
 msgstr ""
 
@@ -6517,12 +6950,15 @@ msgstr ""
 msgid "The following pins/pads are FOUND:\n"
 msgstr ""
 
-#: ../src/report.c:531 ../src/report.c:543
+#: ../src/report.c:531
+#: ../src/report.c:543
 #, c-format
 msgid "%s-%s,%c"
 msgstr ""
 
-#: ../src/report.c:683 ../src/report.c:784 ../src/report.c:937
+#: ../src/report.c:683
+#: ../src/report.c:784
+#: ../src/report.c:937
 msgid "%$m*"
 msgstr ""
 
@@ -6536,16 +6972,19 @@ msgstr ""
 msgid "No net under cursor.\n"
 msgstr "Verplaats de aanwijzer."
 
-#: ../src/report.c:736 ../src/report.c:761
+#: ../src/report.c:736
+#: ../src/report.c:761
 msgid "-"
 msgstr ""
 
-#: ../src/report.c:786 ../src/report.c:939
+#: ../src/report.c:786
+#: ../src/report.c:939
 #, c-format
 msgid "Net \"%s\" length: %s\n"
 msgstr ""
 
-#: ../src/report.c:788 ../src/report.c:941
+#: ../src/report.c:788
+#: ../src/report.c:941
 #, c-format
 msgid "Net length: %s\n"
 msgstr ""
@@ -6571,10 +7010,10 @@ msgstr ""
 msgid "Produce various report."
 msgstr ""
 
-#: ../src/report.c:993 ../src/report.c:1014
-#, fuzzy
+#: ../src/report.c:993
+#: ../src/report.c:1014
 msgid "Click on an object"
-msgstr "Klik op een verbinding"
+msgstr "Klik op een object"
 
 #: ../src/set.c:261
 msgid "That mode is NOT allowed when drawing ratlines!\n"
@@ -6586,9 +7025,9 @@ msgid "Can't use SmartDisperse because no netlist is loaded.\n"
 msgstr "Kan geen ratlijnen toevogen omdat er geen netlijst geladen is.\n"
 
 #: ../src/toporouter.c:1121
-#, fuzzy, c-format
+#, c-format
 msgid "Elapsed time: %.2f seconds\n"
-msgstr "Verstreken tijd: %d.%02d seconden\n"
+msgstr "Verstreken tijd: %.2f seconden\n"
 
 #: ../src/toporouter.c:6503
 msgid ""
@@ -6602,7 +7041,8 @@ msgstr ""
 #. *     have to cast to Coord, which might overflow for complex routing when
 #. *     PCB is built with Coord as a 32-bit integer.
 #.
-#: ../src/toporouter.c:6508 ../src/toporouter.c:6509
+#: ../src/toporouter.c:6508
+#: ../src/toporouter.c:6509
 #, c-format
 msgid "Wiring cost: %f inches\n"
 msgstr "Bedradingkosten: %f inches\n"
@@ -6621,7 +7061,8 @@ msgstr "nog %d netten over\n"
 msgid "%d -> "
 msgstr "%d -> "
 
-#: ../src/toporouter.c:7489 ../src/toporouter.c:7490
+#: ../src/toporouter.c:7489
+#: ../src/toporouter.c:7490
 #, c-format
 msgid "RUBIX router: %d nets remaining\n"
 msgstr "RUBIX router: nog %d netten over\n"
@@ -6653,14 +7094,12 @@ msgid "Escape()"
 msgstr ""
 
 #: ../src/toporouter.c:7750
-#, fuzzy
 msgid "Select net(s)"
-msgstr "Selecteer een Object"
+msgstr "Selecteer net(ten)"
 
 #: ../src/toporouter.c:7751
-#, fuzzy
 msgid "Topological autorouter"
-msgstr "Topologische Autorouter\n"
+msgstr "Topologische Autorouter"
 
 #: ../src/toporouter.c:7751
 msgid "Toporouter()"
@@ -6695,9 +7134,7 @@ msgstr "Herstel laatste ongedaan gemaakte handeling\n"
 
 #: ../src/undo.c:1119
 msgid "Nothing to redo. Perhaps changes have been made since last undo\n"
-msgstr ""
-"Niets te herdoen. Misschien zijn er veranderingen sinds de laatste "
-"ongedaanmaking\n"
+msgstr "Niets te herdoen. Misschien zijn er veranderingen sinds de laatste ongedaanmaking\n"
 
 #: ../src/undo.c:1127
 #, c-format
@@ -6712,9 +7149,7 @@ msgid "ERROR: Failed to redo some operations\n"
 msgstr "Herstel laatste ongedaan gemaakte handeling\n"
 
 #: ../src/undo.c:1174
-msgid ""
-"ERROR: Operations were added to the Undo stack with an incorrect serial "
-"number\n"
+msgid "ERROR: Operations were added to the Undo stack with an incorrect serial number\n"
 msgstr ""
 
 #. ************************************************************
@@ -6768,9 +7203,8 @@ msgid "LoadVendorFrom(filename)"
 msgstr ""
 
 #: ../src/vendor.c:248
-#, fuzzy
 msgid "Loads the specified vendor resource file."
-msgstr "Laad leverancier-bronbestand..."
+msgstr "Laad het gespecificeerde leverancier bronbestand."
 
 #: ../src/vendor.c:281
 msgid "Load Vendor Resource File..."
@@ -6796,20 +7230,19 @@ msgstr "Kan leverancier-bronbestand \"%s\" niet laden\n"
 #: ../src/vendor.c:342
 #, fuzzy, c-format
 msgid "\"%s\" is not a supported units.  Defaulting to inch\n"
-msgstr ""
-"\"%s\" is geen geldig afrondingstype.  Er wordt standaard omhoog afgrond\n"
+msgstr "\"%s\" is geen geldig afrondingstype.  Er wordt standaard omhoog afgrond\n"
 
 #: ../src/vendor.c:355
 msgid "No drillmap resource found\n"
 msgstr "Geen bron voor de boorindeling gevonden\n"
 
 #: ../src/vendor.c:372
-#, fuzzy, c-format
+#, c-format
 msgid "\"%s\" is not a valid rounding type. Defaulting to up\n"
-msgstr ""
-"\"%s\" is geen geldig afrondingstype.  Er wordt standaard omhoog afgrond\n"
+msgstr "\"%s\" is geen geldig afrondingstype.  Er wordt standaard omhoog afgrond\n"
 
-#: ../src/vendor.c:404 ../src/vendor.c:420
+#: ../src/vendor.c:404
+#: ../src/vendor.c:420
 #, c-format
 msgid "Set DRC minimum copper spacing to %.2f mils\n"
 msgstr "Stel DRC minimum koper-tussenruimte op %.2f mils in\n"
@@ -6843,11 +7276,10 @@ msgstr "Laadde %d leverancier boren van %s\n"
 #: ../src/vendor.c:449
 #, c-format
 msgid "Loaded %d RefDes skips, %d Value skips, %d Descr skips\n"
-msgstr ""
-"Laadde %d RefDes overgeslagen, %d Value overgeslagen, %d Descr overgeslagen\n"
+msgstr "Laadde %d RefDes overgeslagen, %d Value overgeslagen, %d Descr overgeslagen\n"
 
 #: ../src/vendor.c:494
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Via at %.2f, %.2f not changed. Possible reasons:\n"
 "\t- pad size too small\n"
@@ -6931,8 +7363,7 @@ msgstr "Genegeerd brontype = %d in skips= sectie\n"
 #: ../src/vendor.c:828
 #, c-format
 msgid "Vendor mapping skipped because refdes = %s matches %s\n"
-msgstr ""
-"Leverancierindeling overgeslagen omdat refdes = %s overeenkomt met %s\n"
+msgstr "Leverancierindeling overgeslagen omdat refdes = %s overeenkomt met %s\n"
 
 #: ../src/vendor.c:840
 #, c-format
@@ -6950,9 +7381,8 @@ msgid "Vendor mapping skipped because element %s is locked\n"
 msgstr "Leverancierindeling overgeslagen omdat element %s op slot is\n"
 
 #: ../src/vendor.c:933
-#, fuzzy
 msgid "re_exec error\n"
-msgstr "regexp fout: %s\n"
+msgstr "re_exec fout\n"
 
 #~ msgid ""
 #~ "Process specifications dictate a minimum silkscreen feature-width\n"
