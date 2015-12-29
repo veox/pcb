@@ -49,12 +49,18 @@ FlagType string_to_pcbflags (const char *flagstring,
 char *pcbflags_to_string (FlagType flags);
 
 /* If any flags not supported for Type are found in flags, clear them and call
- * log_error as appropriate.  See the object_flagbits and pcb_flagbits
- * definitions in strflags.c for the tables specifying which flags are
- * supported where.  */
+ * log_error as appropriate.  See the object_flagbits definitions in strflags.c
+ * for the table specifying which flags are supported where.  */
 void
-clear_any_invalid_flags_and_log_errors (
+clear_invalid_object_flags_and_log_errors (
     int Type,
+    FlagType *flags,
+    int (*log_error) (char const *msg) );
+
+/* Clear any invalid global flags.  In practice this does nothing at the
+ * moment, see the comments in strflags.c for details.  */
+void
+clear_invalid_pcb_flags_and_log_errors (
     FlagType *flags,
     int (*log_error) (char const *msg) );
 

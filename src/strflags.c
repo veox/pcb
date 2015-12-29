@@ -597,7 +597,7 @@ void clear_invalid_flags_and_log_errors (
 }
 
 void
-clear_any_invalid_flags_and_log_errors (
+clear_invalid_object_flags_and_log_errors (
     int Type,
     FlagType *flags,
     int (*log_error) (char const *msg) )
@@ -608,10 +608,25 @@ clear_any_invalid_flags_and_log_errors (
       Type,
       flags,
       log_error );
+}
+
+void
+clear_invalid_pcb_flags_and_log_errors (
+    FlagType *flags,
+    int (*log_error) (char const *msg) )
+{
+  // This function is effectively a a no-op at the moment, because global
+  // flags don't have an associated type so are never invalid for that reason,
+  // and an earlier parse stage already catches (and ignores) unknown flags.
+  // It's here for explanatory symmetry, and as a place-holder in case any
+  // inter-flag crosschecks should prove desirable.
+
+  // Note: ALL_TYPES is passed here for implementation reasons.  In reality
+  // global flags aren't associated with objects of any particular type.
   clear_invalid_flags_and_log_errors (
       pcb_flagbits,
       ENTRIES (pcb_flagbits),
-      Type,
+      ALL_TYPES,
       flags,
       log_error );
 }

@@ -1049,7 +1049,7 @@ arc_hi_format
                           else {
                             // FIXME: other types besides Arc should check
                             // flags
-                            clear_any_invalid_flags_and_log_errors (
+                            clear_invalid_object_flags_and_log_errors (
                                 ARC_TYPE, &($11), yyerror );
                             CreateNewArcOnLayer (
                                   Layer, NU ($3), NU ($4), NU ($5), NU ($6),
