@@ -97,6 +97,25 @@ static int integer_value (PLMeasure m);
 static Coord old_units (PLMeasure m);
 static Coord new_units (PLMeasure m);
 
+// The flag names most recently found in execution of the most recent flags
+// rule recipe are stored here.
+static char **flag_names = NULL;
+
+// This is used from rules that correspond to objects that accept flags.
+// It checks that the current flag_names are valid for the given object_type,
+// then frees and NULLifies the list of names so the provider can tell it's
+// been consumed.
+#define DO_INVALID_FLAG_WARNING_STUFF(object_type, flags)         \
+  do {                                                            \
+    assert (flag_names != NULL);                                  \
+    ensure_flags_set_for_flag_names (                             \
+        (char const *const*) flag_names, flags );                 \
+    warn_about_invalid_object_flags (                             \
+        object_type, (char const *const *) flag_names, yyerror ); \
+    free_null_terminated_string_list (flag_names);                \
+    flag_names = NULL;                                            \
+  } while ( 0 )
+
 #define YYDEBUG 1
 #define YYERROR_VERBOSE 1
 
@@ -1035,6 +1054,8 @@ arc_hi_format
                           // message is seen no matter how wide the window,
                           // so error message can't be cut off at confusing
                           // spots
+
+                          DO_INVALID_FLAG_WARNING_STUFF (ARC_TYPE, $11);
                           
                           if ( NU ($5) != NU ($6) ) {
                             yyerror (
@@ -1047,10 +1068,6 @@ arc_hi_format
                               "not allowed, skipping this arc" );
                           }
                           else {
-                            // FIXME: other types besides Arc should check
-                            // flags
-                            clear_invalid_object_flags_and_log_errors (
-                                ARC_TYPE, &($11), yyerror );
                             CreateNewArcOnLayer (
                                   Layer, NU ($3), NU ($4), NU ($5), NU ($6),
                                   $9, $10, NU ($7), NU ($8), $11 );
@@ -1136,13 +1153,8 @@ text_hi_format
 			/* x, y, direction, scale, text, flags */
 		: T_TEXT '[' measure measure number number STRING flags ']'
 			{
-				/* FIXME: shouldn't know about .f */
-				/* I don't think this matters because anything with hi_format
-				 * will have the silk on its own layer in the file rather
-				 * than using the ONSILKFLAG and having it in a copper layer.
-				 * Thus there is no need for anything besides the 'else'
-				 * part of this code.
-				 */
+                                /* We used to do this here:
+
 				if ($8.f & ONSILKFLAG)
 				{
 					LayerType *lay = &yyData->Layer[yyData->LayerN +
@@ -1150,8 +1162,24 @@ text_hi_format
 
 					CreateNewText(lay, yyFont, NU ($3), NU ($4), $5, $6, $7, $8);
 				}
-				else
-					CreateNewText(Layer, yyFont, NU ($3), NU ($4), $5, $6, $7, $8);
+
+                                It shouldn't be needed now because anything
+                                with hi_format will have the silk on its own
+                                layer rather than using ONSILKFLAG.  So instead
+                                we have some tests in case it does happen and
+                                what used to be the else clause to the if.  */
+                                assert (! FLAG_SET_HAS_FLAG ($8, ONSILKFLAG) );
+                                if ( FLAG_SET_HAS_FLAG ($8, ONSILKFLAG) ) {
+                                  yyerror (
+                                    "ONSILKFLAG set for a T_TEXT object, this "
+                                    "is not allowed in this format revision.  "
+                                    "This text object might end up on the "
+                                    "wrong layer" );
+                                }
+                                        
+			        CreateNewText (
+                                    Layer, yyFont, NU ($3), NU ($4), $5, $6,
+                                    $7, $8);
 				free ($7);
 			}
 		;
@@ -1750,7 +1778,29 @@ pad
 		;
 
 flags		: INTEGER	{ $$ = OldFlags($1); }
-		| STRING	{ $$ = string_to_flags ($1, yyerror); }
+		| STRING	{ 
+                                  // Because flags don't end up getting unique
+                                  // values (some are re-used for different
+                                  // types), we need to remember the names
+                                  // themselves so we can give correct
+                                  // warnings if flags appear on objects
+                                  // for which they are invalid.  This list
+                                  // of names is produced here and consumed
+                                  // when parsing of the entire object is
+                                  // complete.  The consumers are supposed to
+                                  // ensure that flag_names gets reset to NULL.
+                                  if ( flag_names != NULL ) {
+                                    free_null_terminated_string_list (
+                                        flag_names );  
+                                    flag_names = NULL;
+                                  }
+// FIXME: once all the rules that take flags have a flags production consume
+// flag_names correctly, this assert should be moved in front of the above
+// defensive-programming if clause
+                                  assert (flag_names == NULL);
+                                  flag_names = string_to_flag_names ($1);
+                                  $$ = string_to_flags ($1, yyerror);
+                                }
 		;
 
 symbols

@@ -28,6 +28,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <stdio.h>
 #include <ctype.h>
 #ifdef HAVE_STDLIB_H
@@ -78,6 +79,8 @@ typedef struct
   int object_types;
 
 } FlagBitsType;
+
+// FIXME: why not rename DISPLAYNAMEFLAG to SHOWNAMEFLAG
 
 static FlagBitsType object_flagbits[] = {
   { PINFLAG, N ("pin"), ALL_TYPES },
@@ -428,6 +431,135 @@ common_string_to_flags (const char *flagstring,
   return rv.Flags;
 }
 
+char **
+string_to_flag_names (char const *flagstring)
+{
+  char **result = NULL; 
+  int flag_count = 0;
+
+  if ( flagstring == NULL ) {
+    result = realloc (result, (flag_count + 1) * sizeof (char *));
+    result[0] = NULL;
+    return result;
+  }
+
+  // First make a version with any thermal declarations (see comments at
+  // start of this function) filtered out.
+  char *fswt = strdup (flagstring);   // Flag String Without Thermals
+  int mrdi = 0;      // Most Recent Delimiter Index
+  int itp = false;   // In Thermal Parameters (presumably)
+  for ( int ii = 0 ; ii < strlen (fswt) ; ii++ ) {
+    char cc = fswt[ii];   // Current Character
+    if ( ! itp ) {
+      if ( cc == ',' ) {
+        mrdi = ii;
+      }
+      if ( cc == '(' ) {
+        itp = true;
+      }
+    }
+    else {
+      if ( cc == ')' ) {
+        int dsi;   // Declaration Start Index
+        if ( mrdi == 0 ) {
+          dsi = 0;
+        }
+        else {
+          dsi = mrdi + 1;
+        }
+        // If it was a thermal declaration, snip it out.  This leaves empty
+        // fields, but strok() (used subsequently) ignores them.
+        if ( strncmp (fswt + dsi, "thermal", strlen ("thermal") ) == 0 ) {
+          strcpy (fswt + dsi, fswt + ii + 1);
+          ii = dsi - 1;
+        }
+        itp = false;
+      }
+    }
+  }
+
+  char *cur_string = strdup (fswt);   // See strtok() man page for usage
+  char *saved_cur_string = cur_string;      // Because strtok() is weird
+  char *cur_tok = NULL;                     // Gets set to tokens in turn
+  do {
+    cur_tok = strtok (cur_string, " ,");
+    cur_string = NULL;   // strtok() wants this NULL for subsequent calls
+    if ( cur_tok != NULL ) {
+      flag_count++;
+      result = realloc (result, (flag_count + 1) * sizeof (char *));
+      assert (result != NULL);
+      result[flag_count - 1] = strdup (cur_tok);
+      result[flag_count] = NULL;
+    }
+  } while ( cur_tok != NULL);
+  
+  free (saved_cur_string);
+
+  free (fswt);
+  
+  return result;
+}
+
+void
+free_null_terminated_string_list (char **string_list)
+{
+  char **csp;   // Current String Pointer
+  for ( csp = string_list ; *csp != NULL ; csp++ ) {
+    free (*csp);
+  }
+
+  free (string_list);
+}
+
+void
+ensure_flags_set_for_flag_names (char const *const *flag_names, FlagType flags)
+{
+  for ( char **csp = (char **) flag_names ; *csp != NULL ; csp++ ) {
+    bool mit = false;   // *csp is Mentioned In Table (object_flagbits table)
+    bool cbs = false;   // Corresponding Bit Set (in flags)
+    for ( int ii = 0 ; ii < ENTRIES (object_flagbits) ; ii++ ) {
+      if ( strcmp (object_flagbits[ii].name, *csp) == 0 ) {
+        mit = true;
+        if ( FLAG_SET_HAS_FLAG (flags, object_flagbits[ii].mask) ) {
+          cbs = true;
+        }
+      }
+    }
+    assert ((! mit) || (mit && cbs));
+  }
+}
+
+void
+warn_about_invalid_object_flags (
+    int Type,
+    char const *const *flag_names,
+    int (*log_warning) (char const *msg) )
+{
+  char **cfsp;   // Current Flag String Pointer
+  for ( cfsp = (char **) flag_names ; *cfsp != NULL ; cfsp++ ) {
+    // It's a tiny bit inefficient to search the list over and over for each
+    // flag name but it't not worth doing anything smarter.
+    for ( int ii = 0 ; ii < ENTRIES (object_flagbits) ; ii++ ) {
+      if ( strcmp (*cfsp, object_flagbits[ii].name) == 0 ) {
+        if ( ! (object_flagbits[ii].object_types & Type) ) {
+          char error_message[1042];
+          int chars_printed
+            = snprintf (
+                error_message,
+                1042,
+                "\"%s\" flag not supported for objects of this type",
+                *cfsp );
+          log_warning (error_message);
+          if ( chars_printed == 1042 ) {
+            log_warning ("previous error message got truncated");
+          }
+        }
+        break;
+      }
+    }   
+  }
+}
+
 FlagType
 string_to_flags (const char *flagstring,
 		 int (*error) (const char *msg))
@@ -559,74 +691,4 @@ pcbflags_to_string (FlagType flags)
 				 ALL_TYPES,
 				 pcb_flagbits,
 				 ENTRIES (pcb_flagbits));
-}
-
-// Using the flags descriptions in the flagbits table, clear any bits in
-// flags not supported for Type and call log_error as appropriate.
-static
-void clear_invalid_flags_and_log_errors (
-    FlagBitsType *flagbits,
-    size_t flagbits_size,
-    int Type,
-    FlagType *flags,
-    int (*log_error) (char const *msg) )
-{
-  FlagHolder fh = { *flags };  // Because macro.h does flags this way
-
-  for ( int ii = 0 ; ii < flagbits_size ; ii++ ) {
-    if ( TEST_FLAG (flagbits[ii].mask, &fh) ) {
-      if ( (flagbits[ii].object_types | Type) != flagbits[ii].object_types ) {
-        CLEAR_FLAG (flagbits[ii].mask, &fh);
-        char error_message[1042];
-        int chars_printed
-          = snprintf (
-              error_message,
-              1042,
-              "\"%s\" flag not supported for objects of this type, ignoring "
-              "it",
-              flagbits[ii].name );
-        log_error (error_message);
-        if ( chars_printed == 1042 ) {
-          log_error ("previous error message got truncated");
-        }
-      }
-    }
-  } 
-
-  *flags = fh.Flags;
-}
-
-void
-clear_invalid_object_flags_and_log_errors (
-    int Type,
-    FlagType *flags,
-    int (*log_error) (char const *msg) )
-{
-  clear_invalid_flags_and_log_errors (
-      object_flagbits,
-      ENTRIES (object_flagbits),
-      Type,
-      flags,
-      log_error );
-}
-
-void
-clear_invalid_pcb_flags_and_log_errors (
-    FlagType *flags,
-    int (*log_error) (char const *msg) )
-{
-  // This function is effectively a a no-op at the moment, because global
-  // flags don't have an associated type so are never invalid for that reason,
-  // and an earlier parse stage already catches (and ignores) unknown flags.
-  // It's here for explanatory symmetry, and as a place-holder in case any
-  // inter-flag crosschecks should prove desirable.
-
-  // Note: ALL_TYPES is passed here for implementation reasons.  In reality
-  // global flags aren't associated with objects of any particular type.
-  clear_invalid_flags_and_log_errors (
-      pcb_flagbits,
-      ENTRIES (pcb_flagbits),
-      ALL_TYPES,
-      flags,
-      log_error );
 }

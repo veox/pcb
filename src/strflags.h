@@ -48,20 +48,40 @@ FlagType string_to_pcbflags (const char *flagstring,
 			  int (*error) (const char *msg));
 char *pcbflags_to_string (FlagType flags);
 
-/* If any flags not supported for Type are found in flags, clear them and call
- * log_error as appropriate.  See the object_flagbits definitions in strflags.c
- * for the table specifying which flags are supported where.  */
-void
-clear_invalid_object_flags_and_log_errors (
-    int Type,
-    FlagType *flags,
-    int (*log_error) (char const *msg) );
+// If flagstring is non-NULL, return a new NULL-terminated list of new
+// strings, each of which consists of exactly one of the comma-separated
+// sub-strings of flagstring, otherwise return an empty list of strings.
+// Note that an empty list of strings is also returned for an empty
+// flagstring.
+//
+// Amusingly, flags fields in the datafile can contain things like
+// "thermal(0X,1S)", which aren't really flags and don't result in actual
+// flag bits being set when encountered, but instead add a thermal elsewhere
+// as a side effect.  This function is only concerned with actual flags,
+// and ignores these thermal declarations.
+char **
+string_to_flag_names (char const *flagstring);
 
-/* Clear any invalid global flags.  In practice this does nothing at the
- * moment, see the comments in strflags.c for details.  */
+// Free a NULL-terminated list of strings (both the strings and the list
+// of pointers are freed).
 void
-clear_invalid_pcb_flags_and_log_errors (
-    FlagType *flags,
-    int (*log_error) (char const *msg) );
+free_null_terminated_string_list (char **string_list);
+
+// Ensure (via assertions) that for each flag in flag_names which is mentioned
+// in the object flags table, a matching bit the the numeric flags argument
+// is set.  This is used to to help ensure parser correctness.  See the
+// object_flagbits definitions in strflags.c for the table specifying which
+// flags are supported where.
+void
+ensure_flags_set_for_flag_names (char const *const *flag_names, FlagType flags);
+
+// If any flag_names not supported for Type are found in flags, call log_error
+// as appropriate.  See the object_flagbits definitions in strflags.c for
+// the table specifying which flags are supported where.
+void
+warn_about_invalid_object_flags (
+    int Type,
+    char const *const *flag_names,
+    int (*log_warning) (char const *msg) );
 
 #endif /* PCB_STRFLAGS_H */
