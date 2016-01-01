@@ -354,13 +354,6 @@ print_layer_list ()
   return buf;
 }
 
-/*
- * Ok, now the two entry points to this file.  The first, string_to_flags,
- * is passed a string (usually from parse_y.y) and returns a "set of flags".
- *
- * Currently, there is no error handling :-P
- */
-
 static int
 error_ignore (const char *msg)
 {				/* do nothing */
