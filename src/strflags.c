@@ -427,12 +427,11 @@ common_string_to_flags (const char *flagstring,
 char **
 string_to_flag_names (char const *flagstring)
 {
-  char **result = NULL; 
   int flag_count = 0;
+  char **result = malloc ((flag_count + 1) * sizeof (char *));
+  result[flag_count] = NULL;
 
   if ( flagstring == NULL ) {
-    result = realloc (result, (flag_count + 1) * sizeof (char *));
-    result[0] = NULL;
     return result;
   }
 
