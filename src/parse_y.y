@@ -97,24 +97,69 @@ static int integer_value (PLMeasure m);
 static Coord old_units (PLMeasure m);
 static Coord new_units (PLMeasure m);
 
-// The flag names most recently found in execution of the most recent flags
-// rule recipe are stored here.
-static char **flag_names = NULL;
+// Each time a flags rule is processed, a char ** containing the flag names as
+// a NULL-terminated array is put on the top of this stack.  When the rule
+// containing the flags rule is processed, the stack entries are consumed after
+// the flags are validated for the particular object type.
+static char ***flag_name_sets = NULL;
 
-// This is used from rules that correspond to objects that accept flags.
-// It checks that the current flag_names are valid for the given object_type,
-// then frees and NULLifies the list of names so the provider can tell it's
-// been consumed.
-#define DO_INVALID_FLAG_WARNING_STUFF(object_type, flags)         \
-  do {                                                            \
-    assert (flag_names != NULL);                                  \
-    ensure_flags_set_for_flag_names (                             \
-        (char const *const*) flag_names, flags );                 \
-    warn_about_invalid_object_flags (                             \
-        object_type, (char const *const *) flag_names, yyerror ); \
-    free_null_terminated_string_list (flag_names);                \
-    flag_names = NULL;                                            \
-  } while ( 0 )
+static void
+push_flag_names (char const *const *flag_names)
+{
+  // Push the set of names flag_names onto the global flag_name_sets.
+
+  int entries = 0;
+  if ( flag_name_sets != NULL ) {
+    for ( char ***ce = flag_name_sets ; *ce != NULL ; ce++ ) {
+      entries++;
+    }
+  }
+
+  flag_name_sets = realloc (flag_name_sets, (entries + 2) * sizeof (char **));
+  
+  flag_name_sets[entries] = (char **) flag_names;
+  entries++;
+  flag_name_sets[entries] = NULL;
+}
+
+static char **
+pop_flag_names (void)
+{
+  // Return the top element of flag_name_sets, or NULL if it's empty.
+
+  int entries = 0;
+  if ( flag_name_sets != NULL ) {
+    for ( char ***ce = flag_name_sets ; *ce != NULL ; ce++ ) {
+      entries++;
+    }
+  }
+
+  if ( entries == 0 ) {
+    return NULL;
+  }
+
+  char **result = flag_name_sets[entries - 1];
+  entries--;
+  flag_name_sets[entries] = NULL;
+  flag_name_sets = realloc (flag_name_sets, (entries + 1) * sizeof (char **));
+
+  return result;
+}
+
+// This is used from rules that correspond to objects that accept flags.  It
+// checks that the top of flag_name_sets contains a sef of flags that are all
+// valid for the given object_type, issuing warning for any that are not, then
+// frees that top set.
+static void
+do_invalid_flag_warning_stuff (int object_type, FlagType flags)
+{
+  char **cfns = pop_flag_names ();
+  assert (cfns != NULL);
+  ensure_flags_set_for_flag_names ((char const *const*) cfns, flags);
+  warn_about_invalid_object_flags (
+        object_type, (char const *const *) cfns, yyerror );
+  free_null_terminated_string_list (cfns);
+}
 
 #define YYDEBUG 1
 #define YYERROR_VERBOSE 1
@@ -774,8 +819,10 @@ via_hi_format
 			/* x, y, thickness, clearance, mask, drilling-hole, name, flags */
 		: T_VIA '[' measure measure measure measure measure measure STRING flags ']'
 			{
-				CreateNewVia(yyData, NU ($3), NU ($4), NU ($5), NU ($6), NU ($7),
-				                     NU ($8), $9, $10);
+                                do_invalid_flag_warning_stuff (VIA_TYPE, $10);
+				CreateNewVia (
+                                    yyData, NU ($3), NU ($4), NU ($5), NU ($6),
+                                    NU ($7), NU ($8), $9, $10 );
 				free ($9);
 			}
 		;
@@ -851,8 +898,11 @@ Numeric flags.
 rats
 		: T_RAT '[' measure measure INTEGER measure measure INTEGER flags ']'
 			{
-				CreateNewRat(yyData, NU ($3), NU ($4), NU ($6), NU ($7), $5, $8,
-					Settings.RatThickness, $9);
+                                do_invalid_flag_warning_stuff (
+                                    RATLINE_TYPE, $9 );
+				CreateNewRat (
+                                    yyData, NU ($3), NU ($4), NU ($6), NU ($7),
+                                    $5, $8, Settings.RatThickness, $9 );
 			}
 		| T_RAT '(' measure measure INTEGER measure measure INTEGER INTEGER ')'
 			{
@@ -983,8 +1033,10 @@ line_hi_format
 			/* x1, y1, x2, y2, thickness, clearance, flags */
 		: T_LINE '[' measure measure measure measure measure measure flags ']'
 			{
-				CreateNewLineOnLayer(Layer, NU ($3), NU ($4), NU ($5), NU ($6),
-				                            NU ($7), NU ($8), $9);
+                                do_invalid_flag_warning_stuff (LINE_TYPE, $9);
+				CreateNewLineOnLayer (
+                                    Layer, NU ($3), NU ($4), NU ($5), NU ($6),
+				    NU ($7), NU ($8), $9 );
 			}
 		;
 
@@ -1055,7 +1107,8 @@ arc_hi_format
                           // so error message can't be cut off at confusing
                           // spots
 
-                          DO_INVALID_FLAG_WARNING_STUFF (ARC_TYPE, $11);
+                          do_invalid_flag_warning_stuff (ARC_TYPE, $11);
+
                           
                           if ( NU ($5) != NU ($6) ) {
                             yyerror (
@@ -1152,7 +1205,9 @@ text_newformat
 text_hi_format
 			/* x, y, direction, scale, text, flags */
 		: T_TEXT '[' measure measure number number STRING flags ']'
-			{
+			{ 
+                                do_invalid_flag_warning_stuff (TEXT_TYPE, $8);
+
                                 /* We used to do this here:
 
 				if ($8.f & ONSILKFLAG)
@@ -1213,6 +1268,8 @@ polygon_format
 		: /* flags are passed in */
 		T_POLYGON '(' flags ')' '('
 			{
+                                do_invalid_flag_warning_stuff (
+                                    POLYGON_TYPE, $3 );
 				Polygon = CreateNewPolygon(Layer, $3);
 			}
 		  polygonpoints
@@ -1426,9 +1483,15 @@ element_hi_format
 		: T_ELEMENT '[' flags STRING STRING STRING measure measure
 			measure measure number number flags ']' '('
 			{
-				yyElement = CreateNewElement(yyData, yyFont, $3,
-					$4, $5, $6, NU ($7) + NU ($9), NU ($8) + NU ($10),
-					$11, $12, $13, false);
+                                do_invalid_flag_warning_stuff (
+                                    ELEMENT_TYPE, $13 );
+                                do_invalid_flag_warning_stuff (
+                                    TEXT_TYPE, $3);
+				yyElement
+                                  = CreateNewElement (
+                                      yyData, yyFont, $3, $4, $5, $6,
+                                      NU ($7) + NU ($9), NU ($8) + NU ($10),
+				      $11, $12, $13, false );
 				yyElement->MarkX = NU ($7);
 				yyElement->MarkY = NU ($8);
 				free ($4);
@@ -1625,6 +1688,7 @@ pin_hi_format
 			   number, flags */
 		: T_PIN '[' measure measure measure measure measure measure STRING STRING flags ']'
 			{
+                                do_invalid_flag_warning_stuff (PIN_TYPE, $11);
 				CreateNewPin(yyElement, NU ($3) + yyElement->MarkX,
 					NU ($4) + yyElement->MarkY, NU ($5), NU ($6), NU ($7), NU ($8), $9,
 					$10, $11);
@@ -1730,6 +1794,7 @@ pad_hi_format
 			/* x1, y1, x2, y2, thickness, clearance, mask, name , pad number, flags */
 		: T_PAD '[' measure measure measure measure measure measure measure STRING STRING flags ']'
 			{
+                                do_invalid_flag_warning_stuff (PAD_TYPE, $12);
 				CreateNewPad(yyElement, NU ($3) + yyElement->MarkX,
 					NU ($4) + yyElement->MarkY,
 					NU ($5) + yyElement->MarkX,
@@ -1784,21 +1849,12 @@ flags		: INTEGER	{ $$ = OldFlags($1); }
                                   // types), we need to remember the names
                                   // themselves so we can give correct
                                   // warnings if flags appear on objects
-                                  // for which they are invalid.  This list
-                                  // of names is produced here and consumed
-                                  // when parsing of the entire object is
-                                  // complete.  The consumers are supposed to
-                                  // ensure that flag_names gets reset to NULL.
-                                  if ( flag_names != NULL ) {
-                                    free_null_terminated_string_list (
-                                        flag_names );  
-                                    flag_names = NULL;
-                                  }
-// FIXME: once all the rules that take flags have a flags production consume
-// flag_names correctly, this assert should be moved in front of the above
-// defensive-programming if clause
-                                  assert (flag_names == NULL);
-                                  flag_names = string_to_flag_names ($1);
+                                  // for which they are invalid.  We push a
+                                  // list of names here and consume it when
+                                  // parsing of the entire object is complete.
+                                  push_flag_names (
+                                      (char const *const *)
+                                          (string_to_flag_names ($1)) );
                                   $$ = string_to_flags ($1, yyerror);
                                 }
 		;
