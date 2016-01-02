@@ -80,7 +80,8 @@ typedef struct
 
 } FlagBitsType;
 
-// FIXME: why not rename DISPLAYNAMEFLAG to SHOWNAMEFLAG
+// FIXME: why not rename DISPLAYNAMEFLAG to SHOWNAMEFLAG.  It's the only
+// one that doesn't match its text name as it appears in the datafile
 
 static FlagBitsType object_flagbits[] = {
   { PINFLAG, N ("pin"), ALL_TYPES },
