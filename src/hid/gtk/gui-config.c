@@ -1874,7 +1874,7 @@ config_color_save_cb (gpointer data)
   gchar *name, *path, *dir = g_strdup (color_dir);
 
   path =
-    ghid_dialog_file_select_save (_("Save Color File"), &dir, NULL, NULL);
+    ghid_dialog_file_select_save (_("Save Color File"), &dir, NULL, NULL, NULL);
   if (path)
     {
       name = g_path_get_basename (path);

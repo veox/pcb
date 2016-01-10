@@ -47,6 +47,7 @@
 #include "crosshair.h"
 #include "data.h"
 #include "error.h"
+#include "file.h"
 #include "mymem.h"
 #include "mirror.h"
 #include "misc.h"
@@ -1141,10 +1142,11 @@ ConvertBufferToElement (BufferType *Buffer)
 bool
 LoadLayoutToBuffer (BufferType *Buffer, char *Filename)
 {
-  PCBType *newPCB = CreateNewPCB ();
+  PCBType *newPCB = NULL;
+  char *dummy;
 
   /* new data isn't added to the undo list */
-  if (!ParsePCB (newPCB, Filename))
+  if (!LoadPCBWithFormat (&newPCB, Filename, NULL, &dummy))
     {
       /* clear data area and replace pointer */
       ClearBuffer (Buffer);

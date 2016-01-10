@@ -40,6 +40,22 @@
 #endif
 
 /* ---------------------------------------------- */
+static void
+ghid_helper_add_filter(GtkWidget *dialog, char *filter_name, char *filter_mime, char **filter_patterns)
+{
+  GtkFileFilter *pcb_filter;
+  int pi = 0;
+
+  pcb_filter = gtk_file_filter_new ();
+  gtk_file_filter_set_name (pcb_filter, filter_name);
+  gtk_file_filter_add_mime_type (pcb_filter, filter_mime);
+  while (filter_patterns[pi] != 0 ) {
+    gtk_file_filter_add_pattern (pcb_filter, filter_patterns[pi]);
+    pi++;
+  }
+  gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (dialog), pcb_filter);
+}
+/* ---------------------------------------------- */
 gchar *
 ghid_dialog_input (const char * prompt, const char * initial)
 {
@@ -306,13 +322,40 @@ ghid_dialog_file_select_open (gchar * title, gchar ** path, gchar * shortcuts)
     || (strcmp (title, _("Load layout file to buffer")) == 0))
   {
     /* add a filter for layout files */
-    GtkFileFilter *pcb_filter;
-    pcb_filter = gtk_file_filter_new ();
-    gtk_file_filter_set_name (pcb_filter, "pcb");
-    gtk_file_filter_add_mime_type (pcb_filter, "application/x-pcb-layout");
-    gtk_file_filter_add_pattern (pcb_filter, "*.pcb");
-    gtk_file_filter_add_pattern (pcb_filter, "*.PCB");
-    gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (dialog), pcb_filter);
+    int idx = 0;
+    int idx_current = -1;
+    int idx_default = -1;
+    char *filter_id, *filter_name, *filter_mime, **filter_patterns;
+
+    if (PCB->Fileformat != NULL)
+      {
+        idx_current = hid_get_format_idx_by_id (PCB->Fileformat);
+	/* we have ensure that equality check for default format fails, when current format is not loadable
+	 * The check is redundant - format without load capability cannot be the default format
+	 */
+	if (hid_get_file_format(idx_current, HID_FFORMAT_LOADABLE, &filter_id, &filter_name, &filter_mime, &filter_patterns))
+	  {
+	    ghid_helper_add_filter(dialog, filter_name, filter_mime, filter_patterns);
+	  } else {
+	    idx_current = -1;
+	  }
+      }
+
+    /* add filter for default format, if differs from current format */
+    idx_default = hid_get_default_format_idx ();
+    if (idx_default != idx_current && hid_get_file_format(idx_default, HID_FFORMAT_LOADABLE, &filter_id, &filter_name, &filter_mime, &filter_patterns))
+        ghid_helper_add_filter(dialog, filter_name, filter_mime, filter_patterns);
+
+    while (hid_get_file_format(idx, HID_FFORMAT_LOADABLE, &filter_id, &filter_name, &filter_mime, &filter_patterns))
+      {
+        if (filter_id != NULL
+            && idx_current != idx
+            && idx_default != idx )
+	  {
+            ghid_helper_add_filter(dialog, filter_name, filter_mime, filter_patterns);
+	  }
+        idx++;
+     }
   }
 
   /* in case we have a dialog for loading a netlist file */
@@ -455,7 +498,7 @@ ghid_dialog_file_select_multiple(gchar * title, gchar ** path, gchar * shortcuts
 /* ---------------------------------------------- */
 /* Caller must g_free() the returned filename. */
 gchar *
-ghid_dialog_file_select_save (gchar * title, gchar ** path, gchar * file,
+ghid_dialog_file_select_save (gchar * title, gchar ** path, gchar ** format, gchar * file,
 			      gchar * shortcuts)
 {
   GtkWidget *dialog;
@@ -491,6 +534,44 @@ ghid_dialog_file_select_save (gchar * title, gchar ** path, gchar * file,
                                            g_path_get_dirname (file));
     }
 
+  if (format != NULL ) {
+    int idx = 0;
+    int idx_current = -1;
+    int idx_default = -1;
+    char *filter_id, *filter_name, *filter_mime, **filter_patterns;
+
+    /* add filter for current format, if specified */
+    if (*format != NULL)
+      {
+        idx_current = hid_get_format_idx_by_id (*format);
+	/* we have ensure that equality check for default format fails, when current format is not saveable
+	 * The check is redundant - format without save capability cannot be the default format
+	 */
+	if (hid_get_file_format(idx_current, HID_FFORMAT_SAVEABLE, &filter_id, &filter_name, &filter_mime, &filter_patterns))
+	  {
+	    ghid_helper_add_filter(dialog, filter_name, filter_mime, filter_patterns);
+	  } else {
+	    idx_current = -1;
+	  }
+      }
+
+    /* add filter for default format, if differs from current format */
+    idx_default = hid_get_default_format_idx ();
+    if (idx_default != idx_current && hid_get_file_format(idx_default, HID_FFORMAT_SAVEABLE, &filter_id, &filter_name, &filter_mime, &filter_patterns))
+        ghid_helper_add_filter(dialog, filter_name, filter_mime, filter_patterns);
+
+    while (hid_get_file_format(idx, HID_FFORMAT_SAVEABLE, &filter_id, &filter_name, &filter_mime, &filter_patterns))
+      {
+        if (filter_id != NULL
+            && idx_current != idx
+            && idx_default != idx )
+	  {
+            ghid_helper_add_filter(dialog, filter_name, filter_mime, filter_patterns);
+	}
+        idx++;
+     }
+  }
+
   if (shortcuts && *shortcuts)
     {
       folder = g_strdup (shortcuts);
@@ -512,6 +593,14 @@ ghid_dialog_file_select_save (gchar * title, gchar ** path, gchar * file,
 	{
 	  dup_string (path, folder);
 	  g_free (folder);
+
+	  if (format)
+	    {
+	      GtkFileFilter *fp_filter;
+
+	      fp_filter=gtk_file_chooser_get_filter(GTK_FILE_CHOOSER (dialog));
+	      dup_string (format, (gchar*)gtk_file_filter_get_name(fp_filter));
+	    }
 	}
     }
   gtk_widget_destroy (dialog);

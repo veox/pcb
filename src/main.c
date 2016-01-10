@@ -1978,6 +1978,12 @@ main (int argc, char *argv[])
       exit (0);
     }
 
+  /* Check if format supporting both load and save is provided
+   * The function does not return if such format do not exist:
+   * it calls exit(1) in such case.
+   */
+  hid_find_full_format_idx ();
+
   /* Create a new PCB object in memory */
   PCB = CreateNewPCB ();
   ParseGroupString (Settings.Groups, &PCB->LayerGroups, &PCB->Data->LayerN);
@@ -2000,6 +2006,7 @@ main (int argc, char *argv[])
         {
 	   /* File does not exist, save the filename and continue with empty board */
 	   PCB->Filename = strdup (command_line_pcb);
+	   PCB->Fileformat = strdup (hid_get_default_format_id());
 	} else {
 	   /* Hard fail if file exists and fails to load */
            if (LoadPCB (command_line_pcb))

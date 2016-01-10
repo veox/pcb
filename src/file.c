@@ -43,6 +43,7 @@
 
 #include "global.h"
 
+#include <assert.h>
 #include <dirent.h>
 #ifdef HAVE_PWD_H
 #include <pwd.h>
@@ -126,6 +127,7 @@ static int WritePCBFile (char *);
 static int WritePipe (char *, bool);
 static int ParseLibraryTree (void);
 static int LoadNewlibFootprintsFromDir(char *path, char *toppath, bool recursive);
+
 
 /* ---------------------------------------------------------------------------
  * Flag helper functions
@@ -350,16 +352,7 @@ SaveBufferElements (char *Filename)
 int
 SavePCB (char *file)
 {
-  int retcode;
-
-  if (gui->notify_save_pcb == NULL)
     return WritePipe (file, true);
-
-  gui->notify_save_pcb (file, false);
-  retcode = WritePipe (file, true);
-  gui->notify_save_pcb (file, true);
-
-  return retcode;
 }
 
 /*!
@@ -389,11 +382,11 @@ set_some_route_style ()
  * PCBChanged action.
  */
 static int
-real_load_pcb (char *Filename, bool revert)
+real_load_pcb (char *Filename, char *Format, bool revert)
 {
   const char *unit_suffix, *grid_size;
-  char *new_filename;
-  PCBType *newPCB = CreateNewPCB ();
+  char *new_filename, *new_format;
+  PCBType *newPCB = NULL; /* = CreateNewPCB (); */
   PCBType *oldPCB;
 #ifdef DEBUG
   double elapsed;
@@ -405,13 +398,9 @@ real_load_pcb (char *Filename, bool revert)
   new_filename = strdup (Filename);
 
   oldPCB = PCB;
-  PCB = newPCB;
-
-  /* mark the default font invalid to know if the file has one */
-  newPCB->Font.Valid = false;
 
   /* new data isn't added to the undo list */
-  if (!ParsePCB (PCB, new_filename))
+  if (!LoadPCBWithFormat (&PCB, new_filename, Format, &new_format))
     {
       RemovePCB (oldPCB);
 
@@ -438,7 +427,14 @@ real_load_pcb (char *Filename, bool revert)
       /* clear 'changed flag' */
       SetChangedFlag (false);
       PCB->Filename = new_filename;
-      /* just in case a bad file saved file is loaded */
+
+      /* the fileformat must be saveable; if not, default format is used */
+      if (hid_file_format_capable(new_format, HID_FFORMAT_SAVEABLE))
+        {
+          PCB->Fileformat = strdup(new_format);
+	} else {
+          PCB->Fileformat = strdup(hid_get_default_format_id ());
+	}
 
       /* Use attribute PCB::grid::unit as unit, if we can */
       unit_suffix = AttributeGet (PCB, "PCB::grid::unit");
@@ -474,7 +470,10 @@ real_load_pcb (char *Filename, bool revert)
 
       return (0);
     }
+
+  newPCB = PCB;
   PCB = oldPCB;
+
   hid_action ("PCBChanged");
 
   /* release unused memory */
@@ -488,7 +487,7 @@ real_load_pcb (char *Filename, bool revert)
 int
 LoadPCB (char *file)
 {
-  return real_load_pcb (file, false);
+  return real_load_pcb (file, NULL, false);
 }
 
 /*!
@@ -497,7 +496,7 @@ LoadPCB (char *file)
 int
 RevertPCB (void)
 {
-  return real_load_pcb (PCB->Filename, true);
+  return real_load_pcb (PCB->Filename, PCB->Fileformat, true);
 }
 
 /*!
@@ -1073,6 +1072,8 @@ void
 Backup (void)
 {
   char *filename = NULL;
+  char *fileformat;
+  char *save_savecommand;
 
   if( PCB && PCB->Filename )
     {
@@ -1083,6 +1084,7 @@ Backup (void)
 	  exit (1);
 	}
       sprintf (filename, "%s~", PCB->Filename);
+      fileformat = PCB->Fileformat;
     }
   else
     {
@@ -1094,9 +1096,16 @@ Backup (void)
 	  exit (1);
 	}
       sprintf (filename, BACKUP_NAME, (int) getpid ());
+      fileformat = hid_get_default_format_id ();
     }
 
-  WritePCBFile (filename);
+  save_savecommand = Settings.SaveCommand;
+  Settings.SaveCommand = NULL;
+
+  SavePCBWithFormat (PCB, filename, fileformat);
+
+  Settings.SaveCommand = save_savecommand;
+
   free (filename);
 }
 
@@ -1112,8 +1121,16 @@ Backup (void)
 void
 SaveTMPData (void)
 {
+  char *save_savecommand;
+
   sprintf (TMPFilename, EMERGENCY_NAME, (int) getpid ());
+
+  save_savecommand = Settings.SaveCommand;
+  Settings.SaveCommand = NULL;
+
   WritePCBFile (TMPFilename);
+
+  Settings.SaveCommand = save_savecommand;
 }
 
 /*!
@@ -1666,4 +1683,396 @@ static int ReadEdifNetlist (char *filename)
     
     return 0;
 }
+
+
+/****************************************************************************************************/
+
+static int n_formats = 0;
+static HID_Format **all_formats = 0;
+
+
+/*!
+* \brief Provides format data for load/save dialogs;
+* It is used for enumerations with idx starting from 0
+*
+* \param [in] idx - format index
+* \param [in] capability - requested capability: HID_FFORMAT_LOADABLE or HID_FFORMAT_SAVEABLE
+* \param [out] id - string ID; if NULL, format does not implement required operation
+* \param [out] name - description
+* \param [out] mime - mimetype
+* \param [out] patterns - array of pattern definitions
+* \return true if returned data are valid, false if index is out of range
+*/
+bool
+hid_get_file_format(int idx, int capability, char **id, char **name, char **mime, char ***patterns)
+{
+    if (idx >= n_formats)
+        return false;
+    if (((capability == HID_FFORMAT_LOADABLE) && (all_formats[idx]->load_function == NULL)) || ((capability == HID_FFORMAT_SAVEABLE) && (all_formats[idx]->save_function == NULL)))
+      {
+	*id=NULL;
+	return true;
+      }
+
+    *id = all_formats[idx]->id;
+    *name = all_formats[idx]->description;
+    *mime = all_formats[idx]->mimetype;
+    *patterns = all_formats[idx]->patterns;
+
+    return true;
+}
+
+/*!
+* \brief Register new format. Several checks is performed:
+* - warns about duplicity of default formats
+* - refuses to set format without bothl load/save capabilities as default format
+*
+* \param [in] a - array of format definitions
+* \param [in] n - # of formats in the array
+*/
+void
+hid_register_formats (HID_Format * a, int n)
+{
+  int i, count = 0;
+  bool have_default = false;
+
+  all_formats = (HID_Format **)realloc (all_formats,
+                         (n_formats + n) * sizeof (HID_Format*));
+
+  /* look for existing default format */
+  for (i = 0; i < n_formats; i++)
+    {
+      have_default = (all_formats[i]->default_format);
+      if (have_default)
+        break;
+    }
+
+  for (i = 0; i < n; i++)
+    {
+      all_formats[n_formats + count] = a + i;
+      if (all_formats[n_formats + count]->default_format)
+        {
+	  if (have_default)
+	    {
+	      fprintf(stderr, "Cannot set format \"%s\" as default format; default format already exists\n", all_formats[n_formats + count]->id);
+	      all_formats[n_formats + count]->default_format = false;
+	    } else if (all_formats[n_formats + count]->load_function == NULL
+	               || all_formats[n_formats + count]->save_function == NULL)
+	    {
+	      fprintf(stderr, "Cannot set format \"%s\" as default format because does not implement both load & save fuunctions\n", all_formats[n_formats + count]->id);
+	      all_formats[n_formats + count]->default_format = false;
+	    } else {
+	      have_default = true;
+	    }
+	}
+      count++;
+    }
+  n_formats += count;
+}
+
+/*!
+* \brief Function to find the format string ID by it's description.
+* Function is used in Load/Save dialogs.
+*
+* \param [in] desc - description of the format
+* \return pointer for format ID; NULL if such format does not exist
+*/
+char *
+hid_get_format_id_by_desc (char *desc)
+{
+  int i;
+
+  for (i = 0; i < n_formats; i++)
+    {
+      if (strcmp (all_formats[i]->description, desc) == 0)
+        return all_formats[i]->id;
+    }
+  return NULL;
+}
+
+
+/*!
+* \brief Function to find the format string ID by index.
+*
+* \param [in] idx - index of the format
+* \return pointer for format ID; NULL if index is out of range
+*/
+char *
+hid_get_format_id_by_idx (int idx)
+{
+  if (idx < n_formats && idx >= 0)
+    {
+        return all_formats[idx]->id;
+    }
+  return NULL;
+}
+
+/*!
+* \brief Function to find the format index by string ID.
+*
+* \param [in] id - string ID of the format
+* \return index of the format, -1 if no such format exist (should not happen)
+*/
+int
+hid_get_format_idx_by_id (char *id)
+{
+  int i;
+
+  for (i = 0; i < n_formats; i++)
+    {
+      if (strcmp (all_formats[i]->id, id) == 0)
+        return i;
+    }
+  return -1;
+}
+
+
+/*!
+* \brief Function to find the format suitable to act as default format:
+* such format have to provide both load and save functions.
+* Function is called as failback when no default format is specified
+* and to check that such format exists at beginning of program
+*
+* \return index of the first format supporting both load & save functions.
+* If no such format exists, program exits immediately.
+*/
+
+int
+hid_find_full_format_idx ()
+{
+  int i;
+
+  for (i = 0; i < n_formats; i++)
+    {
+      if (all_formats[i]->load_function != NULL
+          && all_formats[i]->save_function != NULL)
+        return i;
+    }
+
+  /* No format suitable to play role of default format found */
+  fprintf(stderr,"No file format supporting both load and save operations found. Exiting.\n");
+  exit(1);
+}
+
+/*!
+* \brief Function to find the default format string ID.
+*
+* \return pointer to default format ID; if none exists, returns first format
+* with load/save capability
+*/
+char *
+hid_get_default_format_id ()
+{
+  int i;
+
+  for (i = 0; i < n_formats; i++)
+    {
+      if (all_formats[i]->default_format)
+        return all_formats[i]->id;
+    }
+
+  return all_formats[hid_find_full_format_idx ()]->id;
+}
+
+/*!
+* \brief Function to find the default format index
+*
+* \return index of default format; if none exists, returns first format
+* with load/save capability
+*/
+int
+hid_get_default_format_idx ()
+{
+  int i;
+
+  for (i = 0; i < n_formats; i++)
+    {
+      if (all_formats[i]->default_format)
+        return i;
+    }
+
+  return hid_find_full_format_idx ();
+}
+
+/*!
+* \brief Check if specified format has capability
+*
+* \param [in] id - pointer to default format ID
+* \param [in] capability - requested capability: HID_FFORMAT_LOADABLE or HID_FFORMAT_SAVEABLE
+* \return true, if format implements requested capability
+*/
+bool
+hid_file_format_capable(char *id, int capability)
+{
+  int i;
+
+  for (i = 0; i < n_formats; i++)
+    {
+      if (strcmp (all_formats[i]->id, id) == 0)
+        return ~(((capability == HID_FFORMAT_LOADABLE) && (all_formats[i]->load_function == NULL))
+                 || ((capability = HID_FFORMAT_SAVEABLE) && (all_formats[i]->save_function == NULL)));
+    }
+
+  return false;
+}
+
+
+/*!
+* \brief Function to save PCB layout. The heart of modular format system
+*
+* \param [in] pcb - pointer to PCB layout
+* \param [in] filename - current layout filename
+* \param [in] fileformat - current format
+* \return 0 - no error, !=0 - error occured
+*/
+int
+SavePCBWithFormat (PCBType *pcb, char *filename, char *fileformat)
+{
+  int i;
+  int result;
+
+  Message(_("Saving file %s as %s\n"), filename, fileformat);
+
+  for (i = 0; i < n_formats ; i++ ) {
+    if ((strcmp (all_formats[i]->id, fileformat) == 0) && (all_formats[i]->save_function != NULL ))
+      {
+        if ((all_formats[i]->check_version != NULL) &&  (*(int (*)(unsigned long, unsigned long))all_formats[i]->check_version)(PCB_FILE_VERSION, PCBFileVersionNeeded()) != 0 )
+	  {
+	    gui->report_dialog(_("Incompatible file format"),_("The selected file format does not support current data structures"));
+	    Message(_("Selected format \"%s\" does not support data structures version %ul:\n"), fileformat, PCB_FILE_VERSION);
+	    return 1;
+	  }
+        if (gui->notify_save_pcb != NULL)
+          gui->notify_save_pcb (filename, false);
+
+        result = (*(int (*)(PCBType *, char *))all_formats[i]->save_function)(pcb, filename);
+
+        if (gui->notify_save_pcb != NULL)
+          gui->notify_save_pcb (filename, true);
+
+	return result;
+      }
+  }
+  Message (_("No suitable module  for format \"%s\"\n"), fileformat);
+  return 1;
+}
+
+/*!
+* \brief Function to save PCB layout. The heart of modular format system
+*
+* \param [inout] pcb - pointer to PCB layout
+* \param [in] filename - current layout filename
+* \param [in] fileformat - current format
+* \param [out] fileformat - format of newly loaded file
+* \return 0 - no error, !=0 - error occured
+*/
+int
+LoadPCBWithFormat (PCBType **pcb, char *filename, char *fileformat, char **new_format)
+{
+  int i;
+  int result;
+
+  *pcb = CreateNewPCB ();
+  /* mark the default font invalid to know if the file has one */
+  (*pcb)->Font.Valid = false;
+
+  if (fileformat)
+    {
+      Message(_("Loading file %s as %s\n"), filename, fileformat);
+
+      for (i = 0; i < n_formats ; i++ )
+        {
+          if ((strcmp (all_formats[i]->id, fileformat) == 0) && (all_formats[i]->load_function != NULL ))
+            {
+	      *new_format = all_formats[i]->id;
+              return (*(int (*)(PCBType *, char *))all_formats[i]->load_function)(*pcb, filename);
+	    }
+        }
+      Message (_("No suitable module  for format \"%s\"\n"), fileformat);
+    } else {
+      Message(_("Loading file %s with autodetection.\n"), filename);
+      for (i = 0; i < n_formats ; i++ )
+        {
+	  if (all_formats[i]->load_function != NULL)
+	    {
+              Message(_(" Probing format %s\n"), all_formats[i]->id);
+              if (all_formats[i]->check_function != NULL )
+                {
+	          /* If check function is available and return value is OK (0), the file is loaded and no other formats are tested */
+                  if (((*(int (*)(char *))all_formats[i]->check_function)(filename)) == 0)
+	            {
+		      *new_format = all_formats[i]->id;
+		      return (*(int (*)(PCBType *, char *))all_formats[i]->load_function)(*pcb, filename);
+		    }
+	        } else {
+	          /* If check function is not available, the file is loaded; if fail, next format is tried */
+	          result = (*(int (*)(PCBType *, char *))all_formats[i]->load_function)(*pcb, filename);
+		  if (result == 0 )
+		    {
+		      *new_format = all_formats[i]->id;
+		      return result;
+		    } else {
+		    /* Cleanup after unsuccessful load */
+		      RemovePCB(*pcb);
+                      *pcb = CreateNewPCB ();
+                      /* mark the default font invalid to know if the file has one */
+                      (*pcb)->Font.Valid = false;
+		    }
+	        }
+            }
+	}
+    }
+
+   Message (_("No suitable module found for file \"%s\"\n"), filename);
+   return 1;
+}
+
+/****************************************************************************************************/
+
+int
+SavePCB2(PCBType *pcb, char *filename)
+{
+  return SavePCB(filename);
+}
+
+int
+CheckPCB(char *filename)
+{
+  FILE *f;
+  int i;
+  char buf[512];
+
+  f=fopen(filename, "r");
+
+  if (!f)
+    return 1;
+
+  for ( i = 0; i < 10; i++ )
+  {
+	fgets(buf,sizeof(buf),f);
+	if (strstr(buf,"FileVersion[") != 0)
+	  {
+	      fclose(f);
+	      return 0;
+	  }
+  }
+  fclose(f);
+  return 1;
+}
+
+#define PCB_FILE_VERSION_IMPLEMENTED 20110603
+
+int
+CheckPCBVersion(unsigned long current, unsigned long minimal)
+{
+  return (PCB_FILE_VERSION_IMPLEMENTED >= minimal)?0:1;
+}
+
+static char *pcb_format_list_patterns[]={"*.pcb", "*.PCB", 0};
+
+static HID_Format pcb_format_list[]={
+  {"pcb","Legacy PCB", pcb_format_list_patterns, "application/x-pcb-layout", false, (void*)CheckPCBVersion, (void*)CheckPCB, (void*)ParsePCB, (void*)SavePCB2,0,0},
+};
+
+REGISTER_FORMATS (pcb_format_list)
 

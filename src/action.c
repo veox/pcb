@@ -5706,7 +5706,7 @@ ActionUnselect (int argc, char **argv, Coord x, Coord y)
 /* --------------------------------------------------------------------------- */
 
 static const char saveto_syntax[] =
-  N_("SaveTo(Layout|LayoutAs,filename)\n"
+  N_("SaveTo(Layout|LayoutAs,filename,format)\n"
   "SaveTo(AllConnections|AllUnusedPins|ElementConnections,filename)\n"
   "SaveTo(PasteBuffer,filename)");
 
@@ -5738,35 +5738,53 @@ Save the content of the active Buffer to a file. This is the graphical way to cr
 
 %end-doc */
 
+extern int SavePCBWithFormat (PCBType *pcb, char *filename, char *fileformat);
+
 static int
 ActionSaveTo (int argc, char **argv, Coord x, Coord y)
 {
   char *function;
   char *name;
+  char *format;
 
   function = ARG (0);
   
   if ( ! function || strcasecmp (function, "Layout") == 0)
     {
-      if (SavePCB (PCB->Filename) == 0)
+      if (SavePCBWithFormat (PCB, PCB->Filename, PCB->Fileformat) == 0)
         SetChangedFlag (false);
       return 0;
     }
 
-  if (argc != 2)
+  if (argc < 2 )
     AFAIL (saveto);
 
   name = argv[1];
+  if (argc == 3) {
+    format = argv[2];
+  } else {
+    format = (PCB->Fileformat)?PCB->Fileformat:hid_get_default_format_id ();
+  }
 
   if (strcasecmp (function, "LayoutAs") == 0)
     {
-      if (SavePCB (name) == 0)
+      if (SavePCBWithFormat (PCB, name, format) == 0)
         {
-          SetChangedFlag (false);
-          free (PCB->Filename);
-          PCB->Filename = strdup (name);
-          if (gui->notify_filename_changed != NULL)
-            gui->notify_filename_changed ();
+	  /* do not mark layout as saved, if it cannot be loaded */
+	  if (hid_file_format_capable(format, HID_FFORMAT_LOADABLE))
+	    {
+              SetChangedFlag (false);
+              free (PCB->Filename);
+              PCB->Filename = strdup (name);
+              /* change only if new format was specified */
+              if (argc == 3)
+	        {
+                  free (PCB->Fileformat);
+                  PCB->Fileformat = strdup (format);
+		}
+              if (gui->notify_filename_changed != NULL)
+                gui->notify_filename_changed ();
+            }
         }
       return 0;
     }

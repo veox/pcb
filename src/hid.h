@@ -264,6 +264,49 @@ extern "C"
 #define REGISTER_ATTRIBUTES(a) HIDCONCAT(void register_,a) ()\
 { hid_register_attributes(a, sizeof(a)/sizeof(a[0])); }
 
+
+/* values returned by check_function */
+#define HID_FFORMAT_UNKNOWN	0
+#define HID_FFORMAT_ACCEPT	1
+#define HID_FFORMAT_REJECT	2
+
+#define HID_FFORMAT_LOADABLE	0
+#define HID_FFORMAT_SAVEABLE	1
+
+  typedef struct
+  {
+    /* Name of the file format */
+    char *id;
+    char *description;
+    /* default extension of the file format */
+    char **patterns;
+    char *mimetype;
+    bool default_format;
+    /* check for versions supported by file format: current version (recommended), minimal */
+    int (*check_version) (unsigned long, unsigned long);
+    /* Functions to call to procass file.  */
+    int (*check_function) (char *);
+    int (*load_function) (void *, char *);
+    int (*save_function) (void *, char *);
+    int (*load_elemet_function) (void *, char *);
+    int (*save_element_function) (void *, char *);
+  } HID_Format;
+
+  extern void hid_register_formats (HID_Format *, int);
+#define REGISTER_FORMATS(a) HIDCONCAT(void register_,a) ()\
+{ hid_register_formats(a, sizeof(a)/sizeof(a[0])); }
+
+/* some format-specific functions.  */
+extern char * hid_get_format_id_by_desc (char *desc);
+extern char * hid_get_format_id_by_idx (int);
+extern char * hid_get_default_format_id ();
+extern int hid_get_format_idx_by_id (char *id);
+extern int hid_find_full_format_idx ();
+extern int hid_get_default_format_idx ();
+extern bool hid_get_file_format(int idx, int capability, char **id, char **name, char **mime, char ***patterns);
+extern bool hid_file_format_capable(char *id, int capability);
+
+
 /* These three are set by hid_parse_command_line().  */
   extern char *program_name;
   extern char *program_directory;
