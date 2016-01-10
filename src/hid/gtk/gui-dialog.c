@@ -307,12 +307,23 @@ ghid_dialog_file_select_open (gchar * title, gchar ** path, gchar * shortcuts)
   {
     /* add a filter for layout files */
     GtkFileFilter *pcb_filter;
-    pcb_filter = gtk_file_filter_new ();
-    gtk_file_filter_set_name (pcb_filter, "pcb");
-    gtk_file_filter_add_mime_type (pcb_filter, "application/x-pcb-layout");
-    gtk_file_filter_add_pattern (pcb_filter, "*.pcb");
-    gtk_file_filter_add_pattern (pcb_filter, "*.PCB");
-    gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (dialog), pcb_filter);
+    int idx = 0, pi;
+    char *filter_id, *filter_name, *filter_mime, **filter_patterns;
+
+    while (hid_get_file_format(idx, 0, &filter_id, &filter_name, &filter_mime, &filter_patterns)) {
+        if (filter_id != NULL ) {
+            pcb_filter = gtk_file_filter_new ();
+            gtk_file_filter_set_name (pcb_filter, filter_name);
+            gtk_file_filter_add_mime_type (pcb_filter, filter_mime);
+	    pi = 0;
+	    while (filter_patterns[pi] != 0 ) {
+		gtk_file_filter_add_pattern (pcb_filter, filter_patterns[pi]);
+		pi++;
+	    }
+            gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (dialog), pcb_filter);
+	}
+        idx++;
+    }
   }
 
   /* in case we have a dialog for loading a netlist file */
@@ -455,7 +466,7 @@ ghid_dialog_file_select_multiple(gchar * title, gchar ** path, gchar * shortcuts
 /* ---------------------------------------------- */
 /* Caller must g_free() the returned filename. */
 gchar *
-ghid_dialog_file_select_save (gchar * title, gchar ** path, gchar * file,
+ghid_dialog_file_select_save (gchar * title, gchar ** path, gchar ** format, gchar * file,
 			      gchar * shortcuts)
 {
   GtkWidget *dialog;
@@ -491,6 +502,27 @@ ghid_dialog_file_select_save (gchar * title, gchar ** path, gchar * file,
                                            g_path_get_dirname (file));
     }
 
+  if (format != NULL ) {
+    GtkFileFilter *pcb_filter;
+    int idx = 0, pi;
+    char *filter_id, *filter_name, *filter_mime, **filter_patterns;
+
+    while (hid_get_file_format(idx, 0, &filter_id, &filter_name, &filter_mime, &filter_patterns)) {
+        if (filter_id != NULL ) {
+            pcb_filter = gtk_file_filter_new ();
+            gtk_file_filter_set_name (pcb_filter, filter_name);
+            gtk_file_filter_add_mime_type (pcb_filter, filter_mime);
+            pi = 0;
+	    while (filter_patterns[pi] != 0 ) {
+		gtk_file_filter_add_pattern (pcb_filter, filter_patterns[pi]);
+		pi++;
+	    }
+            gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (dialog), pcb_filter);
+	}
+        idx++;
+     }
+  }
+
   if (shortcuts && *shortcuts)
     {
       folder = g_strdup (shortcuts);
@@ -512,6 +544,14 @@ ghid_dialog_file_select_save (gchar * title, gchar ** path, gchar * file,
 	{
 	  dup_string (path, folder);
 	  g_free (folder);
+
+	  if (format)
+	    {
+	      GtkFileFilter *fp_filter;
+
+	      fp_filter=gtk_file_chooser_get_filter(GTK_FILE_CHOOSER (dialog));
+	      dup_string (format, (gchar*)gtk_file_filter_get_name(fp_filter));
+	    }
 	}
     }
   gtk_widget_destroy (dialog);

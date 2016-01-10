@@ -315,7 +315,7 @@ gchar *ghid_dialog_file_select_open (gchar * title, gchar ** path,
 				     gchar * shortcuts);
 GSList *ghid_dialog_file_select_multiple (gchar * title, gchar ** path,
 				          gchar * shortcuts);
-gchar *ghid_dialog_file_select_save (gchar * title, gchar ** path,
+gchar *ghid_dialog_file_select_save (gchar * title, gchar ** path, gchar ** format,
 				     gchar * file, gchar * shortcuts);
 void ghid_dialog_message (gchar * message);
 gboolean ghid_dialog_confirm (gchar * message, gchar *cancelmsg, gchar *okmsg);

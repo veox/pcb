@@ -51,6 +51,9 @@ int ImportNetlist (char *);
 int SaveBufferElements (char *);
 void sort_netlist (void);
 
+extern int LoadPCBWithFormat (PCBType **pcb, char *filename, char *fileformat, char **new_format);
+extern int SavePCBWithFormat (PCBType *pcb, char *filename, char *fileformat);
+
 int PCBFileVersionNeeded (void);
         /*!< This is the version needed by the file we're saving. */
 

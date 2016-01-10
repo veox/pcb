@@ -571,6 +571,7 @@ typedef struct PCBType
   FlagType Flags;
   char *Name, /*!< Name of board. */
    *Filename, /*!< Name of file (from load). */
+   *Fileformat, /*!< type of file (from load or last save). */
    *PrintFilename, /*!< From print dialog. */
    *Netlistname, /*!< Name of netlist file. */
     ThermStyle; /*!< Type of thermal to place with thermal tool. */
