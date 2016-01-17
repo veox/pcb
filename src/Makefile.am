@@ -64,6 +64,7 @@ PCB_SRCS = \
 	edif_parse.h \
 	error.c \
 	error.h \
+	fftemplate.c \
 	file.c \
 	file.h \
 	find.c \
