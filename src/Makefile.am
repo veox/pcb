@@ -219,7 +219,7 @@ check_PROGRAMS = unittest
 check_SCRIPTS = unittest
 TESTS = unittest
 
-# Action, Attribute, and Flag lists.
+# Action, Attribute, Flag, and Format lists.
 core_lists.h : ${PCB_SRCS} Makefile
 	true > $@
 	(for f in ${PCB_SRCS} ; do cat $(srcdir)/$$f ; done) | grep "^REGISTER" > $@.tmp
