@@ -43,6 +43,8 @@
 
 #include "global.h"
 
+#include <assert.h>
+
 #include <dirent.h>
 #ifdef HAVE_PWD_H
 #include <pwd.h>
@@ -126,9 +128,6 @@ static int WritePCBFile (char *);
 static int WritePipe (char *, bool);
 static int ParseLibraryTree (void);
 static int LoadNewlibFootprintsFromDir(char *path, char *toppath, bool recursive);
-
-//extern int SavePCBWithFormat (PCBType *pcb, char *filename, char *fileformat);
-//extern int LoadPCBWithFormat (PCBType **pcb, char *filename, char *fileformat, char **new_format);
 
 /* ---------------------------------------------------------------------------
  * Flag helper functions
@@ -1694,7 +1693,7 @@ static HID_Format **all_formats = 0;
    id == NULL -> function not implemented for specific format
 */
 int
-hid_get_file_format(int idx, int load_save, char **id, char **name, char **mime, char ***patterns)
+hid_get_file_format(int idx, int load_save, int *is_default, char **id, char **name, char **mime, char ***patterns)
 {
     if (idx >= n_formats)
         return 0;
@@ -1704,6 +1703,7 @@ hid_get_file_format(int idx, int load_save, char **id, char **name, char **mime,
 	return 1;
       }
 
+    *is_default = all_formats[idx]->default_format;
     *id = all_formats[idx]->id;
     *name = all_formats[idx]->description;
     *mime = all_formats[idx]->mimetype;
@@ -1756,13 +1756,17 @@ char *
 hid_get_default_format_id (char *desc)
 {
   int i;
+  char *result = NULL;
 
   for (i = 0; i < n_formats; i++)
     {
-      if (all_formats[i]->default_format)
-        return all_formats[i]->id;
+      if (all_formats[i]->default_format) {
+        assert (result == NULL);   // There should only be one default format
+        result = all_formats[i]->id;
+      }
     }
-  return NULL;
+
+  return result;
 }
 
 extern int hid_file_format_loadable(char *id)

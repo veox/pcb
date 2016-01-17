@@ -35,6 +35,8 @@
 #include "data.h"
 #include "gui.h"
 
+#include <assert.h>
+
 #ifdef HAVE_LIBDMALLOC
 #include <dmalloc.h>
 #endif
@@ -308,21 +310,65 @@ ghid_dialog_file_select_open (gchar * title, gchar ** path, gchar * shortcuts)
     /* add a filter for layout files */
     GtkFileFilter *pcb_filter;
     int idx = 0, pi;
+    int is_default_format;
     char *filter_id, *filter_name, *filter_mime, **filter_patterns;
 
-    while (hid_get_file_format(idx, 0, &filter_id, &filter_name, &filter_mime, &filter_patterns)) {
-        if (filter_id != NULL ) {
-            pcb_filter = gtk_file_filter_new ();
-            gtk_file_filter_set_name (pcb_filter, filter_name);
-            gtk_file_filter_add_mime_type (pcb_filter, filter_mime);
-	    pi = 0;
-	    while (filter_patterns[pi] != 0 ) {
-		gtk_file_filter_add_pattern (pcb_filter, filter_patterns[pi]);
-		pi++;
-	    }
-            gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (dialog), pcb_filter);
-	}
-        idx++;
+
+    // The default format should go at the top of the filter list.  FIXME:
+    // actually it should perhaps be the default option, rather than "all"
+    // (which is already added above).
+    bool found_default = false;
+    while (
+        hid_get_file_format (
+          idx,
+          0,
+          &is_default_format,
+          &filter_id,
+          &filter_name,
+          &filter_mime,
+          &filter_patterns ) ) {
+      if ( is_default_format ) {
+        // The default format had better be built-in and capable of load
+        assert (filter_id != NULL);  
+        // There better not be more than one default.  FIXME: Message for this
+        // as well in case of screwed-up plugins that want to set default?
+        assert (! found_default);
+        found_default = true;
+        pcb_filter = gtk_file_filter_new ();
+        gtk_file_filter_set_name (pcb_filter, filter_name);
+        gtk_file_filter_add_mime_type (pcb_filter, filter_mime);
+        pi = 0;
+        while (filter_patterns[pi] != 0 ) {
+          gtk_file_filter_add_pattern (pcb_filter, filter_patterns[pi]);
+          pi++;
+        }
+        gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (dialog), pcb_filter);
+      }
+      idx++;
+    }
+
+    // Now add all the other non-default formats
+    idx = 0;
+    while (
+        hid_get_file_format (
+          idx,
+          0,
+          &is_default_format,
+          &filter_id, &filter_name,
+          &filter_mime,
+          &filter_patterns ) ) {
+      if (filter_id != NULL && (! is_default_format) ) {
+        pcb_filter = gtk_file_filter_new ();
+        gtk_file_filter_set_name (pcb_filter, filter_name);
+        gtk_file_filter_add_mime_type (pcb_filter, filter_mime);
+        pi = 0;
+        while (filter_patterns[pi] != 0 ) {
+          gtk_file_filter_add_pattern (pcb_filter, filter_patterns[pi]);
+          pi++;
+        }
+        gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (dialog), pcb_filter);
+      }
+      idx++;
     }
   }
 
@@ -505,10 +551,45 @@ ghid_dialog_file_select_save (gchar * title, gchar ** path, gchar ** format, gch
   if (format != NULL ) {
     GtkFileFilter *pcb_filter;
     int idx = 0, pi;
+    int is_default_format;
     char *filter_id, *filter_name, *filter_mime, **filter_patterns;
 
-    while (hid_get_file_format(idx, 0, &filter_id, &filter_name, &filter_mime, &filter_patterns)) {
-        if (filter_id != NULL ) {
+    // We want to make sure that the default format gets added to the filter
+    // first, so that it ends up as the default selection and at the top of
+    // the list in the GUI
+    bool found_default = false;
+    while (
+        hid_get_file_format (
+          idx,
+          0,
+          &is_default_format,
+          &filter_id, &filter_name,
+          &filter_mime,
+          &filter_patterns) ) {
+      if ( is_default_format ) {
+        // The default format had better be built-in and capable of save
+        assert (filter_id != NULL);  
+        // There better not be more than one default.  FIXME: Message for this
+        // as well in case of screwed-up plugins that want to set default?
+        assert (! found_default);
+        found_default = true;
+        pcb_filter = gtk_file_filter_new ();
+        gtk_file_filter_set_name (pcb_filter, filter_name);
+        gtk_file_filter_add_mime_type (pcb_filter, filter_mime);
+        pi = 0;
+        while (filter_patterns[pi] != 0 ) {
+          gtk_file_filter_add_pattern (pcb_filter, filter_patterns[pi]);
+          pi++;
+        }
+        gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (dialog), pcb_filter);
+      }
+      idx++;
+    }
+
+    // Now add all the other non-default formats
+    idx = 0;
+    while (hid_get_file_format(idx, 0, &is_default_format, &filter_id, &filter_name, &filter_mime, &filter_patterns)) {
+        if (filter_id != NULL && (! is_default_format) ) {
             pcb_filter = gtk_file_filter_new ();
             gtk_file_filter_set_name (pcb_filter, filter_name);
             gtk_file_filter_add_mime_type (pcb_filter, filter_mime);

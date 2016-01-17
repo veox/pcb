@@ -297,7 +297,7 @@ extern "C"
 extern char * hid_get_format_id_by_desc (char *desc);
 extern char * hid_get_format_id_by_idx (int);
 extern char * hid_get_default_format_id ();
-extern int hid_get_file_format(int idx, int load_save, char **id, char **name, char **mime, char ***patterns);
+extern int hid_get_file_format(int idx, int load_save, int *is_default, char **id, char **name, char **mime, char ***patterns);
 extern int hid_file_format_loadable(char *id);
 
 
