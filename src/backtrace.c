@@ -1,4 +1,4 @@
-// Implementation of interface described in backtrace.h.
+/* Implementation of interface described in backtrace.h.  */
 
 /*
  *                            COPYRIGHT
@@ -37,39 +37,41 @@
 
 #include "backtrace.h"
 
+#ifndef NDEBUG
+
 char *
 backtrace_with_line_numbers (void)
 {
   char executable_name[PATH_MAX + 1];
   ssize_t bytes_read;
-  size_t btrace_size;                 // Number of addresses
+  size_t btrace_size;                 /* Number of addresses */
   int return_code;
-  // Backtrace Addresses (temporary file, initialized to template)
+  /* Backtrace Addresses (temporary file, initialized to template) */
   char ba[] = "/tmp/baXXXXXX";  
-  // Most Recent Backtrace Text (temporary file, initialized to template)
-  char bt[] = "/tmp/btXXXXXX";   // Most Recent Backtrace Text
-  int tfd;     // Temporary File Descriptor (reused for different files)
-  FILE *tfp;   // Trmporary FILE Pointer (reused for different things)
+  /* Most Recent Backtrace Text (temporary file, initialized to template) */
+  char bt[] = "/tmp/btXXXXXX";   /* Most Recent Backtrace Text  */
+  int tfd;     /* Temporary File Descriptor (reused for different files) */
+  FILE *tfp;   /* Trmporary FILE Pointer (reused for different things) */
 #define BT_MAX_STACK 142
-  void *btrace_array[BT_MAX_STACK];   // Actual addressess
-  int ii;      //  Index variable
+  void *btrace_array[BT_MAX_STACK];   /* Actual addressess */
+  int ii;      /* Index variable */
 #define ADDR2LINE_COMMAND_MAX_LENGTH 242
   char addr2line_command[ADDR2LINE_COMMAND_MAX_LENGTH + 1];
   int bytes_printed;
   struct stat stat_buf;
   char *result;
 
-  // Use /proc magic to find which binary we are
+  /* Use /proc magic to find which binary we are  */
   bytes_read = readlink ("/proc/self/exe", executable_name, PATH_MAX + 1);
   assert (bytes_read != -1);
-  assert (bytes_read <= PATH_MAX);      // Systems don't always honor PATH_MAX
-  executable_name[bytes_read] = '\0';   // Readlink doesn't do this for us
+  assert (bytes_read <= PATH_MAX);   /* Systems don't always honor PATH_MAX */
+  executable_name[bytes_read] = '\0';   /* Readlink doesn't do this for us */
   
-  // Get the actual backtrace
+  /* Get the actual backtrace  */
   btrace_size = backtrace (btrace_array, BT_MAX_STACK);
   assert (btrace_size < BT_MAX_STACK);
 
-  // Create temp files (filling in their actual names), close file descriptors
+  /* Create temp files (filling in actual names), close file descriptors  */
   tfd = mkstemp (ba);
   assert (tfd != -1);
   return_code = close (tfd);
@@ -79,16 +81,16 @@ backtrace_with_line_numbers (void)
   return_code = close (tfd);
   assert (return_code == 0);
 
-  // Print the addresses to the address file
+  /* Print the addresses to the address file  */
   tfp = fopen (ba, "w");
   assert (tfp != NULL);
-  for ( ii = 1 ; ii < btrace_size ; ii++ ) {   // Skip 0 because that's us
+  for ( ii = 1 ; ii < btrace_size ; ii++ ) {   /* Skip 0 because that's us */
     fprintf (tfp, "%p\n", btrace_array[ii]);
   } 
   return_code = fclose (tfp);
   assert (return_code == 0);
 
-  // Run addr2line to convert addresses to show func, file, line
+  /* Run addr2line to convert addresses to show func, file, line  */
   bytes_printed
     = snprintf (
         addr2line_command,
@@ -101,15 +103,15 @@ backtrace_with_line_numbers (void)
   return_code = system (addr2line_command);
   assert (return_code == 0);
 
-  // Get the size of the result
+  /* Get the size of the result */
   return_code = stat (bt, &stat_buf);
   assert (return_code == 0);
   
-  // Allocate storage for result
-  result = malloc (stat_buf.st_size + 1);   // +1 for trailing null byte
+  /* Allocate storage for result */
+  result = malloc (stat_buf.st_size + 1);   /* +1 for trailing null byte */
   assert (result != NULL);
 
-  // Read the func, file, line form back in
+  /* Read the func, file, line form back in */
   tfp = fopen (bt, "r");
   assert (tfp != NULL);
   bytes_read = fread (result, 1, stat_buf.st_size, tfp);
@@ -118,7 +120,7 @@ backtrace_with_line_numbers (void)
   return_code = fclose (tfp);
   assert (return_code == 0);
 
-  // Remove the temporary files
+  /* Remove the temporary files */
   return_code = unlink (bt);
   assert (return_code == 0);
   return_code = unlink (ba);
@@ -126,3 +128,5 @@ backtrace_with_line_numbers (void)
 
   return result;
 }
+
+#endif
