@@ -67,50 +67,50 @@ ghid_pan_view_rel (Coord dx, Coord dy)
  * gport->view_width and gport->view_height are in PCB coordinates
  */
 
-// This is the maximum screen_size / board_size (in the limiting dimension)
-// that we're ever going to allow.  For large boards the limit may actually
-// be lower to avoid overflow issues (see max_safe_zoom()).  This lets
-// you scroll out until the board is pretty small relative to the screen,
-// to make it easy to get your bearings, but not scroll out so far that the
-// board vanishes.
+/* This is the maximum screen_size / board_size (in the limiting dimension)
+ * that we're ever going to allow.  For large boards the limit may actually
+ * be lower to avoid overflow issues (see max_safe_zoom()).  This lets
+ * you scroll out until the board is pretty small relative to the screen,
+ * to make it easy to get your bearings, but not scroll out so far that the
+ * board vanishes. */
 #define ALLOW_ZOOM_OUT_BY 10 /* Arbitrary, and same as the lesstif HID */
 
 static double
 max_safe_zoom (void)
 {
-  // For zoom to work correctly, we need to not overflow gport->view.width
-  // or gport->view.height (which are the view port width/height in pcb
-  // coordinates).  This function gives a maximum "safe" zoom for this
-  // purpose.  It works by considering how large the entire screen would be in
-  // pcb coordinates and clamping zoom such that that value won't overflow.
-  // It is therefore overly conservative for small windows.  This is good
-  // enough, because:
-  //
-  //   * Tiny windows are rare for pcb editing
-  //   * Gigantic boards are rare
-  //   * 32 bit Coord is going to get rarer
-  //   * The "right" fix is harder and needs re-zoom on window re-size
-  //
-  // DONTFIXME: Zoom might still blow up if we move between screens of
-  // different sizes (multi-monitor setup with different size monitors).
-  // Boo hoo, it doesn't crash and this is a minute corner case.  Could be
-  // fixed by somehow getting the entire screen list but I don't know how.
+  /* For zoom to work correctly, we need to not overflow gport->view.width
+   * or gport->view.height (which are the view port width/height in pcb
+   * coordinates).  This function gives a maximum "safe" zoom for this
+   * purpose.  It works by considering how large the entire screen would be in
+   * pcb coordinates and clamping zoom such that that value won't overflow.
+   * It is therefore overly conservative for small windows.  This is good
+   * enough, because:
+   *
+   *   * Tiny windows are rare for pcb editing
+   *   * Gigantic boards are rare
+   *   * 32 bit Coord is going to get rarer
+   *   * The "right" fix is harder and needs re-zoom on window re-size
+   *
+   * DONTFIXME: Zoom might still blow up if we move between screens of
+   * different sizes (multi-monitor setup with different size monitors).
+   * Boo hoo, it doesn't crash and this is a minute corner case.  Could be
+   * fixed by somehow getting the entire screen list but I don't know how.  */
 
-  // For most boards it's just a matter of deciding how far out we want to
-  // allow user to zoom, which this does.
+  /* For most boards it's just a matter of deciding how far out we want to
+   * allow user to zoom, which this does.  */
   double result = (
       ALLOW_ZOOM_OUT_BY *
       MAX (PCB->MaxWidth  / gport->width, PCB->MaxHeight / gport->height) );
 
-  // Get current screen width and height
+  /* Get current screen width and height */
   GdkScreen *current_screen
     = gtk_window_get_screen (GTK_WINDOW (gport->top_window));
   gint csw = gdk_screen_get_width (current_screen);    // Current Screen Width
   gint csh = gdk_screen_get_height (current_screen);   // Current Screen Height
 
-  // We don't want to end up trying to use the very largest possible
-  // gport->view.width because we're going through floating point on the way,
-  // so cheat a tiny bit.
+  /* We don't want to end up trying to use the very largest possible
+   * gport->view.width because we're going through floating point on the way,
+   * so cheat a tiny bit.  */
   double const safety_factor = 0.9842;
 
   result = MIN (result, safety_factor * ((double) COORD_MAX) / MAX (csw, csh));
