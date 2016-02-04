@@ -57,8 +57,6 @@
 char *
 backtrace_with_line_numbers (void);
 
-// FIXME: so how does libc assert get the program name? test all this
-
 /* Like assert(), but prints a full backtrace (if it does anything).
  * All caveats of backtrace_with_line_numbers() apply.  */
 #  define ASSERT_BT(COND)                                                    \
