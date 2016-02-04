@@ -84,9 +84,10 @@ backtrace_with_line_numbers (void)
   /* Print the addresses to the address file  */
   tfp = fopen (ba, "w");
   assert (tfp != NULL);
-  for ( ii = 1 ; ii < btrace_size ; ii++ ) {   /* Skip 0 because that's us */
-    fprintf (tfp, "%p\n", btrace_array[ii]);
-  } 
+  for ( ii = 1 ; ii < btrace_size ; ii++ )    /* Skip 0 because that's us */
+    {
+      fprintf (tfp, "%p\n", btrace_array[ii]);
+    } 
   return_code = fclose (tfp);
   assert (return_code == 0);
 
