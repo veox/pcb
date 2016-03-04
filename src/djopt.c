@@ -1007,6 +1007,8 @@ split_line (line_s * l, corner_s * c)
 static int
 canonicalize_line (line_s * l)
 {
+  if (l->is_pad)
+    return 0;
   /* This could be faster */
   corner_s *c;
   if (l->s->x == l->e->x)
@@ -3058,13 +3060,6 @@ ActionDJopt (int argc, char **argv, Coord x, Coord y)
   END_LOOP;
   check (0, 0);
 
-  if (NSTRCMP (arg, "splitlines") == 0)
-    {
-      if (canonicalize_lines ())
-	IncrementUndoSerialNumber ();
-      return 0;
-    }
-
   for (layn = 0; layn < max_copper_layer; layn++)
     {
       LayerType *layer = LAYER_PTR (layn);
@@ -3103,7 +3098,7 @@ ActionDJopt (int argc, char **argv, Coord x, Coord y)
 
   check (0, 0);
   pinsnap ();
-  canonicalize_lines ();
+  saved += canonicalize_lines ();
   check (0, 0);
   classify_nets ();
   /*dump_all(); */
@@ -3125,6 +3120,8 @@ ActionDJopt (int argc, char **argv, Coord x, Coord y)
     saved += automagic ();
   else if (NSTRCMP (arg, "miter") == 0)
     saved += miter ();
+  else if (NSTRCMP (arg, "splitlines") == 0)
+    /* Just to call canonicalize_lines() above.  */ ;
   else
     {
       printf ("unknown command: %s\n", arg);
