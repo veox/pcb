@@ -1,5 +1,5 @@
-// Provide a backtrace with line numbers, and an assert()-like routine that
-// prints a backtrace on failure.
+/* Provide a backtrace with line numbers, and an assert()-like routine that
+ * prints a backtrace on failure.  */
 
 /*
  *                            COPYRIGHT
