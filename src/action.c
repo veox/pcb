@@ -95,7 +95,7 @@
  */
 typedef enum
 {
-  F_AddCurrentObjectIfBufferEmpty,
+  F_AddObjectIfEmpty,
   F_AddSelected,
   F_All,
   F_AllConnections,
@@ -331,7 +331,7 @@ static bool mid_stroke = false;
 static BoxType StrokeBox;
 #endif
 static FunctionType Functions[] = {
-  {"AddCurrentObjectIfBufferEmpty", F_AddCurrentObjectIfBufferEmpty},
+  {"AddObjectIfEmpty", F_AddObjectIfEmpty},
   {"AddSelected", F_AddSelected},
   {"All", F_All},
   {"AllConnections", F_AllConnections},
@@ -1938,11 +1938,6 @@ ActionDumpLibrary (int argc, char **argv, Coord x, Coord y)
 
 /* -------------------------------------------------------------------------- */
 
-
-/* FIXME: the first possible value for the argument shouldn't be called Object,
- * because this function won't work on any object but only on an element. 
- * Sampe applies to other actions taking an "Object" in a sense, so maybe this
- * over-general term is hard to eliminate  */
 static const char flip_syntax[] = N_("Flip(Object|Selected|SelectedElements)");
 
 static const char flip_help[] =
@@ -6017,7 +6012,7 @@ ActionBell (char *volume)
 /* --------------------------------------------------------------------------- */
 
 static const char pastebuffer_syntax[] =
-  N_("PasteBuffer(AddSelected|AddCurrentObjectIfBufferEmpty|Clear|1..MAX_BUFFER)\n"
+  N_("PasteBuffer(AddSelected|AddObjectIfEmpty|Clear|1..MAX_BUFFER)\n"
   "PasteBuffer(Rotate, 1..3)\n"
   "PasteBuffer(Convert|Save|Restore|Mirror)\n"
   "PasteBuffer(ToLayout, X, Y, units)");
@@ -6037,8 +6032,9 @@ often referred to as ``the'' paste buffer.
 @item AddSelected
 Copies the selected objects to the current paste buffer.
 
-@item AddCurrentObjectIfBufferEmpty
-Iff the current paste buffer is empty, add the hovered or clicked object to the buffer.  If the hovered or clicked object is part of an element the entire element is added.
+@item AddObjectIfEmpty
+Iff the current paste buffer is empty, add the hovered or clicked object to the buffer.  If the hovered or clicked object is part of an element the entire
+element is added.
 
 @item Clear
 Remove all objects from the current paste buffer.
@@ -6100,19 +6096,12 @@ ActionPasteBuffer (int argc, char **argv, Coord x, Coord y)
 
 	  /* copies objects to paste buffer */
 	case F_AddSelected:
-          printf ("%s:%i:%s: x: %li, y: %li\n", __FILE__, __LINE__, __func__,
-              x, y ); 
 	  AddSelectedToBuffer (PASTEBUFFER, 0, 0, false);
 	  break;
 
-        /* FIXME: maybe hsould be called AddPointed instead  */
-        case F_AddCurrentObjectIfBufferEmpty:
-          // FIXME the message I think isn't used sadly 'cause GetXY got called
+        case F_AddObjectIfEmpty:
           gui->get_coords (_("Select an Object"), &x, &y);
-          printf ("%s:%i:%s: x: %li, y: %li\n", __FILE__, __LINE__, __func__,
-                  x, y ); 
-          // FIXME: gross needs rename
-          AddToBufferIfEmpty(PASTEBUFFER, x, y, false);
+          AddToBufferIfEmpty (PASTEBUFFER, x, y, false);
           break;
 
 	  /* converts buffer contents into an element */
