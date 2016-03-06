@@ -60,6 +60,7 @@
 #include "search.h"
 #include "select.h"
 #include "set.h"
+#include "undo.h"
 
 #ifdef HAVE_LIBDMALLOC
 #include <dmalloc.h>
@@ -569,6 +570,7 @@ CopyOrMoveObjectToBuffer (
     else {
       CopyObjectToBuffer (Buffer->Data, PCB->Data, type, Ptr1, Ptr2, Ptr3);
       RemoveObject (type, Ptr1, Ptr2, Ptr3);
+      IncrementUndoSerialNumber ();
     }
   }
   
