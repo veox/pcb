@@ -542,13 +542,15 @@ type_name_string (int type)
 }
 
 /*!
- * \brief Iff (X, Y) falls on an object with type in COPY_TYPES, add the object
- * to Buffer, leaving the new object selected iff LeaveSelected.  Note that if
- * (X, Y) falls on an object not in COPY_TYPES, another object may still
- * qualify: e.g. the line connected to a pin, or the element containing a pin.
+ * \brief Iff (X, Y) falls on an object with type in COPY_TYPES, copy or move
+ * (depending on copy) the object to Buffer, leaving the copied or moved object
+ * selected iff LeaveSelected.  Note that if (X, Y) falls on an object not in
+ * COPY_TYPES, another object may still qualify: e.g. the line connected to a
+ * pin, or the element containing a pin.
  */
-void
-AddObjectToBuffer (BufferType *Buffer, Coord X, Coord Y, bool LeaveSelected)
+static void
+CopyOrMoveObjectToBuffer (
+    BufferType *Buffer, Coord X, Coord Y, bool LeaveSelected, bool copy )
 {
   if (!LeaveSelected)
     ExtraFlag = SELECTEDFLAG;
@@ -561,13 +563,46 @@ AddObjectToBuffer (BufferType *Buffer, Coord X, Coord Y, bool LeaveSelected)
   int type = SearchScreen (X, Y, COPY_TYPES, &Ptr1, &Ptr2, &Ptr3);
 
   if ( type != NO_TYPE ) {
-    CopyObjectToBuffer (Buffer->Data, PCB->Data, type, Ptr1, Ptr2, Ptr3);
+    if ( copy ) {
+      CopyObjectToBuffer (Buffer->Data, PCB->Data, type, Ptr1, Ptr2, Ptr3);
+    }
+    else {
+      CopyObjectToBuffer (Buffer->Data, PCB->Data, type, Ptr1, Ptr2, Ptr3);
+      RemoveObject (type, Ptr1, Ptr2, Ptr3);
+    }
   }
   
   notify_crosshair_change (true);
 
   ExtraFlag = 0;
+
 }
+
+/*!
+ * \brief Iff (X, Y) falls on an object with type in COPY_TYPES, copy the
+ * object to Buffer, leaving the new object selected iff LeaveSelected.  Note
+ * that if (X, Y) falls on an object not in COPY_TYPES, another object may
+ * still qualify: e.g. the line connected to a pin, or the element containing
+ * a pin.
+ */
+void
+AddObjectToBuffer (BufferType *Buffer, Coord X, Coord Y, bool LeaveSelected)
+{
+  CopyOrMoveObjectToBuffer (Buffer, X, Y, LeaveSelected, true);
+}
+
+/*!
+ * \brief Iff (X, Y) falls on an object with type in COPY_TYPES, cut the
+ * object to Buffer, leaving the object selected iff LeaveSelected.  Note that
+ * if (X, Y) falls on an object not in COPY_TYPES, another object may still
+ * qualify: e.g. the line connected to a pin, or the element containing a pin.
+ */
+void
+CutObjectToBuffer (BufferType *Buffer, Coord X, Coord Y, bool LeaveSelected)
+{
+  CopyOrMoveObjectToBuffer (Buffer, X, Y, LeaveSelected, false);
+}
+
 
 /*!
  * \brief Loads element data from file/library into buffer.

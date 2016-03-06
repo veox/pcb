@@ -90,7 +90,7 @@ MainMenu =
    #{"Clear undo-buffer" Undo(ClearList) a={"Shift-Ctrl-U" "Shift Ctrl<Key>u"}}
    -
    {"Cut to buffer" GetXY(Click to set the snap point for this buffer)
-    PasteBuffer(Clear) PasteBuffer(AddSelected) RemoveSelected() Mode(PasteBuffer)
+    PasteBuffer(Clear) PasteBuffer(AddSelected) PasteBuffer(CutObjectIfEmpty) RemoveSelected() Mode(PasteBuffer)
     a={"Ctrl-X" "Ctrl<Key>x"}}
    {"Copy to buffer" GetXY(Click to set the snap point for this buffer)
     PasteBuffer(Clear) PasteBuffer(AddSelected) PasteBuffer(AddObjectIfEmpty) Unselect(All) Mode(PasteBuffer)

@@ -115,6 +115,7 @@ typedef enum
   F_Connection,
   F_Convert,
   F_Copy,
+  F_CutObjectIfEmpty,
   F_CycleClip,
   F_CycleCrosshair,
   F_DeleteRats,
@@ -351,6 +352,7 @@ static FunctionType Functions[] = {
   {"Connection", F_Connection},
   {"Convert", F_Convert},
   {"Copy", F_Copy},
+  {"CutObjectIfEmpty", F_CutObjectIfEmpty},
   {"CycleClip", F_CycleClip},
   {"CycleCrosshair", F_CycleCrosshair},
   {"DeleteRats", F_DeleteRats},
@@ -6103,6 +6105,13 @@ ActionPasteBuffer (int argc, char **argv, Coord x, Coord y)
           if ( BufferIsEmpty (PASTEBUFFER) ) {
             gui->get_coords (_("Select an Object"), &x, &y);
             AddObjectToBuffer (PASTEBUFFER, x, y, false);
+          }
+          break;
+
+        case F_CutObjectIfEmpty:
+          if ( BufferIsEmpty (PASTEBUFFER) ) {
+            gui->get_coords (_("Select an Object"), &x, &y);
+            CutObjectToBuffer (PASTEBUFFER, x, y, false);
           }
           break;
 
