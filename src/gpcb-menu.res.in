@@ -93,7 +93,7 @@ MainMenu =
     PasteBuffer(Clear) PasteBuffer(AddSelected) RemoveSelected() Mode(PasteBuffer)
     a={"Ctrl-X" "Ctrl<Key>x"}}
    {"Copy to buffer" GetXY(Click to set the snap point for this buffer)
-    PasteBuffer(Clear) PasteBuffer(AddSelected) Unselect(All) Mode(PasteBuffer)
+    PasteBuffer(Clear) PasteBuffer(AddSelected) PasteBuffer(AddCurrentObjectIfBufferEmpty) Unselect(All) Mode(PasteBuffer)
     a={"Ctrl-C" "Ctrl<Key>c"}}
    {"Paste buffer" Mode(PasteBuffer) a={"Ctrl-V" "Ctrl<Key>v"}}
    -

@@ -35,6 +35,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <stdlib.h>
 #include <memory.h>
 #include <math.h>
@@ -113,6 +114,10 @@ MoveLineToBuffer,
     MoveElementToBuffer,
     NULL, NULL, NULL, NULL, NULL, MoveArcToBuffer, MoveRatToBuffer};
 
+/*!
+ * \brief Additional flags that should not be set in the new object when
+ * adding an objects do a buffer, besides the flags in NOCOPY_FLAGS.
+ */
 static int ExtraFlag = 0;
 
 /*!
@@ -436,18 +441,17 @@ ClearBuffer (BufferType *Buffer)
 
 /*!
  * \brief Copies all selected and visible objects to the paste buffer.
- *
- * \return true if any objects have been removed.
  */
 void
 AddSelectedToBuffer (BufferType *Buffer, Coord X, Coord Y, bool LeaveSelected)
 {
-  /* switch crosshair off because adding objects to the pastebuffer
-   * may change the 'valid' area for the cursor
-   */
   if (!LeaveSelected)
     ExtraFlag = SELECTEDFLAG;
+
+  /* switch crosshair off because adding objects to the pastebuffer
+   * may change the 'valid' area for the cursor */
   notify_crosshair_change (false);
+
   Source = PCB->Data;
   Dest = Buffer->Data;
   SelectedOperation (&AddBufferFunctions, false, ALL_TYPES);
@@ -463,8 +467,108 @@ AddSelectedToBuffer (BufferType *Buffer, Coord X, Coord Y, bool LeaveSelected)
       Buffer->X = Crosshair.X;
       Buffer->Y = Crosshair.Y;
     }
+
   notify_crosshair_change (true);
+
   ExtraFlag = 0;
+}
+
+static bool
+BufferIsEmpty (BufferType *Buffer)
+{
+  DataType *bd = Buffer->Data;   /* Buffer Data */   
+
+  if ( bd->ViaN > 0 )     return false;
+  if ( bd->ElementN > 0 ) return false;
+  if ( bd->RatN > 0 )     return false;
+
+  LAYER_LOOP (bd, bd->LayerN);
+  {
+    if ( layer->LineN > 0 )    return false; 
+    if ( layer->TextN > 0 )    return false; 
+    if ( layer->PolygonN > 0 ) return false; 
+    if ( layer->ArcN > 0 )     return false; 
+  }
+  END_LOOP;
+
+  return true;
+}
+
+#define TYPE_X_MACRO_TABLE \
+  X(NO_TYPE)               \
+  X(VIA_TYPE)              \
+  X(ELEMENT_TYPE)          \
+  X(LINE_TYPE)             \
+  X(POLYGON_TYPE)          \
+  X(TEXT_TYPE)             \
+  X(RATLINE_TYPE)          \
+  X(PIN_TYPE)              \
+  X(PAD_TYPE)              \
+  X(ELEMENTNAME_TYPE)      \
+  X(POLYGONPOINT_TYPE)     \
+  X(LINEPOINT_TYPE)        \
+  X(ELEMENTLINE_TYPE)      \
+  X(ARC_TYPE)              \
+  X(ELEMENTARC_TYPE)       \
+  X(LOCKED_TYPE)           \
+  X(NET_TYPE)              \
+  X(ARCPOINT_TYPE)         \
+  X(PIN_TYPES)             \
+  X(LOCK_TYPES)            \
+  X(SELECT_TYPES)          \
+  X(COPY_TYPES)            \
+  X(ALL_TYPES)
+
+/* Return a new string containing the name of the given type.  */
+static char *
+type_name_string (int type)
+{
+  switch ( type ) {
+#define X(type)            \
+  case type:               \
+    return strdup (#type); \
+    break;
+    TYPE_X_MACRO_TABLE
+#undef X
+    default:
+      /* Note that this could mean we have an invalid type, or it could mean
+       * TYPE_X_MACRO_TABLE needs to be updated.  */
+      assert (false);
+      break;
+  }
+}
+
+/*!
+ * \brief Iff Buffer is empty and (X, Y) falls on an object with type in
+ * COPY_TYPES, add the object to Buffer, leaving the new object selected iff
+ * LeaveSelected.
+ * anything (buggy IMO).   FIXME: BufferIsEmpty() should be exported via buffer.h and the test shoul go in ActionPasteBuffer() in action.c
+ * FIXME: Should call MoveObjectToBuffer or CopyObjectToBuffer conditional on an arg maybe, if we end up needing MoveToBufferIfEmpty to implement cut (but maybe we don't because the action sequence ends up doing that a different way)
+ */
+void
+AddToBufferIfEmpty (
+    BufferType *Buffer, Coord X, Coord Y, bool LeaveSelected )
+{
+  if ( BufferIsEmpty (Buffer) ) {
+
+    if (!LeaveSelected)
+      ExtraFlag = SELECTEDFLAG;
+
+    /* switch crosshair off because adding objects to the pastebuffer
+     * may change the 'valid' area for the cursor */
+    notify_crosshair_change (false);
+
+    void *Ptr1, *Ptr2, *Ptr3;
+    int type = SearchScreen (X, Y, COPY_TYPES, &Ptr1, &Ptr2, &Ptr3);
+
+    if ( type != NO_TYPE ) {
+      CopyObjectToBuffer (Buffer->Data, PCB->Data, type, Ptr1, Ptr2, Ptr3);
+    }
+    
+    notify_crosshair_change (true);
+
+    ExtraFlag = 0;
+  }
 }
 
 /*!

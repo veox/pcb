@@ -41,6 +41,7 @@
 void SetBufferBoundingBox (BufferType *);
 void ClearBuffer (BufferType *);
 void AddSelectedToBuffer (BufferType *, Coord, Coord, bool);
+void AddToBufferIfEmpty (BufferType *, Coord, Coord, bool);
 bool LoadElementToBuffer (BufferType *, char *, bool);
 bool ConvertBufferToElement (BufferType *);
 bool SmashBufferElement (BufferType *);
@@ -51,8 +52,7 @@ void SwapBuffers (void);
 void MirrorBuffer (BufferType *);
 void InitBuffers (void);
 void *MoveObjectToBuffer (DataType *, DataType *, int, void *, void *, void *); 
-void *CopyObjectToBuffer (DataType *, DataType *, int,
-			  void *, void *, void *);
+void *CopyObjectToBuffer (DataType *, DataType *, int, void *, void *, void *);
 
 int LoadFootprint (int argc, char **argv, Coord x, Coord y);
 
