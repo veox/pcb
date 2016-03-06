@@ -6100,8 +6100,10 @@ ActionPasteBuffer (int argc, char **argv, Coord x, Coord y)
 	  break;
 
         case F_AddObjectIfEmpty:
-          gui->get_coords (_("Select an Object"), &x, &y);
-          AddToBufferIfEmpty (PASTEBUFFER, x, y, false);
+          if ( BufferIsEmpty (PASTEBUFFER) ) {
+            gui->get_coords (_("Select an Object"), &x, &y);
+            AddObjectToBuffer (PASTEBUFFER, x, y, false);
+          }
           break;
 
 	  /* converts buffer contents into an element */

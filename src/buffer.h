@@ -41,7 +41,8 @@
 void SetBufferBoundingBox (BufferType *);
 void ClearBuffer (BufferType *);
 void AddSelectedToBuffer (BufferType *, Coord, Coord, bool);
-void AddToBufferIfEmpty (BufferType *, Coord, Coord, bool);
+void AddObjectToBuffer (BufferType *, Coord, Coord, bool);
+bool BufferIsEmpty (BufferType *);
 bool LoadElementToBuffer (BufferType *, char *, bool);
 bool ConvertBufferToElement (BufferType *);
 bool SmashBufferElement (BufferType *);

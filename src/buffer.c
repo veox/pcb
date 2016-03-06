@@ -473,7 +473,10 @@ AddSelectedToBuffer (BufferType *Buffer, Coord X, Coord Y, bool LeaveSelected)
   ExtraFlag = 0;
 }
 
-static bool
+/*!
+ * \brief Return true iff Buffer is completely empty.
+ */
+bool
 BufferIsEmpty (BufferType *Buffer)
 {
   DataType *bd = Buffer->Data;   /* Buffer Data */   
@@ -539,36 +542,31 @@ type_name_string (int type)
 }
 
 /*!
- * \brief Iff Buffer is empty and (X, Y) falls on an object with type in
- * COPY_TYPES, add the object to Buffer, leaving the new object selected iff
- * LeaveSelected.
- * anything (buggy IMO).   FIXME: BufferIsEmpty() should be exported via buffer.h and the test shoul go in ActionPasteBuffer() in action.c
- * FIXME: Should call MoveObjectToBuffer or CopyObjectToBuffer conditional on an arg maybe, if we end up needing MoveToBufferIfEmpty to implement cut (but maybe we don't because the action sequence ends up doing that a different way)
+ * \brief Iff (X, Y) falls on an object with type in COPY_TYPES, add the object
+ * to Buffer, leaving the new object selected iff LeaveSelected.  Note that if
+ * (X, Y) falls on an object not in COPY_TYPES, another object may still
+ * qualify: e.g. the line connected to a pin, or the element containing a pin.
  */
 void
-AddToBufferIfEmpty (
-    BufferType *Buffer, Coord X, Coord Y, bool LeaveSelected )
+AddObjectToBuffer (BufferType *Buffer, Coord X, Coord Y, bool LeaveSelected)
 {
-  if ( BufferIsEmpty (Buffer) ) {
+  if (!LeaveSelected)
+    ExtraFlag = SELECTEDFLAG;
 
-    if (!LeaveSelected)
-      ExtraFlag = SELECTEDFLAG;
+  /* switch crosshair off because adding objects to the pastebuffer
+   * may change the 'valid' area for the cursor */
+  notify_crosshair_change (false);
 
-    /* switch crosshair off because adding objects to the pastebuffer
-     * may change the 'valid' area for the cursor */
-    notify_crosshair_change (false);
+  void *Ptr1, *Ptr2, *Ptr3;
+  int type = SearchScreen (X, Y, COPY_TYPES, &Ptr1, &Ptr2, &Ptr3);
 
-    void *Ptr1, *Ptr2, *Ptr3;
-    int type = SearchScreen (X, Y, COPY_TYPES, &Ptr1, &Ptr2, &Ptr3);
-
-    if ( type != NO_TYPE ) {
-      CopyObjectToBuffer (Buffer->Data, PCB->Data, type, Ptr1, Ptr2, Ptr3);
-    }
-    
-    notify_crosshair_change (true);
-
-    ExtraFlag = 0;
+  if ( type != NO_TYPE ) {
+    CopyObjectToBuffer (Buffer->Data, PCB->Data, type, Ptr1, Ptr2, Ptr3);
   }
+  
+  notify_crosshair_change (true);
+
+  ExtraFlag = 0;
 }
 
 /*!
