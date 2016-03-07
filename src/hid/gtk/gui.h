@@ -25,7 +25,7 @@
 #ifndef PCB_HID_GTK_GHID_H
 #define PCB_HID_GTK_GHID_H
 
-#include "locale.h"
+#include <locale.h>
 
 #include "global.h"
 #include "hid.h"
