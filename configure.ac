@@ -316,7 +316,7 @@ if test "x$enable_toporouter" = "xyes"; then
   # apart toporouter related stuff and because testing for the library makes
   # reasonably sure that GTS is available, we omit a test for gts.h.
   #AC_CHECK_HEADER(gts.h, , AC_MSG_ERROR($this_error_text), glib.h)
-  AC_SEARCH_LIBS(gts_object_class_new, gts, , AC_MSG_ERROR($this_error_text))
+  AC_SEARCH_LIBS(gts_object_class_new, gts, , AC_MSG_ERROR($this_error_text), -lm)
   unset this_error_text
 fi
 
